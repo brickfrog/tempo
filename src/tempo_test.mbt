@@ -113,6 +113,49 @@ test "Date::days_until" {
 }
 
 ///|
+test "Date::parse valid" {
+  let d = @src.Date::parse("2024-03-15")
+  assert_eq(d.year, 2024)
+  assert_eq(d.month, 3)
+  assert_eq(d.day, 15)
+}
+
+///|
+test "Date::format" {
+  let d = @src.Date::new(2024, 3, 5)
+  assert_eq(d.format(), "2024-03-05")
+}
+
+///|
+test "Date::parse roundtrip" {
+  let s = "2000-02-29"
+  let d = @src.Date::parse(s)
+  assert_eq(d.format(), s)
+}
+
+///|
+test "Date::parse invalid month" {
+  let result = try {
+    @src.Date::parse("2024-13-01") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Date::parse trailing junk" {
+  let result = try {
+    @src.Date::parse("2024-01-01Z") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
 test "Time::new valid" {
   let t = @src.Time::new(23, 59, 59, 999_999_999)
   assert_eq(t.hour, 23)
@@ -245,6 +288,98 @@ test "DateTime::format with nanoseconds" {
 test "DateTime::format nanosecond precision" {
   let dt = @src.DateTime::from_unix_nanos(1710506096_123_456_789L)
   assert_eq(dt.format(), "2024-03-15T12:34:56.123456789Z")
+}
+
+///|
+test "Time::format no sub-second" {
+  let t = @src.Time::new(0, 0, 0, 0)
+  assert_eq(t.format(), "00:00:00")
+}
+
+///|
+test "Time::format with nanoseconds trimmed" {
+  let t = @src.Time::new(12, 34, 56, 100_000_000)
+  assert_eq(t.format(), "12:34:56.1")
+}
+
+///|
+test "Time::format nanosecond precision" {
+  let t = @src.Time::new(12, 34, 56, 123_456_789)
+  assert_eq(t.format(), "12:34:56.123456789")
+}
+
+///|
+test "Time::parse basic" {
+  let t = @src.Time::parse("12:34:56")
+  assert_eq(t.hour, 12)
+  assert_eq(t.minute, 34)
+  assert_eq(t.second, 56)
+  assert_eq(t.nanosecond, 0)
+}
+
+///|
+test "Time::parse midnight" {
+  let t = @src.Time::parse("00:00:00")
+  assert_eq(t.hour, 0)
+  assert_eq(t.nanosecond, 0)
+}
+
+///|
+test "Time::parse with fractional seconds" {
+  let t = @src.Time::parse("12:34:56.123456789")
+  assert_eq(t.nanosecond, 123_456_789)
+}
+
+///|
+test "Time::parse fractional seconds trimmed" {
+  let t = @src.Time::parse("12:34:56.1")
+  assert_eq(t.nanosecond, 100_000_000)
+}
+
+///|
+test "Time::parse fractional seconds >9 digits truncated" {
+  let t = @src.Time::parse("12:34:56.123456789999")
+  assert_eq(t.nanosecond, 123_456_789)
+}
+
+///|
+test "Time::parse invalid hour" {
+  let result = try {
+    @src.Time::parse("24:00:00") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Time::parse invalid format" {
+  let result = try {
+    @src.Time::parse("not-a-time") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Time::parse unexpected trailing" {
+  let result = try {
+    @src.Time::parse("12:34:56Z") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Time::parse roundtrip" {
+  let s = "12:34:56.123456789"
+  let t = @src.Time::parse(s)
+  assert_eq(t.format(), s)
 }
 
 ///|

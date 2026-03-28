@@ -22,7 +22,9 @@ pub fn Date::add_days(Self, Int) -> Self
 pub fn Date::day_of_week(Self) -> Int
 pub fn Date::day_of_year(Self) -> Int
 pub fn Date::days_until(Self, Self) -> Int
+pub fn Date::format(Self) -> String
 pub fn Date::new(Int, Int, Int) -> Self raise TempoError
+pub fn Date::parse(String) -> Self raise TempoError
 pub impl Compare for Date
 pub impl Eq for Date
 pub impl Show for Date
@@ -76,7 +78,9 @@ pub struct Time {
   second : Int
   nanosecond : Int
 }
+pub fn Time::format(Self) -> String
 pub fn Time::new(Int, Int, Int, Int) -> Self raise TempoError
+pub fn Time::parse(String) -> Self raise TempoError
 pub impl Compare for Time
 pub impl Eq for Time
 pub impl Show for Time
