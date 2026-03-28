@@ -1,7 +1,7 @@
 # tempo
 
-UTC date/time library for MoonBit. RFC 3339 parsing and formatting, Unix
-timestamp conversion, and basic arithmetic. No external dependencies.
+UTC date/time library for MoonBit. RFC 3339 parsing, Unix timestamp conversion,
+basic arithmetic. No external dependencies.
 
 In your `moon.pkg`:
 
@@ -16,13 +16,10 @@ import {
 ```moonbit nocheck
 ///|
 test {
-  // Parse an RFC 3339 string
   let dt = @tempo.DateTime::parse("2026-03-28T14:31:43Z")
   inspect(dt.date.year, content="2026")
   inspect(dt.date.month, content="3")
   inspect(dt.time.hour, content="14")
-
-  // Format back to RFC 3339
   inspect(dt.format(), content="2026-03-28T14:31:43Z")
 }
 ```
@@ -31,10 +28,10 @@ test {
 
 | Type | Description |
 |---|---|
-| `Date` | Calendar date: `year`, `month` (1–12), `day` (1–31) |
-| `Time` | Time of day: `hour`, `minute`, `second`, `nanosecond` |
+| `Date` | `year`, `month` (1–12), `day` (1–31) |
+| `Time` | `hour`, `minute`, `second`, `nanosecond` |
 | `DateTime` | Combined UTC date and time |
-| `Duration` | Signed span of time, stored as nanoseconds |
+| `Duration` | Signed duration, stored as nanoseconds |
 
 All types implement `Eq`, `Compare`, and `Show`.
 
@@ -43,7 +40,6 @@ All types implement `Eq`, `Compare`, and `Show`.
 ```moonbit nocheck
 ///|
 test {
-  // Validated constructors — raise TempoError on bad input
   let d = @tempo.Date::new(2026, 3, 28)
   let t = @tempo.Time::new(14, 31, 43, 0)
   let dt = @tempo.DateTime::new(d, t)
@@ -54,7 +50,6 @@ test {
 ```moonbit nocheck
 ///|
 test {
-  // From Unix timestamps
   let dt = @tempo.DateTime::from_unix_seconds(0L)
   inspect(dt.format(), content="1970-01-01T00:00:00Z")
 
@@ -65,13 +60,12 @@ test {
 
 ## Parsing
 
-`DateTime::parse` accepts RFC 3339 / ISO 8601. Only UTC is supported: `Z`,
-`+00:00`, or `-00:00`. Non-UTC offsets raise `TempoError`.
+Accepts RFC 3339 / ISO 8601. Only UTC offsets (`Z`, `+00:00`, `-00:00`) are
+accepted — others raise `TempoError`.
 
 ```moonbit nocheck
 ///|
 test {
-  // Fractional seconds — any precision, truncated to nanoseconds
   let dt = @tempo.DateTime::parse("2026-03-28T14:31:43.125Z")
   inspect(dt.time.nanosecond, content="125000000")
 }
@@ -80,7 +74,6 @@ test {
 ```moonbit nocheck
 ///|
 test {
-  // Non-UTC offset is rejected
   let result = try {
     @tempo.DateTime::parse("2026-03-28T14:31:43+09:00") |> ignore
     "ok"
@@ -93,8 +86,8 @@ test {
 
 ## Formatting
 
-`DateTime::format` always produces RFC 3339 with a `Z` suffix. Sub-second
-precision is included only when `nanosecond ≠ 0`, with trailing zeros trimmed.
+`DateTime::format` produces RFC 3339 with a `Z` suffix. Fractional seconds are
+included only when `nanosecond ≠ 0`, trailing zeros trimmed.
 
 ```moonbit nocheck
 ///|
@@ -110,15 +103,12 @@ test {
 ///|
 test {
   let dt = @tempo.DateTime::parse("2026-03-28T12:00:00Z")
-
-  // Add / subtract durations
   let dt2 = dt.add(@tempo.Duration::hours(2L))
   inspect(dt2.time.hour, content="14")
 
   let dt3 = dt.sub(@tempo.Duration::minutes(30L))
   inspect(dt3.time.minute, content="30")
 
-  // Diff two DateTimes
   let gap = dt2.diff(dt)
   inspect(gap.as_hours(), content="2")
 }
@@ -127,7 +117,6 @@ test {
 ```moonbit nocheck
 ///|
 test {
-  // Durations compose with + / - / unary -
   let a = @tempo.Duration::hours(1L)
   let b = @tempo.Duration::minutes(30L)
   inspect((a + b).as_minutes(), content="90")
@@ -154,8 +143,7 @@ test {
 ```moonbit nocheck
 ///|
 test {
-  // DateTime::now() returns the current UTC time.
-  // Precision: milliseconds on js/wasm-gc, whole seconds on native.
+  // Millisecond precision on js/wasm-gc, whole seconds on native.
   let now = @tempo.DateTime::now()
   assert_eq(now > @tempo.DateTime::epoch(), true)
 }
@@ -174,11 +162,10 @@ test {
 }
 ```
 
-## What's not here
+## Not included
 
-- **Timezones / DST** — the IANA database is ~3 MB of data and changes
-  several times a year. Planned as a separate `tempo-tz` package.
-- **Locale-aware formatting** — month/day names, `strftime` patterns.
-- **Leap seconds** — POSIX time ignores them; so does tempo.
+- **Timezones / DST** — planned as a separate `tempo-tz` package
+- **Locale-aware formatting** — `strftime` patterns, localized names
+- **Leap seconds** — POSIX ignores them, so does tempo
 
-See [ROADMAP.md](ROADMAP.md) for the full plan.
+See [ROADMAP.md](ROADMAP.md).
