@@ -18,6 +18,10 @@ pub struct Date {
   month : Int
   day : Int
 }
+pub fn Date::add_days(Self, Int) -> Self
+pub fn Date::day_of_week(Self) -> Int
+pub fn Date::day_of_year(Self) -> Int
+pub fn Date::days_until(Self, Self) -> Int
 pub fn Date::new(Int, Int, Int) -> Self raise TempoError
 pub impl Compare for Date
 pub impl Eq for Date
