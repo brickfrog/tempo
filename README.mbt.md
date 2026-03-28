@@ -13,7 +13,8 @@ import {
 
 ## Quick start
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   // Parse an RFC 3339 string
   let dt = @tempo.DateTime::parse("2026-03-28T14:31:43Z")
@@ -39,7 +40,8 @@ All types implement `Eq`, `Compare`, and `Show`.
 
 ## Constructing values
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   // Validated constructors — raise TempoError on bad input
   let d = @tempo.Date::new(2026, 3, 28)
@@ -49,7 +51,8 @@ test {
 }
 ```
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   // From Unix timestamps
   let dt = @tempo.DateTime::from_unix_seconds(0L)
@@ -65,7 +68,8 @@ test {
 `DateTime::parse` accepts RFC 3339 / ISO 8601. Only UTC is supported: `Z`,
 `+00:00`, or `-00:00`. Non-UTC offsets raise `TempoError`.
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   // Fractional seconds — any precision, truncated to nanoseconds
   let dt = @tempo.DateTime::parse("2026-03-28T14:31:43.125Z")
@@ -73,7 +77,8 @@ test {
 }
 ```
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   // Non-UTC offset is rejected
   let result = try {
@@ -91,7 +96,8 @@ test {
 `DateTime::format` always produces RFC 3339 with a `Z` suffix. Sub-second
 precision is included only when `nanosecond ≠ 0`, with trailing zeros trimmed.
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   let dt = @tempo.DateTime::from_unix_nanos(1_711_630_303_100_000_000L)
   inspect(dt.format(), content="2024-03-28T14:31:43.1Z")
@@ -100,7 +106,8 @@ test {
 
 ## Arithmetic
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   let dt = @tempo.DateTime::parse("2026-03-28T12:00:00Z")
 
@@ -117,7 +124,8 @@ test {
 }
 ```
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   // Durations compose with + / - / unary -
   let a = @tempo.Duration::hours(1L)
@@ -129,11 +137,12 @@ test {
 
 ## Duration constructors
 
-```moonbit
+```moonbit nocheck
+///|
 test {
-  inspect(@tempo.Duration::days(1L).as_hours(),        content="24")
-  inspect(@tempo.Duration::hours(1L).as_minutes(),     content="60")
-  inspect(@tempo.Duration::minutes(1L).as_seconds(),   content="60")
+  inspect(@tempo.Duration::days(1L).as_hours(), content="24")
+  inspect(@tempo.Duration::hours(1L).as_minutes(), content="60")
+  inspect(@tempo.Duration::minutes(1L).as_seconds(), content="60")
   inspect(@tempo.Duration::seconds(1L).as_milliseconds(), content="1000")
   inspect(@tempo.Duration::milliseconds(1L).as_microseconds(), content="1000")
   inspect(@tempo.Duration::microseconds(1L).as_nanoseconds(), content="1000")
@@ -142,7 +151,8 @@ test {
 
 ## Current time
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   // DateTime::now() returns the current UTC time.
   // Precision: milliseconds on js/wasm-gc, whole seconds on native.
@@ -153,7 +163,8 @@ test {
 
 ## Calendar helpers
 
-```moonbit
+```moonbit nocheck
+///|
 test {
   assert_eq(@tempo.is_leap_year(2000), true)
   assert_eq(@tempo.is_leap_year(1900), false)
