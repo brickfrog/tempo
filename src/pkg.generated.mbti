@@ -74,7 +74,9 @@ pub struct Time {
   second : Int
   nanosecond : Int
 }
+pub fn Time::format(Self) -> String
 pub fn Time::new(Int, Int, Int, Int) -> Self raise TempoError
+pub fn Time::parse(String) -> Self raise TempoError
 pub impl Compare for Time
 pub impl Eq for Time
 pub impl Show for Time
