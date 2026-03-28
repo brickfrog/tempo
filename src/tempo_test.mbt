@@ -189,6 +189,98 @@ test "DateTime::format nanosecond precision" {
 }
 
 ///|
+test "Time::format no sub-second" {
+  let t = @src.Time::new(0, 0, 0, 0)
+  assert_eq(t.format(), "00:00:00")
+}
+
+///|
+test "Time::format with nanoseconds trimmed" {
+  let t = @src.Time::new(12, 34, 56, 100_000_000)
+  assert_eq(t.format(), "12:34:56.1")
+}
+
+///|
+test "Time::format nanosecond precision" {
+  let t = @src.Time::new(12, 34, 56, 123_456_789)
+  assert_eq(t.format(), "12:34:56.123456789")
+}
+
+///|
+test "Time::parse basic" {
+  let t = @src.Time::parse("12:34:56")
+  assert_eq(t.hour, 12)
+  assert_eq(t.minute, 34)
+  assert_eq(t.second, 56)
+  assert_eq(t.nanosecond, 0)
+}
+
+///|
+test "Time::parse midnight" {
+  let t = @src.Time::parse("00:00:00")
+  assert_eq(t.hour, 0)
+  assert_eq(t.nanosecond, 0)
+}
+
+///|
+test "Time::parse with fractional seconds" {
+  let t = @src.Time::parse("12:34:56.123456789")
+  assert_eq(t.nanosecond, 123_456_789)
+}
+
+///|
+test "Time::parse fractional seconds trimmed" {
+  let t = @src.Time::parse("12:34:56.1")
+  assert_eq(t.nanosecond, 100_000_000)
+}
+
+///|
+test "Time::parse fractional seconds >9 digits truncated" {
+  let t = @src.Time::parse("12:34:56.123456789999")
+  assert_eq(t.nanosecond, 123_456_789)
+}
+
+///|
+test "Time::parse invalid hour" {
+  let result = try {
+    @src.Time::parse("24:00:00") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Time::parse invalid format" {
+  let result = try {
+    @src.Time::parse("not-a-time") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Time::parse unexpected trailing" {
+  let result = try {
+    @src.Time::parse("12:34:56Z") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Time::parse roundtrip" {
+  let s = "12:34:56.123456789"
+  let t = @src.Time::parse(s)
+  assert_eq(t.format(), s)
+}
+
+///|
 test "DateTime::parse basic" {
   let dt = @src.DateTime::parse("1970-01-01T00:00:00Z")
   assert_eq(dt.to_unix_seconds(), 0L)

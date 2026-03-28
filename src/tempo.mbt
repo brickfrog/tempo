@@ -395,6 +395,18 @@ pub fn DateTime::format(self : DateTime) -> String {
 }
 
 ///|
+/// Format this time as `HH:MM:SS` or `HH:MM:SS.fraction` (nanoseconds trimmed,
+/// consistent with `DateTime::format`).
+pub fn Time::format(self : Time) -> String {
+  let base = "\{pad2(self.hour)}:\{pad2(self.minute)}:\{pad2(self.second)}"
+  if self.nanosecond == 0 {
+    base
+  } else {
+    base + "." + fmt_frac(self.nanosecond)
+  }
+}
+
+///|
 pub impl Show for Date with output(self, logger) {
   logger.write_string(
     "\{pad4(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}",
@@ -577,4 +589,24 @@ pub fn DateTime::parse(s : String) -> DateTime raise TempoError {
   let date = Date::new(year, month, day)
   let time = Time::new(hour, minute, second, nanosecond)
   { date, time }
+}
+
+///|
+/// Parse a time-of-day string: `HH:MM:SS` or `HH:MM:SS.fraction`.
+pub fn Time::parse(s : String) -> Time raise TempoError {
+  let v = s.view()
+  let (hour, v) = parse_digits(v, 2)
+  let v = consume(v, ':')
+  let (minute, v) = parse_digits(v, 2)
+  let v = consume(v, ':')
+  let (second, v) = parse_digits(v, 2)
+  let (nanosecond, v) = match v {
+    ['.', .. rest] => parse_frac_ns(rest)
+    _ => (0, v)
+  }
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  Time::new(hour, minute, second, nanosecond)
 }

@@ -1,4 +1,5 @@
 .DS_Store
+.cursor/
 _build/
 .mooncakes/
 .moonagent/
