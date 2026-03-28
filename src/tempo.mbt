@@ -345,11 +345,20 @@ fn pad4(n : Int) -> String {
   }
 }
 
-// Year field for ISO 8601 / RFC 3339: sign plus four-digit absolute value.
+// Proleptic Gregorian year for text output: optional leading `-` for years
+// before 1 CE, then the absolute year number zero-padded to at least four
+// decimal digits (same rules as `pad4`). Years with |year| ≥ 10000 use more
+// than four digits. RFC 3339 `date-time` only allows four-digit positive years;
+// this formatting follows ISO 8601-style expanded years for arbitrary `Date`
+// values. `Int::min_value` cannot be negated to a positive `Int`; that case is
+// rejected here.
 
 ///|
 fn pad4_year(year : Int) -> String {
   if year < 0 {
+    if year == @int.min_value {
+      abort("pad4_year: year is Int::min_value, cannot format magnitude")
+    }
     "-" + pad4(-year)
   } else {
     pad4(year)
@@ -392,8 +401,10 @@ fn fmt_frac(ns : Int) -> String {
 }
 
 ///|
-/// Format this DateTime as an RFC 3339 / ISO 8601 string (UTC, 'Z' suffix).
-/// Sub-second precision is included only when nanoseconds ≠ 0.
+/// Format this DateTime as an RFC 3339-style string (UTC, `Z` suffix) when the
+/// year is in the usual four-digit range; negative years and years ≥ 10000 use
+/// ISO 8601 expanded-year conventions (see `pad4_year`). Sub-second precision
+/// is included only when nanoseconds ≠ 0.
 pub fn DateTime::format(self : DateTime) -> String {
   let d = self.date
   let t = self.time
