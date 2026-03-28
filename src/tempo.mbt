@@ -121,6 +121,47 @@ pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
   { year, month, day }
 }
 
+// ─── Date arithmetic ──────────────────────────────────────────────────────────
+
+///|
+/// Add a signed number of calendar days to this date (proleptic Gregorian).
+pub fn Date::add_days(self : Date, days : Int) -> Date {
+  let base = days_from_civil(self.year, self.month, self.day)
+  let (y, m, d) = civil_from_days(base + days.to_int64())
+  { year: y, month: m, day: d }
+}
+
+///|
+/// ISO 8601 weekday: Monday = 1 through Sunday = 7.
+pub fn Date::day_of_week(self : Date) -> Int {
+  let d = days_from_civil(self.year, self.month, self.day)
+  // Align so Monday (1970-01-05, etc.) is remainder 0.
+  let idx = floor_mod64(d - 4L, 7L)
+  idx.to_int() + 1
+}
+
+///|
+/// Day of year in 1..366 (1 = January 1).
+pub fn Date::day_of_year(self : Date) -> Int {
+  let y = self.year
+  let start = days_from_civil(y, 1, 1)
+  let today = days_from_civil(self.year, self.month, self.day)
+  (today - start).to_int() + 1
+}
+
+///|
+/// Calendar days from `self` to `other` (`other` minus `self`). Negative if `other` is earlier.
+pub fn Date::days_until(self : Date, other : Date) -> Int {
+  let a = days_from_civil(self.year, self.month, self.day)
+  let b = days_from_civil(other.year, other.month, other.day)
+  (b - a).to_int()
+}
+
+///|
+fn floor_mod64(a : Int64, b : Int64) -> Int64 {
+  a - floor_div64(a, b) * b
+}
+
 ///|
 /// Parse a calendar date in 'YYYY-MM-DD' format.
 pub fn Date::parse(s : String) -> Date raise TempoError {

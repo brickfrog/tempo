@@ -54,6 +54,65 @@ test "Date::new non-leap Feb 29 invalid" {
 }
 
 ///|
+test "Date::add_days forward" {
+  let d = @src.Date::new(2024, 3, 15)
+  let d2 = d.add_days(10)
+  assert_eq(d2.year, 2024)
+  assert_eq(d2.month, 3)
+  assert_eq(d2.day, 25)
+}
+
+///|
+test "Date::add_days backward" {
+  let d = @src.Date::new(2024, 3, 15)
+  let d2 = d.add_days(-14)
+  assert_eq(d2.month, 3)
+  assert_eq(d2.day, 1)
+}
+
+///|
+test "Date::add_days crosses month" {
+  let d = @src.Date::new(2024, 1, 31)
+  let d2 = d.add_days(1)
+  assert_eq(d2.month, 2)
+  assert_eq(d2.day, 1)
+}
+
+///|
+test "Date::add_days leap day" {
+  let d = @src.Date::new(2024, 2, 28)
+  let d2 = d.add_days(1)
+  assert_eq(d2.month, 2)
+  assert_eq(d2.day, 29)
+}
+
+///|
+test "Date::day_of_week ISO" {
+  // 1970-01-01 Thursday; 2024-01-01 Monday; 2024-03-15 Friday
+  assert_eq(@src.Date::new(1970, 1, 1).day_of_week(), 4)
+  assert_eq(@src.Date::new(2024, 1, 1).day_of_week(), 1)
+  assert_eq(@src.Date::new(2024, 3, 15).day_of_week(), 5)
+  assert_eq(@src.Date::new(2024, 3, 17).day_of_week(), 7)
+}
+
+///|
+test "Date::day_of_year" {
+  assert_eq(@src.Date::new(2024, 1, 1).day_of_year(), 1)
+  assert_eq(@src.Date::new(2024, 3, 15).day_of_year(), 75)
+  assert_eq(@src.Date::new(2023, 12, 31).day_of_year(), 365)
+  assert_eq(@src.Date::new(2024, 12, 31).day_of_year(), 366)
+}
+
+///|
+test "Date::days_until" {
+  let a = @src.Date::new(2024, 3, 1)
+  let b = @src.Date::new(2024, 3, 15)
+  assert_eq(a.days_until(b), 14)
+  assert_eq(b.days_until(a), -14)
+  assert_eq(a.days_until(a), 0)
+}
+
+///|
 test "Date::parse valid" {
   let d = @src.Date::parse("2024-03-15")
   assert_eq(d.year, 2024)
