@@ -54,6 +54,108 @@ test "Date::new non-leap Feb 29 invalid" {
 }
 
 ///|
+test "Date::add_days forward" {
+  let d = @src.Date::new(2024, 3, 15)
+  let d2 = d.add_days(10)
+  assert_eq(d2.year, 2024)
+  assert_eq(d2.month, 3)
+  assert_eq(d2.day, 25)
+}
+
+///|
+test "Date::add_days backward" {
+  let d = @src.Date::new(2024, 3, 15)
+  let d2 = d.add_days(-14)
+  assert_eq(d2.month, 3)
+  assert_eq(d2.day, 1)
+}
+
+///|
+test "Date::add_days crosses month" {
+  let d = @src.Date::new(2024, 1, 31)
+  let d2 = d.add_days(1)
+  assert_eq(d2.month, 2)
+  assert_eq(d2.day, 1)
+}
+
+///|
+test "Date::add_days leap day" {
+  let d = @src.Date::new(2024, 2, 28)
+  let d2 = d.add_days(1)
+  assert_eq(d2.month, 2)
+  assert_eq(d2.day, 29)
+}
+
+///|
+test "Date::day_of_week ISO" {
+  // 1970-01-01 Thursday; 2024-01-01 Monday; 2024-03-15 Friday
+  assert_eq(@src.Date::new(1970, 1, 1).day_of_week(), 4)
+  assert_eq(@src.Date::new(2024, 1, 1).day_of_week(), 1)
+  assert_eq(@src.Date::new(2024, 3, 15).day_of_week(), 5)
+  assert_eq(@src.Date::new(2024, 3, 17).day_of_week(), 7)
+}
+
+///|
+test "Date::day_of_year" {
+  assert_eq(@src.Date::new(2024, 1, 1).day_of_year(), 1)
+  assert_eq(@src.Date::new(2024, 3, 15).day_of_year(), 75)
+  assert_eq(@src.Date::new(2023, 12, 31).day_of_year(), 365)
+  assert_eq(@src.Date::new(2024, 12, 31).day_of_year(), 366)
+}
+
+///|
+test "Date::days_until" {
+  let a = @src.Date::new(2024, 3, 1)
+  let b = @src.Date::new(2024, 3, 15)
+  assert_eq(a.days_until(b), 14)
+  assert_eq(b.days_until(a), -14)
+  assert_eq(a.days_until(a), 0)
+}
+
+///|
+test "Date::parse valid" {
+  let d = @src.Date::parse("2024-03-15")
+  assert_eq(d.year, 2024)
+  assert_eq(d.month, 3)
+  assert_eq(d.day, 15)
+}
+
+///|
+test "Date::format" {
+  let d = @src.Date::new(2024, 3, 5)
+  assert_eq(d.format(), "2024-03-05")
+}
+
+///|
+test "Date::parse roundtrip" {
+  let s = "2000-02-29"
+  let d = @src.Date::parse(s)
+  assert_eq(d.format(), s)
+}
+
+///|
+test "Date::parse invalid month" {
+  let result = try {
+    @src.Date::parse("2024-13-01") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Date::parse trailing junk" {
+  let result = try {
+    @src.Date::parse("2024-01-01Z") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
 test "Time::new valid" {
   let t = @src.Time::new(23, 59, 59, 999_999_999)
   assert_eq(t.hour, 23)
@@ -205,6 +307,98 @@ test "DateTime::format negative year -0001" {
 }
 
 ///|
+test "Time::format no sub-second" {
+  let t = @src.Time::new(0, 0, 0, 0)
+  assert_eq(t.format(), "00:00:00")
+}
+
+///|
+test "Time::format with nanoseconds trimmed" {
+  let t = @src.Time::new(12, 34, 56, 100_000_000)
+  assert_eq(t.format(), "12:34:56.1")
+}
+
+///|
+test "Time::format nanosecond precision" {
+  let t = @src.Time::new(12, 34, 56, 123_456_789)
+  assert_eq(t.format(), "12:34:56.123456789")
+}
+
+///|
+test "Time::parse basic" {
+  let t = @src.Time::parse("12:34:56")
+  assert_eq(t.hour, 12)
+  assert_eq(t.minute, 34)
+  assert_eq(t.second, 56)
+  assert_eq(t.nanosecond, 0)
+}
+
+///|
+test "Time::parse midnight" {
+  let t = @src.Time::parse("00:00:00")
+  assert_eq(t.hour, 0)
+  assert_eq(t.nanosecond, 0)
+}
+
+///|
+test "Time::parse with fractional seconds" {
+  let t = @src.Time::parse("12:34:56.123456789")
+  assert_eq(t.nanosecond, 123_456_789)
+}
+
+///|
+test "Time::parse fractional seconds trimmed" {
+  let t = @src.Time::parse("12:34:56.1")
+  assert_eq(t.nanosecond, 100_000_000)
+}
+
+///|
+test "Time::parse fractional seconds >9 digits truncated" {
+  let t = @src.Time::parse("12:34:56.123456789999")
+  assert_eq(t.nanosecond, 123_456_789)
+}
+
+///|
+test "Time::parse invalid hour" {
+  let result = try {
+    @src.Time::parse("24:00:00") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Time::parse invalid format" {
+  let result = try {
+    @src.Time::parse("not-a-time") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Time::parse unexpected trailing" {
+  let result = try {
+    @src.Time::parse("12:34:56Z") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Time::parse roundtrip" {
+  let s = "12:34:56.123456789"
+  let t = @src.Time::parse(s)
+  assert_eq(t.format(), s)
+}
+
+///|
 test "DateTime::parse basic" {
   let dt = @src.DateTime::parse("1970-01-01T00:00:00Z")
   assert_eq(dt.to_unix_seconds(), 0L)
@@ -293,6 +487,21 @@ test "Duration::days" {
   let d = @src.Duration::days(1L)
   assert_eq(d.as_seconds(), 86_400L)
   assert_eq(d.as_hours(), 24L)
+}
+
+///|
+test "Duration::weeks" {
+  let w = @src.Duration::weeks(2L)
+  assert_eq(w.as_nanoseconds(), 2L * 7L * 86_400L * 1_000_000_000L)
+  assert_eq(w.as_seconds(), 2L * 7L * 86_400L)
+  assert_eq(w.as_weeks(), 2L)
+}
+
+///|
+test "Duration::as_weeks" {
+  assert_eq(@src.Duration::days(14L).as_weeks(), 2L)
+  assert_eq(@src.Duration::days(13L).as_weeks(), 1L)
+  assert_eq(@src.Duration::days(1L).as_weeks(), 0L)
 }
 
 ///|

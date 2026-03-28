@@ -121,6 +121,69 @@ pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
   { year, month, day }
 }
 
+// ─── Date arithmetic ──────────────────────────────────────────────────────────
+
+///|
+/// Add a signed number of calendar days to this date (proleptic Gregorian).
+pub fn Date::add_days(self : Date, days : Int) -> Date {
+  let base = days_from_civil(self.year, self.month, self.day)
+  let (y, m, d) = civil_from_days(base + days.to_int64())
+  { year: y, month: m, day: d }
+}
+
+///|
+/// ISO 8601 weekday: Monday = 1 through Sunday = 7.
+pub fn Date::day_of_week(self : Date) -> Int {
+  let d = days_from_civil(self.year, self.month, self.day)
+  // Align so Monday (1970-01-05, etc.) is remainder 0.
+  let idx = floor_mod64(d - 4L, 7L)
+  idx.to_int() + 1
+}
+
+///|
+/// Day of year in 1..366 (1 = January 1).
+pub fn Date::day_of_year(self : Date) -> Int {
+  let y = self.year
+  let start = days_from_civil(y, 1, 1)
+  let today = days_from_civil(self.year, self.month, self.day)
+  (today - start).to_int() + 1
+}
+
+///|
+/// Calendar days from `self` to `other` (`other` minus `self`). Negative if `other` is earlier.
+pub fn Date::days_until(self : Date, other : Date) -> Int {
+  let a = days_from_civil(self.year, self.month, self.day)
+  let b = days_from_civil(other.year, other.month, other.day)
+  (b - a).to_int()
+}
+
+///|
+fn floor_mod64(a : Int64, b : Int64) -> Int64 {
+  a - floor_div64(a, b) * b
+}
+
+///|
+/// Parse a calendar date in 'YYYY-MM-DD' format.
+pub fn Date::parse(s : String) -> Date raise TempoError {
+  let v = s.view()
+  let (year, v) = parse_digits(v, 4)
+  let v = consume(v, '-')
+  let (month, v) = parse_digits(v, 2)
+  let v = consume(v, '-')
+  let (day, v) = parse_digits(v, 2)
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  Date::new(year, month, day)
+}
+
+///|
+/// Format this date as 'YYYY-MM-DD'.
+pub fn Date::format(self : Date) -> String {
+  "\{pad4(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}"
+}
+
 ///|
 pub fn Time::new(
   hour : Int,
@@ -224,6 +287,11 @@ pub fn Duration::days(d : Int64) -> Duration {
 }
 
 ///|
+pub fn Duration::weeks(w : Int64) -> Duration {
+  { nanoseconds: w * 7L * 86_400L * ns_per_sec }
+}
+
+///|
 pub fn Duration::microseconds(us : Int64) -> Duration {
   { nanoseconds: us * ns_per_us }
 }
@@ -278,6 +346,11 @@ pub fn Duration::as_minutes(self : Duration) -> Int64 {
 ///|
 pub fn Duration::as_hours(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_hour
+}
+
+///|
+pub fn Duration::as_weeks(self : Duration) -> Int64 {
+  self.nanoseconds / (7L * 86_400L * ns_per_sec)
 }
 
 // ─── Duration arithmetic ──────────────────────────────────────────────────────
@@ -417,6 +490,18 @@ pub fn DateTime::format(self : DateTime) -> String {
 }
 
 ///|
+/// Format this time as `HH:MM:SS` or `HH:MM:SS.fraction` (nanoseconds trimmed,
+/// consistent with `DateTime::format`).
+pub fn Time::format(self : Time) -> String {
+  let base = "\{pad2(self.hour)}:\{pad2(self.minute)}:\{pad2(self.second)}"
+  if self.nanosecond == 0 {
+    base
+  } else {
+    base + "." + fmt_frac(self.nanosecond)
+  }
+}
+
+///|
 pub impl Show for Date with output(self, logger) {
   logger.write_string(
     "\{pad4_year(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}",
@@ -425,12 +510,7 @@ pub impl Show for Date with output(self, logger) {
 
 ///|
 pub impl Show for Time with output(self, logger) {
-  let base = "\{pad2(self.hour)}:\{pad2(self.minute)}:\{pad2(self.second)}"
-  if self.nanosecond == 0 {
-    logger.write_string(base)
-  } else {
-    logger.write_string(base + "." + fmt_frac(self.nanosecond))
-  }
+  logger.write_string(self.format())
 }
 
 ///|
@@ -599,4 +679,24 @@ pub fn DateTime::parse(s : String) -> DateTime raise TempoError {
   let date = Date::new(year, month, day)
   let time = Time::new(hour, minute, second, nanosecond)
   { date, time }
+}
+
+///|
+/// Parse a time-of-day string: `HH:MM:SS` or `HH:MM:SS.fraction`.
+pub fn Time::parse(s : String) -> Time raise TempoError {
+  let v = s.view()
+  let (hour, v) = parse_digits(v, 2)
+  let v = consume(v, ':')
+  let (minute, v) = parse_digits(v, 2)
+  let v = consume(v, ':')
+  let (second, v) = parse_digits(v, 2)
+  let (nanosecond, v) = match v {
+    ['.', .. rest] => parse_frac_ns(rest)
+    _ => (0, v)
+  }
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  Time::new(hour, minute, second, nanosecond)
 }
