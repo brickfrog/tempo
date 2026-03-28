@@ -280,6 +280,21 @@ test "Duration::days" {
 }
 
 ///|
+test "Duration::weeks" {
+  let w = @src.Duration::weeks(2L)
+  assert_eq(w.as_nanoseconds(), 2L * 7L * 86_400L * 1_000_000_000L)
+  assert_eq(w.as_seconds(), 2L * 7L * 86_400L)
+  assert_eq(w.as_weeks(), 2L)
+}
+
+///|
+test "Duration::as_weeks" {
+  assert_eq(@src.Duration::days(14L).as_weeks(), 2L)
+  assert_eq(@src.Duration::days(13L).as_weeks(), 1L)
+  assert_eq(@src.Duration::days(1L).as_weeks(), 0L)
+}
+
+///|
 test "Duration::days arithmetic" {
   let dt = @src.DateTime::parse("2024-01-31T00:00:00Z")
   let dt2 = dt.add(@src.Duration::days(1L))

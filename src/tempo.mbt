@@ -224,6 +224,11 @@ pub fn Duration::days(d : Int64) -> Duration {
 }
 
 ///|
+pub fn Duration::weeks(w : Int64) -> Duration {
+  { nanoseconds: w * 7L * 86_400L * ns_per_sec }
+}
+
+///|
 pub fn Duration::microseconds(us : Int64) -> Duration {
   { nanoseconds: us * ns_per_us }
 }
@@ -278,6 +283,11 @@ pub fn Duration::as_minutes(self : Duration) -> Int64 {
 ///|
 pub fn Duration::as_hours(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_hour
+}
+
+///|
+pub fn Duration::as_weeks(self : Duration) -> Int64 {
+  self.nanoseconds / (7L * 86_400L * ns_per_sec)
 }
 
 // ─── Duration arithmetic ──────────────────────────────────────────────────────

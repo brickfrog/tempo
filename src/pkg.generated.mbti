@@ -52,6 +52,7 @@ pub fn Duration::as_milliseconds(Self) -> Int64
 pub fn Duration::as_minutes(Self) -> Int64
 pub fn Duration::as_nanoseconds(Self) -> Int64
 pub fn Duration::as_seconds(Self) -> Int64
+pub fn Duration::as_weeks(Self) -> Int64
 pub fn Duration::days(Int64) -> Self
 pub fn Duration::hours(Int64) -> Self
 pub fn Duration::microseconds(Int64) -> Self
@@ -59,6 +60,7 @@ pub fn Duration::milliseconds(Int64) -> Self
 pub fn Duration::minutes(Int64) -> Self
 pub fn Duration::nanoseconds(Int64) -> Self
 pub fn Duration::seconds(Int64) -> Self
+pub fn Duration::weeks(Int64) -> Self
 pub impl Add for Duration
 pub impl Compare for Duration
 pub impl Eq for Duration
