@@ -122,6 +122,28 @@ pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
 }
 
 ///|
+/// Parse a calendar date in 'YYYY-MM-DD' format.
+pub fn Date::parse(s : String) -> Date raise TempoError {
+  let v = s.view()
+  let (year, v) = parse_digits(v, 4)
+  let v = consume(v, '-')
+  let (month, v) = parse_digits(v, 2)
+  let v = consume(v, '-')
+  let (day, v) = parse_digits(v, 2)
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  Date::new(year, month, day)
+}
+
+///|
+/// Format this date as 'YYYY-MM-DD'.
+pub fn Date::format(self : Date) -> String {
+  "\{pad4(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}"
+}
+
+///|
 pub fn Time::new(
   hour : Int,
   minute : Int,

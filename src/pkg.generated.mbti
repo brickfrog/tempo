@@ -18,7 +18,9 @@ pub struct Date {
   month : Int
   day : Int
 }
+pub fn Date::format(Self) -> String
 pub fn Date::new(Int, Int, Int) -> Self raise TempoError
+pub fn Date::parse(String) -> Self raise TempoError
 pub impl Compare for Date
 pub impl Eq for Date
 pub impl Show for Date

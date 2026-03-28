@@ -54,6 +54,49 @@ test "Date::new non-leap Feb 29 invalid" {
 }
 
 ///|
+test "Date::parse valid" {
+  let d = @src.Date::parse("2024-03-15")
+  assert_eq(d.year, 2024)
+  assert_eq(d.month, 3)
+  assert_eq(d.day, 15)
+}
+
+///|
+test "Date::format" {
+  let d = @src.Date::new(2024, 3, 5)
+  assert_eq(d.format(), "2024-03-05")
+}
+
+///|
+test "Date::parse roundtrip" {
+  let s = "2000-02-29"
+  let d = @src.Date::parse(s)
+  assert_eq(d.format(), s)
+}
+
+///|
+test "Date::parse invalid month" {
+  let result = try {
+    @src.Date::parse("2024-13-01") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
+test "Date::parse trailing junk" {
+  let result = try {
+    @src.Date::parse("2024-01-01Z") |> ignore
+    "ok"
+  } catch {
+    @src.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+
+///|
 test "Time::new valid" {
   let t = @src.Time::new(23, 59, 59, 999_999_999)
   assert_eq(t.hour, 23)
