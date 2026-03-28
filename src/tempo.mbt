@@ -345,6 +345,17 @@ fn pad4(n : Int) -> String {
   }
 }
 
+// Year field for ISO 8601 / RFC 3339: sign plus four-digit absolute value.
+
+///|
+fn pad4_year(year : Int) -> String {
+  if year < 0 {
+    "-" + pad4(-year)
+  } else {
+    pad4(year)
+  }
+}
+
 ///|
 fn pad9(n : Int) -> String {
   if n < 10 {
@@ -386,7 +397,7 @@ fn fmt_frac(ns : Int) -> String {
 pub fn DateTime::format(self : DateTime) -> String {
   let d = self.date
   let t = self.time
-  let base = "\{pad4(d.year)}-\{pad2(d.month)}-\{pad2(d.day)}T\{pad2(t.hour)}:\{pad2(t.minute)}:\{pad2(t.second)}"
+  let base = "\{pad4_year(d.year)}-\{pad2(d.month)}-\{pad2(d.day)}T\{pad2(t.hour)}:\{pad2(t.minute)}:\{pad2(t.second)}"
   if t.nanosecond == 0 {
     base + "Z"
   } else {
@@ -397,7 +408,7 @@ pub fn DateTime::format(self : DateTime) -> String {
 ///|
 pub impl Show for Date with output(self, logger) {
   logger.write_string(
-    "\{pad4(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}",
+    "\{pad4_year(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}",
   )
 }
 

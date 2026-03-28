@@ -189,6 +189,22 @@ test "DateTime::format nanosecond precision" {
 }
 
 ///|
+test "DateTime::format negative year" {
+  let d = @src.Date::new(-500, 6, 15)
+  let t = @src.Time::new(12, 0, 0, 0)
+  let dt = @src.DateTime::new(d, t)
+  assert_eq(dt.format(), "-0500-06-15T12:00:00Z")
+}
+
+///|
+test "DateTime::format negative year -0001" {
+  let d = @src.Date::new(-1, 1, 1)
+  let t = @src.Time::new(0, 0, 0, 0)
+  let dt = @src.DateTime::new(d, t)
+  assert_eq(dt.format(), "-0001-01-01T00:00:00Z")
+}
+
+///|
 test "DateTime::parse basic" {
   let dt = @src.DateTime::parse("1970-01-01T00:00:00Z")
   assert_eq(dt.to_unix_seconds(), 0L)
@@ -407,6 +423,18 @@ test "Show Date" {
 }
 
 ///|
+test "Show Date negative year" {
+  let d = @src.Date::new(-500, 6, 15)
+  inspect(d, content="-0500-06-15")
+}
+
+///|
+test "Show Date negative year -0001" {
+  let d = @src.Date::new(-1, 1, 1)
+  inspect(d, content="-0001-01-01")
+}
+
+///|
 test "Show Time" {
   let t = @src.Time::new(9, 5, 3, 0)
   inspect(t, content="09:05:03")
@@ -416,6 +444,14 @@ test "Show Time" {
 test "Show DateTime" {
   let dt = @src.DateTime::from_unix_seconds(1710506096L)
   inspect(dt, content="2024-03-15T12:34:56Z")
+}
+
+///|
+test "Show DateTime negative year" {
+  let d = @src.Date::new(-500, 6, 15)
+  let t = @src.Time::new(12, 0, 0, 0)
+  let dt = @src.DateTime::new(d, t)
+  inspect(dt, content="-0500-06-15T12:00:00Z")
 }
 
 ///|
