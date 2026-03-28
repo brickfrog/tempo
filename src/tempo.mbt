@@ -415,12 +415,7 @@ pub impl Show for Date with output(self, logger) {
 
 ///|
 pub impl Show for Time with output(self, logger) {
-  let base = "\{pad2(self.hour)}:\{pad2(self.minute)}:\{pad2(self.second)}"
-  if self.nanosecond == 0 {
-    logger.write_string(base)
-  } else {
-    logger.write_string(base + "." + fmt_frac(self.nanosecond))
-  }
+  logger.write_string(self.format())
 }
 
 ///|
