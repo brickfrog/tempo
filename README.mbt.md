@@ -1,1 +1,173 @@
-# brickfrog/tempo
+# tempo
+
+UTC date/time library for MoonBit. RFC 3339 parsing and formatting, Unix
+timestamp conversion, and basic arithmetic. No external dependencies.
+
+In your `moon.pkg`:
+
+```
+import {
+  "brickfrog/tempo/src" @tempo,
+}
+```
+
+## Quick start
+
+```moonbit
+test {
+  // Parse an RFC 3339 string
+  let dt = @tempo.DateTime::parse("2026-03-28T14:31:43Z")
+  inspect(dt.date.year, content="2026")
+  inspect(dt.date.month, content="3")
+  inspect(dt.time.hour, content="14")
+
+  // Format back to RFC 3339
+  inspect(dt.format(), content="2026-03-28T14:31:43Z")
+}
+```
+
+## Types
+
+| Type | Description |
+|---|---|
+| `Date` | Calendar date: `year`, `month` (1–12), `day` (1–31) |
+| `Time` | Time of day: `hour`, `minute`, `second`, `nanosecond` |
+| `DateTime` | Combined UTC date and time |
+| `Duration` | Signed span of time, stored as nanoseconds |
+
+All types implement `Eq`, `Compare`, and `Show`.
+
+## Constructing values
+
+```moonbit
+test {
+  // Validated constructors — raise TempoError on bad input
+  let d = @tempo.Date::new(2026, 3, 28)
+  let t = @tempo.Time::new(14, 31, 43, 0)
+  let dt = @tempo.DateTime::new(d, t)
+  inspect(dt.format(), content="2026-03-28T14:31:43Z")
+}
+```
+
+```moonbit
+test {
+  // From Unix timestamps
+  let dt = @tempo.DateTime::from_unix_seconds(0L)
+  inspect(dt.format(), content="1970-01-01T00:00:00Z")
+
+  let dt2 = @tempo.DateTime::from_unix_nanos(1_000_000_000L)
+  inspect(dt2.format(), content="1970-01-01T00:00:01Z")
+}
+```
+
+## Parsing
+
+`DateTime::parse` accepts RFC 3339 / ISO 8601. Only UTC is supported: `Z`,
+`+00:00`, or `-00:00`. Non-UTC offsets raise `TempoError`.
+
+```moonbit
+test {
+  // Fractional seconds — any precision, truncated to nanoseconds
+  let dt = @tempo.DateTime::parse("2026-03-28T14:31:43.125Z")
+  inspect(dt.time.nanosecond, content="125000000")
+}
+```
+
+```moonbit
+test {
+  // Non-UTC offset is rejected
+  let result = try {
+    @tempo.DateTime::parse("2026-03-28T14:31:43+09:00") |> ignore
+    "ok"
+  } catch {
+    @tempo.TempoError(_) => "error"
+  }
+  assert_eq(result, "error")
+}
+```
+
+## Formatting
+
+`DateTime::format` always produces RFC 3339 with a `Z` suffix. Sub-second
+precision is included only when `nanosecond ≠ 0`, with trailing zeros trimmed.
+
+```moonbit
+test {
+  let dt = @tempo.DateTime::from_unix_nanos(1_711_630_303_100_000_000L)
+  inspect(dt.format(), content="2024-03-28T14:31:43.1Z")
+}
+```
+
+## Arithmetic
+
+```moonbit
+test {
+  let dt = @tempo.DateTime::parse("2026-03-28T12:00:00Z")
+
+  // Add / subtract durations
+  let dt2 = dt.add(@tempo.Duration::hours(2L))
+  inspect(dt2.time.hour, content="14")
+
+  let dt3 = dt.sub(@tempo.Duration::minutes(30L))
+  inspect(dt3.time.minute, content="30")
+
+  // Diff two DateTimes
+  let gap = dt2.diff(dt)
+  inspect(gap.as_hours(), content="2")
+}
+```
+
+```moonbit
+test {
+  // Durations compose with + / - / unary -
+  let a = @tempo.Duration::hours(1L)
+  let b = @tempo.Duration::minutes(30L)
+  inspect((a + b).as_minutes(), content="90")
+  inspect((-a).as_nanoseconds(), content="-3600000000000")
+}
+```
+
+## Duration constructors
+
+```moonbit
+test {
+  inspect(@tempo.Duration::days(1L).as_hours(),        content="24")
+  inspect(@tempo.Duration::hours(1L).as_minutes(),     content="60")
+  inspect(@tempo.Duration::minutes(1L).as_seconds(),   content="60")
+  inspect(@tempo.Duration::seconds(1L).as_milliseconds(), content="1000")
+  inspect(@tempo.Duration::milliseconds(1L).as_microseconds(), content="1000")
+  inspect(@tempo.Duration::microseconds(1L).as_nanoseconds(), content="1000")
+}
+```
+
+## Current time
+
+```moonbit
+test {
+  // DateTime::now() returns the current UTC time.
+  // Precision: milliseconds on js/wasm-gc, whole seconds on native.
+  let now = @tempo.DateTime::now()
+  assert_eq(now > @tempo.DateTime::epoch(), true)
+}
+```
+
+## Calendar helpers
+
+```moonbit
+test {
+  assert_eq(@tempo.is_leap_year(2000), true)
+  assert_eq(@tempo.is_leap_year(1900), false)
+  assert_eq(@tempo.is_leap_year(2024), true)
+  assert_eq(@tempo.days_in_month(2024, 2), 29)
+  assert_eq(@tempo.days_in_month(2023, 2), 28)
+}
+```
+
+## What's not here
+
+- **Timezones / DST** — the IANA database is ~3 MB of data and changes
+  several times a year. Planned as a separate `tempo-tz` package.
+- **Locale-aware formatting** — month/day names, `strftime` patterns.
+- **Leap seconds** — POSIX time ignores them; so does tempo.
+
+See [ROADMAP.md](ROADMAP.md) for the full plan.

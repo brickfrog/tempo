@@ -1,0 +1,83 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "brickfrog/tempo/src"
+
+// Values
+pub fn days_in_month(Int, Int) -> Int
+
+pub fn is_leap_year(Int) -> Bool
+
+// Errors
+pub(all) suberror TempoError {
+  TempoError(String)
+}
+pub impl Show for TempoError
+
+// Types and methods
+pub struct Date {
+  year : Int
+  month : Int
+  day : Int
+}
+pub fn Date::new(Int, Int, Int) -> Self raise TempoError
+pub impl Compare for Date
+pub impl Eq for Date
+pub impl Show for Date
+
+pub struct DateTime {
+  date : Date
+  time : Time
+}
+pub fn DateTime::add(Self, Duration) -> Self
+pub fn DateTime::diff(Self, Self) -> Duration
+pub fn DateTime::epoch() -> Self
+pub fn DateTime::format(Self) -> String
+pub fn DateTime::from_unix_nanos(Int64) -> Self
+pub fn DateTime::from_unix_seconds(Int64) -> Self
+pub fn DateTime::new(Date, Time) -> Self
+pub fn DateTime::now() -> Self
+pub fn DateTime::parse(String) -> Self raise TempoError
+pub fn DateTime::sub(Self, Duration) -> Self
+pub fn DateTime::to_unix_nanos(Self) -> Int64
+pub fn DateTime::to_unix_seconds(Self) -> Int64
+pub impl Compare for DateTime
+pub impl Eq for DateTime
+pub impl Show for DateTime
+
+pub struct Duration {
+  nanoseconds : Int64
+}
+pub fn Duration::as_hours(Self) -> Int64
+pub fn Duration::as_microseconds(Self) -> Int64
+pub fn Duration::as_milliseconds(Self) -> Int64
+pub fn Duration::as_minutes(Self) -> Int64
+pub fn Duration::as_nanoseconds(Self) -> Int64
+pub fn Duration::as_seconds(Self) -> Int64
+pub fn Duration::days(Int64) -> Self
+pub fn Duration::hours(Int64) -> Self
+pub fn Duration::microseconds(Int64) -> Self
+pub fn Duration::milliseconds(Int64) -> Self
+pub fn Duration::minutes(Int64) -> Self
+pub fn Duration::nanoseconds(Int64) -> Self
+pub fn Duration::seconds(Int64) -> Self
+pub impl Add for Duration
+pub impl Compare for Duration
+pub impl Eq for Duration
+pub impl Neg for Duration
+pub impl Show for Duration
+pub impl Sub for Duration
+
+pub struct Time {
+  hour : Int
+  minute : Int
+  second : Int
+  nanosecond : Int
+}
+pub fn Time::new(Int, Int, Int, Int) -> Self raise TempoError
+pub impl Compare for Time
+pub impl Eq for Time
+pub impl Show for Time
+
+// Type aliases
+
+// Traits
+

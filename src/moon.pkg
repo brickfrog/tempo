@@ -1,0 +1,7 @@
+options(
+  targets: {
+    "now_js.mbt": [ "js" ],
+    "now_native.mbt": [ "native", "llvm" ],
+    "now_wasm.mbt": [ "wasm-gc" ],
+  },
+)
