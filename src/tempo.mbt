@@ -573,15 +573,16 @@ fn parse_digits(
   view : StringView,
   n : Int,
 ) -> (Int, StringView) raise TempoError {
-  loop (view, n, 0) {
-    (v, 0, acc) => (acc, v)
-    (v, remaining, acc) =>
-      match v {
-        ['0'..='9' as c, .. rest] =>
-          continue (rest, remaining - 1, acc * 10 + c.to_int() - '0')
-        [c, ..] => raise TempoError("expected digit, got '\{c}'")
-        [] => raise TempoError("unexpected end of input, expected digit")
-      }
+  for v = view, remaining = n, acc = 0 {
+    if remaining == 0 {
+      break (acc, v)
+    }
+    match v {
+      ['0'..='9' as c, .. rest] =>
+        continue rest, remaining - 1, acc * 10 + c.to_int() - '0'
+      [c, ..] => raise TempoError("expected digit, got '\{c}'")
+      [] => raise TempoError("unexpected end of input, expected digit")
+    }
   }
 }
 
@@ -602,29 +603,30 @@ fn consume(view : StringView, expected : Char) -> StringView raise TempoError {
 
 ///|
 fn parse_frac_ns(view : StringView) -> (Int, StringView) raise TempoError {
-  loop (view, 0, 0) {
-    (v, count, acc) =>
-      match v {
-        ['0'..='9' as c, .. rest] =>
-          if count < 9 {
-            // Still within 9 significant digits — accumulate normally.
-            continue (rest, count + 1, acc * 10 + c.to_int() - '0')
-          } else {
-            // Beyond 9 digits: skip without touching acc to avoid overflow.
-            continue (rest, count + 1, acc)
-          }
-        _ => {
-          if count == 0 {
-            raise TempoError("expected digits after '.'")
-          }
-          // Pad up to 9 digits if fewer were provided (e.g. ".1" → 100_000_000).
-          let ns = loop (acc, 9 - count.clamp(min=0, max=9)) {
-            (a, 0) => a
-            (a, r) => continue (a * 10, r - 1)
-          }
-          (ns, v)
+  for v = view, count = 0, acc = 0 {
+    match v {
+      ['0'..='9' as c, .. rest] =>
+        if count < 9 {
+          // Still within 9 significant digits — accumulate normally.
+          continue rest, count + 1, acc * 10 + c.to_int() - '0'
+        } else {
+          // Beyond 9 digits: skip without touching acc to avoid overflow.
+          continue rest, count + 1, acc
         }
+      _ => {
+        if count == 0 {
+          raise TempoError("expected digits after '.'")
+        }
+        // Pad up to 9 digits if fewer were provided (e.g. ".1" → 100_000_000).
+        let ns = for a = acc, r = 9 - count.clamp(min=0, max=9) {
+          if r == 0 {
+            break a
+          }
+          continue a * 10, r - 1
+        }
+        break (ns, v)
       }
+    }
   }
 }
 
