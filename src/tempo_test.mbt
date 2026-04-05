@@ -401,7 +401,9 @@ test "DateTime::parse -00:00 offset" {
 
 ///|
 test "DateTime::parse non-UTC offset rejected" {
-  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:34:56+05:30")) is Err(_))
+  assert_true(
+    (try? @tempo.DateTime::parse("2024-03-15T12:34:56+05:30")) is Err(_),
+  )
 }
 
 ///|
@@ -718,7 +720,9 @@ test "DateTime::parse bad timezone char" {
 
 ///|
 test "DateTime::parse trailing after Z" {
-  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:00:00Zextra")) is Err(_))
+  assert_true(
+    (try? @tempo.DateTime::parse("2024-03-15T12:00:00Zextra")) is Err(_),
+  )
 }
 
 // ─── Edge cases (audit 3.5) ──────────────────────────────────────────────────

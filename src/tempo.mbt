@@ -529,38 +529,38 @@ fn Duration::to_string_repr(self : Duration) -> String {
   if ns == 0L {
     "0s"
   } else {
-  let (sign, abs_ns) = if ns < 0L { ("-", -ns) } else { ("", ns) }
-  let h = abs_ns / ns_per_hour
-  let rem = abs_ns - h * ns_per_hour
-  let m = rem / ns_per_min
-  let rem = rem - m * ns_per_min
-  let s = rem / ns_per_sec
-  let rem = rem - s * ns_per_sec
-  let ms = rem / ns_per_ms
-  let rem = rem - ms * ns_per_ms
-  let us = rem / ns_per_us
-  let sub_ns = (rem - us * ns_per_us).to_int()
-  let buf = StringBuilder::new()
-  buf.write_string(sign)
-  if h > 0L {
-    buf.write_string("\{h}h")
-  }
-  if m > 0L {
-    buf.write_string("\{m}m")
-  }
-  if s > 0L || (h == 0L && m == 0L) {
-    buf.write_string("\{s}s")
-  }
-  if ms > 0L {
-    buf.write_string("\{ms}ms")
-  }
-  if us > 0L {
-    buf.write_string("\{us}µs")
-  }
-  if sub_ns > 0 {
-    buf.write_string("\{sub_ns}ns")
-  }
-  buf.to_string()
+    let (sign, abs_ns) = if ns < 0L { ("-", -ns) } else { ("", ns) }
+    let h = abs_ns / ns_per_hour
+    let rem = abs_ns - h * ns_per_hour
+    let m = rem / ns_per_min
+    let rem = rem - m * ns_per_min
+    let s = rem / ns_per_sec
+    let rem = rem - s * ns_per_sec
+    let ms = rem / ns_per_ms
+    let rem = rem - ms * ns_per_ms
+    let us = rem / ns_per_us
+    let sub_ns = (rem - us * ns_per_us).to_int()
+    let buf = StringBuilder::new()
+    buf.write_string(sign)
+    if h > 0L {
+      buf.write_string("\{h}h")
+    }
+    if m > 0L {
+      buf.write_string("\{m}m")
+    }
+    if s > 0L || (h == 0L && m == 0L) {
+      buf.write_string("\{s}s")
+    }
+    if ms > 0L {
+      buf.write_string("\{ms}ms")
+    }
+    if us > 0L {
+      buf.write_string("\{us}µs")
+    }
+    if sub_ns > 0 {
+      buf.write_string("\{sub_ns}ns")
+    }
+    buf.to_string()
   }
 }
 
