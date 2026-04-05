@@ -49,3 +49,32 @@ You can browse and install extra skills here:
   behavior. For solid, well-defined results (e.g. scientific computations),
   prefer assertion tests. You can use `moon coverage analyze > uncovered.log` to
   see which parts of your code are not covered by tests.
+
+## Design decisions (do not re-flag in audits)
+
+- **pad2/pad4/pad9 unrolled branches:** Deliberate. Each branch produces one
+  string interpolation with zero intermediate allocation. Not worth a generic
+  `pad(n, width)` unless profiling shows formatting is a bottleneck.
+
+- **pad4_year abort on Int::min_value:** Intentional programmer-error trap.
+  `Int::min_value` cannot be negated to a positive `Int`. This year is not
+  constructable via `Date::new` — only via raw struct literal (caller bug).
+  Future option: handle via `Int64` arithmetic to eliminate the abort.
+
+- **floor_div64 / floor_mod64:** Required. MoonBit stdlib does not provide floor
+  division for `Int64`. MoonBit's `/` truncates toward zero; these round toward
+  negative infinity, which the Hinnant calendar algorithms depend on.
+
+- **Format/parse negative year asymmetry:** By design. `format()` handles
+  negative years (ISO 8601 expanded). `parse()` accepts only 4-digit positive
+  years (RFC 3339). Expanded-year parsing is deferred.
+
+- **Error test pattern:** Tests check error occurrence via
+  `assert_true((try? expr) is Err(_))`, not message content, to avoid brittle
+  string assertions.
+
+- **Duration::to_string_repr sequential decomposition:** Readable at ~35 lines.
+  A loop over `(value, suffix)` pairs would obscure the special-case logic where
+  seconds are always shown when hours and minutes are both zero.
+
+- **fmt_frac while loop:** Intentional. `StringView` lacks `trim_end(Char)`.

@@ -429,7 +429,7 @@ fn pad4(n : Int) -> String {
 ///|
 fn pad4_year(year : Int) -> String {
   if year < 0 {
-    if year == @int.min_value {
+    if year == @int.MIN_VALUE {
       abort("pad4_year: year is Int::min_value, cannot format magnitude")
     }
     "-" + pad4(-year)
@@ -527,8 +527,8 @@ pub impl Show for Duration with output(self, logger) {
 fn Duration::to_string_repr(self : Duration) -> String {
   let ns = self.nanoseconds
   if ns == 0L {
-    return "0s"
-  }
+    "0s"
+  } else {
   let (sign, abs_ns) = if ns < 0L { ("-", -ns) } else { ("", ns) }
   let h = abs_ns / ns_per_hour
   let rem = abs_ns - h * ns_per_hour
@@ -561,6 +561,7 @@ fn Duration::to_string_repr(self : Duration) -> String {
     buf.write_string("\{sub_ns}ns")
   }
   buf.to_string()
+  }
 }
 
 // ─── RFC 3339 parsing ─────────────────────────────────────────────────────────

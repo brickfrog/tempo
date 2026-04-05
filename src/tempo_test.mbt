@@ -22,35 +22,17 @@ test "Date::new non-leap day 28 ok" {
 
 ///|
 test "Date::new invalid month" {
-  let result = try {
-    @tempo.Date::new(2024, 13, 1) |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.Date::new(2024, 13, 1)) is Err(_))
 }
 
 ///|
 test "Date::new invalid day" {
-  let result = try {
-    @tempo.Date::new(2024, 2, 30) |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.Date::new(2024, 2, 30)) is Err(_))
 }
 
 ///|
 test "Date::new non-leap Feb 29 invalid" {
-  let result = try {
-    @tempo.Date::new(2001, 2, 29) |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.Date::new(2001, 2, 29)) is Err(_))
 }
 
 ///|
@@ -135,24 +117,12 @@ test "Date::parse roundtrip" {
 
 ///|
 test "Date::parse invalid month" {
-  let result = try {
-    @tempo.Date::parse("2024-13-01") |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.Date::parse("2024-13-01")) is Err(_))
 }
 
 ///|
 test "Date::parse trailing junk" {
-  let result = try {
-    @tempo.Date::parse("2024-01-01Z") |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.Date::parse("2024-01-01Z")) is Err(_))
 }
 
 ///|
@@ -166,13 +136,7 @@ test "Time::new valid" {
 
 ///|
 test "Time::new invalid hour" {
-  let result = try {
-    @tempo.Time::new(24, 0, 0, 0) |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.Time::new(24, 0, 0, 0)) is Err(_))
 }
 
 ///|
@@ -360,35 +324,17 @@ test "Time::parse fractional seconds >9 digits truncated" {
 
 ///|
 test "Time::parse invalid hour" {
-  let result = try {
-    @tempo.Time::parse("24:00:00") |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.Time::parse("24:00:00")) is Err(_))
 }
 
 ///|
 test "Time::parse invalid format" {
-  let result = try {
-    @tempo.Time::parse("not-a-time") |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.Time::parse("not-a-time")) is Err(_))
 }
 
 ///|
 test "Time::parse unexpected trailing" {
-  let result = try {
-    @tempo.Time::parse("12:34:56Z") |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.Time::parse("12:34:56Z")) is Err(_))
 }
 
 ///|
@@ -455,24 +401,12 @@ test "DateTime::parse -00:00 offset" {
 
 ///|
 test "DateTime::parse non-UTC offset rejected" {
-  let result = try {
-    @tempo.DateTime::parse("2024-03-15T12:34:56+05:30") |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:34:56+05:30")) is Err(_))
 }
 
 ///|
 test "DateTime::parse invalid format" {
-  let result = try {
-    @tempo.DateTime::parse("not-a-date") |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  assert_true((try? @tempo.DateTime::parse("not-a-date")) is Err(_))
 }
 
 ///|
@@ -685,4 +619,146 @@ test "Show Duration hours minutes seconds" {
 test "Show Duration negative" {
   let d = -@tempo.Duration::seconds(5L)
   inspect(d, content="-5s")
+}
+
+// ─── Duration constructors/accessors (audit 3.1) ─────────────────────────────
+
+///|
+test "Duration::nanoseconds" {
+  let d = @tempo.Duration::nanoseconds(42L)
+  assert_eq(d.as_nanoseconds(), 42L)
+}
+
+///|
+test "Duration::microseconds" {
+  let d = @tempo.Duration::microseconds(100L)
+  assert_eq(d.as_nanoseconds(), 100_000L)
+  assert_eq(d.as_microseconds(), 100L)
+}
+
+///|
+test "Duration::milliseconds" {
+  let d = @tempo.Duration::milliseconds(5L)
+  assert_eq(d.as_nanoseconds(), 5_000_000L)
+  assert_eq(d.as_milliseconds(), 5L)
+}
+
+// ─── Time::new validation (audit 3.2) ────────────────────────────────────────
+
+///|
+test "Time::new invalid minute" {
+  assert_true((try? @tempo.Time::new(0, 60, 0, 0)) is Err(_))
+}
+
+///|
+test "Time::new invalid second" {
+  assert_true((try? @tempo.Time::new(0, 0, 60, 0)) is Err(_))
+}
+
+///|
+test "Time::new invalid nanosecond negative" {
+  assert_true((try? @tempo.Time::new(0, 0, 0, -1)) is Err(_))
+}
+
+///|
+test "Time::new invalid nanosecond upper" {
+  assert_true((try? @tempo.Time::new(0, 0, 0, 1_000_000_000)) is Err(_))
+}
+
+// ─── Duration Show branches (audit 3.3) ──────────────────────────────────────
+
+///|
+test "Show Duration milliseconds" {
+  inspect(@tempo.Duration::milliseconds(500L), content="0s500ms")
+}
+
+///|
+test "Show Duration microseconds" {
+  inspect(@tempo.Duration::microseconds(1L), content="0s1µs")
+}
+
+///|
+test "Show Duration nanoseconds" {
+  inspect(@tempo.Duration::nanoseconds(1L), content="0s1ns")
+}
+
+///|
+test "Show Duration complex" {
+  let d = @tempo.Duration::hours(1L) + @tempo.Duration::milliseconds(500L)
+  inspect(d, content="1h500ms")
+}
+
+///|
+test "Show Duration negative complex" {
+  let d = -(@tempo.Duration::hours(1L) + @tempo.Duration::milliseconds(500L))
+  inspect(d, content="-1h500ms")
+}
+
+// ─── Parsing error paths (audit 3.4) ─────────────────────────────────────────
+
+///|
+test "DateTime::parse unexpected EOF in digits" {
+  assert_true((try? @tempo.DateTime::parse("2024-03-1")) is Err(_))
+}
+
+///|
+test "DateTime::parse bad separator" {
+  assert_true((try? @tempo.DateTime::parse("2024-03-15X12:00:00Z")) is Err(_))
+}
+
+///|
+test "DateTime::parse dot without fraction" {
+  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:00:00.Z")) is Err(_))
+}
+
+///|
+test "DateTime::parse bad timezone char" {
+  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:00:00Q")) is Err(_))
+}
+
+///|
+test "DateTime::parse trailing after Z" {
+  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:00:00Zextra")) is Err(_))
+}
+
+// ─── Edge cases (audit 3.5) ──────────────────────────────────────────────────
+
+///|
+test "Date::add_days zero is identity" {
+  let d = @tempo.Date::new(2024, 6, 15)
+  let d2 = d.add_days(0)
+  assert_eq(d, d2)
+}
+
+///|
+test "Date::add_days across year boundary" {
+  let d = @tempo.Date::new(2024, 12, 31)
+  let d2 = d.add_days(1)
+  assert_eq(d2.year, 2025)
+  assert_eq(d2.month, 1)
+  assert_eq(d2.day, 1)
+}
+
+///|
+test "days_in_month invalid month" {
+  assert_eq(@tempo.days_in_month(2024, 0), 0)
+  assert_eq(@tempo.days_in_month(2024, 13), 0)
+}
+
+///|
+test "DateTime::from_unix_nanos negative" {
+  let dt = @tempo.DateTime::from_unix_nanos(-1L)
+  assert_eq(dt.date.year, 1969)
+  assert_eq(dt.date.month, 12)
+  assert_eq(dt.date.day, 31)
+  assert_eq(dt.time.hour, 23)
+  assert_eq(dt.time.minute, 59)
+  assert_eq(dt.time.second, 59)
+  assert_eq(dt.time.nanosecond, 999_999_999)
+}
+
+///|
+test "Show TempoError" {
+  let err = @tempo.TempoError("test message")
+  inspect(err, content="TempoError: test message")
 }
