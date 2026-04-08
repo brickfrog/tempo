@@ -48,6 +48,7 @@ pub impl Show for DateTime
 pub struct Duration {
   nanoseconds : Int64
 } derive(Compare, Eq)
+pub fn Duration::as_days(Self) -> Int64
 pub fn Duration::as_hours(Self) -> Int64
 pub fn Duration::as_microseconds(Self) -> Int64
 pub fn Duration::as_milliseconds(Self) -> Int64
@@ -57,6 +58,8 @@ pub fn Duration::as_seconds(Self) -> Int64
 pub fn Duration::as_weeks(Self) -> Int64
 pub fn Duration::days(Int64) -> Self
 pub fn Duration::hours(Int64) -> Self
+pub fn Duration::is_negative(Self) -> Bool
+pub fn Duration::is_zero(Self) -> Bool
 pub fn Duration::microseconds(Int64) -> Self
 pub fn Duration::milliseconds(Int64) -> Self
 pub fn Duration::minutes(Int64) -> Self

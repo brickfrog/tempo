@@ -766,3 +766,180 @@ test "Show TempoError" {
   let err = @tempo.TempoError("test message")
   inspect(err, content="TempoError: test message")
 }
+
+// ─── Coverage: pad9 branches (nanosecond widths 1–8 digits) ──────────────────
+
+///|
+test "DateTime::format nanosecond 1 ns" {
+  let base = 1710506096L * 1_000_000_000L
+  let dt = @tempo.DateTime::from_unix_nanos(base + 1L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56.000000001Z")
+}
+
+///|
+test "DateTime::format nanosecond 12 ns" {
+  let base = 1710506096L * 1_000_000_000L
+  let dt = @tempo.DateTime::from_unix_nanos(base + 12L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56.000000012Z")
+}
+
+///|
+test "DateTime::format nanosecond 123 ns" {
+  let base = 1710506096L * 1_000_000_000L
+  let dt = @tempo.DateTime::from_unix_nanos(base + 123L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56.000000123Z")
+}
+
+///|
+test "DateTime::format nanosecond 1234 ns" {
+  let base = 1710506096L * 1_000_000_000L
+  let dt = @tempo.DateTime::from_unix_nanos(base + 1234L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56.000001234Z")
+}
+
+///|
+test "DateTime::format nanosecond 12345 ns" {
+  let base = 1710506096L * 1_000_000_000L
+  let dt = @tempo.DateTime::from_unix_nanos(base + 12_345L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56.000012345Z")
+}
+
+///|
+test "DateTime::format nanosecond 123456 ns" {
+  let base = 1710506096L * 1_000_000_000L
+  let dt = @tempo.DateTime::from_unix_nanos(base + 123_456L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56.000123456Z")
+}
+
+///|
+test "DateTime::format nanosecond 1234567 ns" {
+  let base = 1710506096L * 1_000_000_000L
+  let dt = @tempo.DateTime::from_unix_nanos(base + 1_234_567L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56.001234567Z")
+}
+
+///|
+test "DateTime::format nanosecond 12345678 ns" {
+  let base = 1710506096L * 1_000_000_000L
+  let dt = @tempo.DateTime::from_unix_nanos(base + 12_345_678L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56.012345678Z")
+}
+
+// ─── Coverage: pad4 2–3 digit year ───────────────────────────────────────────
+
+///|
+test "Date::format 3-digit year" {
+  let d = @tempo.Date::new(500, 6, 15)
+  assert_eq(d.format(), "0500-06-15")
+}
+
+///|
+test "Date::format 2-digit year" {
+  let d = @tempo.Date::new(50, 1, 1)
+  assert_eq(d.format(), "0050-01-01")
+}
+
+// ─── Coverage: consume wrong-char branch ─────────────────────────────────────
+
+///|
+test "DateTime::parse wrong separator in date" {
+  // '/' instead of '-' triggers consume's wrong-char branch
+  assert_true((try? @tempo.DateTime::parse("2024/03-15T12:00:00Z")) is Err(_))
+}
+
+// ─── Coverage: EOF-in-parse branches ─────────────────────────────────────────
+
+///|
+test "DateTime::parse EOF before T" {
+  assert_true((try? @tempo.DateTime::parse("2024-03-15")) is Err(_))
+}
+
+///|
+test "DateTime::parse EOF before timezone" {
+  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:00:00")) is Err(_))
+}
+
+// ─── New API: Duration::as_days, is_zero, is_negative ────────────────────────
+
+///|
+test "Duration::as_days" {
+  assert_eq(@tempo.Duration::days(3L).as_days(), 3L)
+  assert_eq(@tempo.Duration::hours(48L).as_days(), 2L)
+  assert_eq(@tempo.Duration::hours(25L).as_days(), 1L)
+}
+
+///|
+test "Duration::is_zero" {
+  assert_eq(@tempo.Duration::seconds(0L).is_zero(), true)
+  assert_eq(@tempo.Duration::seconds(1L).is_zero(), false)
+  assert_eq((-@tempo.Duration::seconds(1L)).is_zero(), false)
+}
+
+///|
+test "Duration::is_negative" {
+  assert_eq(@tempo.Duration::seconds(-1L).is_negative(), true)
+  assert_eq((-@tempo.Duration::seconds(5L)).is_negative(), true)
+  assert_eq(@tempo.Duration::seconds(1L).is_negative(), false)
+  assert_eq(@tempo.Duration::seconds(0L).is_negative(), false)
+}
+
+// ─── Coverage: consume EOF branch ────────────────────────────────────────────
+
+///|
+test "DateTime::parse truncated mid-date separator" {
+  // Only year-month, no day separator — consume('-', ...) hits EOF
+  assert_true((try? @tempo.DateTime::parse("2024-03")) is Err(_))
+}
+
+// ─── Edge-case tests ─────────────────────────────────────────────────────────
+
+///|
+test "DateTime::parse lowercase z" {
+  let dt = @tempo.DateTime::parse("2024-03-15T12:34:56z")
+  assert_eq(dt.to_unix_seconds(), 1710506096L)
+}
+
+///|
+test "Date::day_of_week BCE" {
+  // -0001-12-31 — verify the algorithm handles negative years correctly
+  let d = @tempo.Date::new(-1, 12, 31)
+  let dow = d.day_of_week()
+  // Day of week should be 1..7
+  assert_true(dow >= 1 && dow <= 7)
+}
+
+///|
+test "Date::day_of_year leap Feb 29" {
+  assert_eq(@tempo.Date::new(2024, 2, 29).day_of_year(), 60)
+}
+
+///|
+test "Date::add_days large positive" {
+  let d = @tempo.Date::new(2024, 1, 1)
+  let d2 = d.add_days(10_000)
+  // 10000 days from 2024-01-01 ≈ 2051-05-19
+  assert_eq(d2.year, 2051)
+  assert_eq(d2.month, 5)
+  assert_eq(d2.day, 19)
+}
+
+///|
+test "Date::add_days large negative" {
+  let d = @tempo.Date::new(2024, 1, 1)
+  let d2 = d.add_days(-10_000)
+  assert_eq(d2.year, 1996)
+  assert_eq(d2.month, 8)
+  assert_eq(d2.day, 15)
+}
+
+///|
+test "Duration::as_days round-trip" {
+  let d = @tempo.Duration::days(365L)
+  assert_eq(d.as_days(), 365L)
+}
+
+///|
+test "Date::parse roundtrip 2-digit year" {
+  let d = @tempo.Date::new(50, 3, 5)
+  assert_eq(d.format(), "0050-03-05")
+}

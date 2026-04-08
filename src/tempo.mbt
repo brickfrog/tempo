@@ -50,11 +50,14 @@ pub struct Duration {
 // ─── Calendar helpers ─────────────────────────────────────────────────────────
 
 ///|
+/// `true` if `year` is a leap year in the proleptic Gregorian calendar.
 pub fn is_leap_year(year : Int) -> Bool {
   (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
 }
 
 ///|
+/// Number of days in the given month (1–12). Returns `0` for invalid month
+/// values outside 1–12.
 pub fn days_in_month(year : Int, month : Int) -> Int {
   match month {
     1 | 3 | 5 | 7 | 8 | 10 | 12 => 31
@@ -110,6 +113,8 @@ fn days_from_civil(year : Int, month : Int, day : Int) -> Int64 {
 // ─── Constructors ─────────────────────────────────────────────────────────────
 
 ///|
+/// Create a `Date`, validating that `month` is 1–12 and `day` fits the
+/// calendar month (accounting for leap years in February).
 pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
   if month < 1 || month > 12 {
     raise TempoError("month \{month} out of range 1–12")
@@ -185,6 +190,8 @@ pub fn Date::format(self : Date) -> String {
 }
 
 ///|
+/// Create a `Time`, validating that each field is within its canonical range:
+/// `hour` 0–23, `minute` 0–59, `second` 0–59, `nanosecond` 0–999_999_999.
 pub fn Time::new(
   hour : Int,
   minute : Int,
@@ -207,6 +214,9 @@ pub fn Time::new(
 }
 
 ///|
+/// Create a `DateTime` from a validated `Date` and `Time`.
+/// Both arguments should be constructed via `Date::new` / `Time::new` (which
+/// validate). This constructor performs no additional checks.
 pub fn DateTime::new(date : Date, time : Time) -> DateTime {
   { date, time }
 }
@@ -223,7 +233,9 @@ pub fn DateTime::epoch() -> DateTime {
 // ─── Unix timestamp conversion ────────────────────────────────────────────────
 
 ///|
-/// Convert a Unix timestamp (seconds since 1970-01-01T00:00:00Z) to DateTime.
+/// Convert a Unix timestamp (seconds since 1970-01-01T00:00:00Z) to a `DateTime`.
+/// Negative values represent dates before the Unix epoch. The year range is
+/// limited by what `Int64` can represent as days (~±100 billion years).
 pub fn DateTime::from_unix_seconds(ts : Int64) -> DateTime {
   let secs_per_day = 86400L
   let days = floor_div64(ts, secs_per_day)
@@ -236,7 +248,9 @@ pub fn DateTime::from_unix_seconds(ts : Int64) -> DateTime {
 }
 
 ///|
-/// Convert a Unix timestamp in nanoseconds to DateTime.
+/// Convert a Unix timestamp in nanoseconds to a `DateTime`.
+/// Nanosecond resolution is preserved. Negative values represent dates before
+/// the Unix epoch.
 pub fn DateTime::from_unix_nanos(ns : Int64) -> DateTime {
   let ts_sec = floor_div64(ns, ns_per_sec)
   let nanosecond = (ns - ts_sec * ns_per_sec).to_int()
@@ -254,7 +268,11 @@ pub fn DateTime::to_unix_seconds(self : DateTime) -> Int64 {
 }
 
 ///|
-/// Convert this DateTime to a Unix timestamp in nanoseconds.
+/// Convert this `DateTime` to a Unix timestamp in nanoseconds.
+///
+/// **Note:** Int64 can represent ±292 years of nanoseconds from epoch, so
+/// dates outside ~1678–2262 CE will overflow. For wider ranges use
+/// `to_unix_seconds` instead.
 pub fn DateTime::to_unix_nanos(self : DateTime) -> Int64 {
   self.to_unix_seconds() * 1_000_000_000L + self.time.nanosecond.to_int64()
 }
@@ -277,41 +295,49 @@ let ns_per_min : Int64 = 60_000_000_000L
 let ns_per_hour : Int64 = 3_600_000_000_000L
 
 ///|
+/// Create a Duration from a number of nanoseconds.
 pub fn Duration::nanoseconds(ns : Int64) -> Duration {
   { nanoseconds: ns }
 }
 
 ///|
+/// Create a Duration representing the given number of days (86 400 seconds each).
 pub fn Duration::days(d : Int64) -> Duration {
   { nanoseconds: d * 86_400L * ns_per_sec }
 }
 
 ///|
+/// Create a Duration representing the given number of weeks (7 × 86 400 seconds).
 pub fn Duration::weeks(w : Int64) -> Duration {
   { nanoseconds: w * 7L * 86_400L * ns_per_sec }
 }
 
 ///|
+/// Create a Duration representing the given number of microseconds.
 pub fn Duration::microseconds(us : Int64) -> Duration {
   { nanoseconds: us * ns_per_us }
 }
 
 ///|
+/// Create a Duration representing the given number of milliseconds.
 pub fn Duration::milliseconds(ms : Int64) -> Duration {
   { nanoseconds: ms * ns_per_ms }
 }
 
 ///|
+/// Create a Duration representing the given number of seconds.
 pub fn Duration::seconds(s : Int64) -> Duration {
   { nanoseconds: s * ns_per_sec }
 }
 
 ///|
+/// Create a Duration representing the given number of minutes.
 pub fn Duration::minutes(m : Int64) -> Duration {
   { nanoseconds: m * ns_per_min }
 }
 
 ///|
+/// Create a Duration representing the given number of hours.
 pub fn Duration::hours(h : Int64) -> Duration {
   { nanoseconds: h * ns_per_hour }
 }
@@ -319,38 +345,62 @@ pub fn Duration::hours(h : Int64) -> Duration {
 // ─── Duration accessors ───────────────────────────────────────────────────────
 
 ///|
+/// Total nanoseconds in this duration.
 pub fn Duration::as_nanoseconds(self : Duration) -> Int64 {
   self.nanoseconds
 }
 
 ///|
+/// Total whole microseconds in this duration (truncated toward zero).
 pub fn Duration::as_microseconds(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_us
 }
 
 ///|
+/// Total whole milliseconds in this duration (truncated toward zero).
 pub fn Duration::as_milliseconds(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_ms
 }
 
 ///|
+/// Total whole seconds in this duration (truncated toward zero).
 pub fn Duration::as_seconds(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_sec
 }
 
 ///|
+/// Total whole minutes in this duration (truncated toward zero).
 pub fn Duration::as_minutes(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_min
 }
 
 ///|
+/// Total whole hours in this duration (truncated toward zero).
 pub fn Duration::as_hours(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_hour
 }
 
 ///|
+/// Total whole days in this duration (truncated toward zero).
+pub fn Duration::as_days(self : Duration) -> Int64 {
+  self.nanoseconds / (86_400L * ns_per_sec)
+}
+
+///|
 pub fn Duration::as_weeks(self : Duration) -> Int64 {
   self.nanoseconds / (7L * 86_400L * ns_per_sec)
+}
+
+///|
+/// `true` when this duration is exactly zero.
+pub fn Duration::is_zero(self : Duration) -> Bool {
+  self.nanoseconds == 0L
+}
+
+///|
+/// `true` when this duration is negative.
+pub fn Duration::is_negative(self : Duration) -> Bool {
+  self.nanoseconds < 0L
 }
 
 // ─── Duration arithmetic ──────────────────────────────────────────────────────

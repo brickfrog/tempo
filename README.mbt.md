@@ -129,12 +129,76 @@ test {
 ```moonbit nocheck
 ///|
 test {
+  inspect(@tempo.Duration::weeks(1L).as_days(), content="7")
   inspect(@tempo.Duration::days(1L).as_hours(), content="24")
   inspect(@tempo.Duration::hours(1L).as_minutes(), content="60")
   inspect(@tempo.Duration::minutes(1L).as_seconds(), content="60")
   inspect(@tempo.Duration::seconds(1L).as_milliseconds(), content="1000")
   inspect(@tempo.Duration::milliseconds(1L).as_microseconds(), content="1000")
   inspect(@tempo.Duration::microseconds(1L).as_nanoseconds(), content="1000")
+}
+```
+
+## Duration accessors
+
+All accessors truncate toward zero (e.g. 90 minutes → 1 hour).
+
+```moonbit nocheck
+///|
+test {
+  inspect(@tempo.Duration::days(3L).as_days(), content="3")
+  inspect(@tempo.Duration::weeks(1L).as_weeks(), content="1")
+  inspect(@tempo.Duration::days(7L).as_weeks(), content="1")
+}
+```
+
+## Duration predicates
+
+```moonbit nocheck
+///|
+test {
+  assert_eq(@tempo.Duration::seconds(0L).is_zero(), true)
+  assert_eq(@tempo.Duration::seconds(1L).is_zero(), false)
+  assert_eq(@tempo.Duration::seconds(-1L).is_negative(), true)
+  assert_eq(@tempo.Duration::seconds(1L).is_negative(), false)
+}
+```
+
+## Date arithmetic
+
+```moonbit nocheck
+///|
+test {
+  let d = @tempo.Date::new(2024, 3, 15)
+
+  // Add/remove days
+  let d2 = d.add_days(10)
+  inspect(d2.day, content="25")
+
+  // ISO weekday: Monday = 1 … Sunday = 7
+  assert_eq(d.day_of_week(), 5) // Friday
+
+  // Day of year (1-based)
+  assert_eq(d.day_of_year(), 75)
+
+  // Days between two dates
+  let other = @tempo.Date::new(2024, 3, 1)
+  assert_eq(d.days_until(other), -14)
+}
+```
+
+## Date and Time parsing/formatting
+
+```moonbit nocheck
+///|
+test {
+  // Date-only parse/format
+  let d = @tempo.Date::parse("2024-03-15")
+  inspect(d.format(), content="2024-03-15")
+
+  // Time-only parse/format
+  let t = @tempo.Time::parse("14:31:43.500")
+  inspect(t.format(), content="14:31:43.5")
 }
 ```
 

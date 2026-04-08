@@ -17,26 +17,38 @@
 
 ---
 
-## v0.2 — next
-
-**`now()` precision on native**
-Currently `time(2)` — whole seconds. Fix: C stub wrapping `clock_gettime(CLOCK_REALTIME)`.
+## v0.2 — shipped
 
 **`Date` arithmetic**
 `Date::add_days`, `Date::day_of_week`, `Date::day_of_year`, `Date::days_until`.
 
-**Negative year formatting**
-`pad4` misbehaves for year < 0. Document or fix.
+**`Date::parse` / `Date::format`**
+Date-only strings: `2024-03-28`.
+
+**`Time::parse` / `Time::format`**
+Time-only strings: `14:31:43`, `14:31:43.123`.
 
 **`Duration::weeks`**
 `7 * days`.
 
-**`Duration` display**
-`to_string_repr` omits zero components. Settle on a canonical format.
+**`Duration::as_days`**
+Whole-day accessor, completes constructor/accessor symmetry.
+
+**`Duration::is_zero` / `Duration::is_negative`**
+Common predicates.
+
+**`Duration::as_weeks`**
+Whole-week accessor.
+
+**Negative year formatting**
+`pad4_year` now handles negative years via ISO 8601 expanded-year conventions.
+
+**Docstrings**
+Added to all public functions.
 
 ---
 
-## v1.0
+## v0.3 — next
 
 **Sub-second `now()` on native**
 See v0.2. Requires a `.c` stub in the build.
