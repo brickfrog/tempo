@@ -3,8 +3,7 @@
 ///|
 extern "js" fn js_now_nanos() -> Int64 =
   #| function() {
-  #|   const ns = BigInt(Date.now()) * 1000000n;
-  #|   return { hi: Number(ns >> 32n), lo: Number(ns & 0xFFFFFFFFn) };
+  #|   return BigInt(Date.now()) * 1000000n;
   #| }
 
 ///|
