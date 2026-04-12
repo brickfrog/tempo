@@ -528,6 +528,8 @@ fn fmt_frac(ns : Int) -> String {
 /// year is in the usual four-digit range; negative years and years ≥ 10000 use
 /// ISO 8601 expanded-year conventions (see `pad4_year`). Sub-second precision
 /// is included only when nanoseconds ≠ 0.
+/// Note: expanded-year output (years outside 0000–9999) cannot be round-tripped
+/// through `DateTime::parse`, which accepts only 4-digit positive years (RFC 3339).
 pub fn DateTime::format(self : DateTime) -> String {
   let d = self.date
   let t = self.time
@@ -579,9 +581,13 @@ fn Duration::to_string_repr(self : Duration) -> String {
   if ns == 0L {
     "0s"
   } else {
-    let (sign, abs_ns) = if ns < 0L { ("-", -ns) } else { ("", ns) }
-    let h = abs_ns / ns_per_hour
-    let rem = abs_ns - h * ns_per_hour
+    let sign = if ns < 0L { "-" } else { "" }
+    // Decompose with signed arithmetic first, then abs each component
+    // individually. Each component's magnitude is bounded (|h| ≤ 2_562_047,
+    // |m| < 60, etc.), so the per-component negation is always safe and avoids
+    // the Int64::min_value overflow that `-ns` would trigger.
+    let h = ns / ns_per_hour
+    let rem = ns - h * ns_per_hour
     let m = rem / ns_per_min
     let rem = rem - m * ns_per_min
     let s = rem / ns_per_sec
@@ -589,7 +595,13 @@ fn Duration::to_string_repr(self : Duration) -> String {
     let ms = rem / ns_per_ms
     let rem = rem - ms * ns_per_ms
     let us = rem / ns_per_us
-    let sub_ns = (rem - us * ns_per_us).to_int()
+    let sub_ns = rem - us * ns_per_us
+    let h = if h < 0L { -h } else { h }
+    let m = if m < 0L { -m } else { m }
+    let s = if s < 0L { -s } else { s }
+    let ms = if ms < 0L { -ms } else { ms }
+    let us = if us < 0L { -us } else { us }
+    let sub_ns = (if sub_ns < 0L { -sub_ns } else { sub_ns }).to_int()
     let buf = StringBuilder::new()
     buf.write_string(sign)
     if h > 0L {

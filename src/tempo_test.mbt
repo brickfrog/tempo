@@ -696,6 +696,19 @@ test "Show Duration negative complex" {
   inspect(d, content="-1h500ms")
 }
 
+///|
+test "Show Duration Int64::min_value" {
+  // Regression: -ns overflowed back to min_value before divide-first fix.
+  let d = @tempo.Duration::nanoseconds(-9_223_372_036_854_775_808L)
+  inspect(d, content="-2562047h47m16s854ms775µs808ns")
+}
+
+///|
+test "Show Duration Int64::max_value" {
+  let d = @tempo.Duration::nanoseconds(9_223_372_036_854_775_807L)
+  inspect(d, content="2562047h47m16s854ms775µs807ns")
+}
+
 // ─── Parsing error paths (audit 3.4) ─────────────────────────────────────────
 
 ///|
