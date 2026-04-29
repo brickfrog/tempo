@@ -520,7 +520,7 @@ fn fmt_frac(ns : Int) -> String {
   while end > 1 && s[end - 1] == '0' {
     end -= 1
   }
-  s[:end].to_string()
+  s[:end].to_owned()
 }
 
 ///|
