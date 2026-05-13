@@ -602,7 +602,7 @@ fn Duration::to_string_repr(self : Duration) -> String {
     let ms = if ms < 0L { -ms } else { ms }
     let us = if us < 0L { -us } else { us }
     let sub_ns = (if sub_ns < 0L { -sub_ns } else { sub_ns }).to_int()
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     buf.write_string(sign)
     if h > 0L {
       buf.write_string("\{h}h")

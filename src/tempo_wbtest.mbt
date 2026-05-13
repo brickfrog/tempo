@@ -16,7 +16,9 @@ test "civil_from_days roundtrip" {
     let (y, m, d) = cases[i]
     let days = days_from_civil(y, m, d)
     let (y2, m2, d2) = civil_from_days(days)
-    assert_eq((y2, m2, d2), (y, m, d))
+    assert_eq(y2, y)
+    assert_eq(m2, m)
+    assert_eq(d2, d)
   }
 }
 
