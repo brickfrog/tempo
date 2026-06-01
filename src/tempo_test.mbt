@@ -391,18 +391,72 @@ test "DateTime::parse fractional seconds all nines overflow safe" {
 test "DateTime::parse +00:00 offset" {
   let dt = @tempo.DateTime::parse("2024-03-15T12:34:56+00:00")
   assert_eq(dt.to_unix_seconds(), 1710506096L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56Z")
 }
 
 ///|
 test "DateTime::parse -00:00 offset" {
   let dt = @tempo.DateTime::parse("2024-03-15T12:34:56-00:00")
   assert_eq(dt.to_unix_seconds(), 1710506096L)
+  assert_eq(dt.format(), "2024-03-15T12:34:56Z")
 }
 
 ///|
-test "DateTime::parse non-UTC offset rejected" {
+test "DateTime::parse positive offset normalized to UTC" {
+  let dt = @tempo.DateTime::parse("2024-07-21T17:11:00+09:00")
+  assert_eq(dt.format(), "2024-07-21T08:11:00Z")
+}
+
+///|
+test "DateTime::parse negative offset normalized to UTC" {
+  let dt = @tempo.DateTime::parse("2024-07-21T17:11:00-04:00")
+  assert_eq(dt.format(), "2024-07-21T21:11:00Z")
+}
+
+///|
+test "DateTime::parse offset normalization crosses date forward" {
+  let dt = @tempo.DateTime::parse("2024-07-21T23:30:00-04:00")
+  assert_eq(dt.format(), "2024-07-22T03:30:00Z")
+}
+
+///|
+test "DateTime::parse offset normalization crosses date backward" {
+  let dt = @tempo.DateTime::parse("2024-07-21T02:30:00+09:00")
+  assert_eq(dt.format(), "2024-07-20T17:30:00Z")
+}
+
+///|
+test "DateTime::parse offset normalization preserves fractional seconds" {
+  let dt = @tempo.DateTime::parse("2024-03-28T14:31:43.125-04:00")
+  assert_eq(dt.format(), "2024-03-28T18:31:43.125Z")
+}
+
+///|
+test "DateTime::parse offset normalization future year overflow safe" {
+  let dt = @tempo.DateTime::parse("3000-01-01T00:30:00+01:00")
+  assert_eq(dt.format(), "2999-12-31T23:30:00Z")
+}
+
+///|
+test "DateTime::parse offset normalization past year overflow safe" {
+  let dt = @tempo.DateTime::parse("1000-01-01T05:00:00-06:00")
+  assert_eq(dt.format(), "1000-01-01T11:00:00Z")
+}
+
+///|
+test "DateTime::parse offset normalization matches Z equivalent" {
+  let offset = @tempo.DateTime::parse("3000-06-15T12:00:00+05:00")
+  let utc = @tempo.DateTime::parse("3000-06-15T07:00:00Z")
+  assert_eq(offset, utc)
+}
+
+///|
+test "DateTime::parse rejects out-of-range offset" {
   assert_true(
-    (try? @tempo.DateTime::parse("2024-03-15T12:34:56+05:30")) is Err(_),
+    (try? @tempo.DateTime::parse("2024-03-15T12:34:56+24:00")) is Err(_),
+  )
+  assert_true(
+    (try? @tempo.DateTime::parse("2024-03-15T12:34:56+05:60")) is Err(_),
   )
 }
 
