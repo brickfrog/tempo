@@ -432,6 +432,25 @@ test "DateTime::parse offset normalization preserves fractional seconds" {
 }
 
 ///|
+test "DateTime::parse offset normalization future year overflow safe" {
+  let dt = @tempo.DateTime::parse("3000-01-01T00:30:00+01:00")
+  assert_eq(dt.format(), "2999-12-31T23:30:00Z")
+}
+
+///|
+test "DateTime::parse offset normalization past year overflow safe" {
+  let dt = @tempo.DateTime::parse("1000-01-01T05:00:00-06:00")
+  assert_eq(dt.format(), "1000-01-01T11:00:00Z")
+}
+
+///|
+test "DateTime::parse offset normalization matches Z equivalent" {
+  let offset = @tempo.DateTime::parse("3000-06-15T12:00:00+05:00")
+  let utc = @tempo.DateTime::parse("3000-06-15T07:00:00Z")
+  assert_eq(offset, utc)
+}
+
+///|
 test "DateTime::parse rejects out-of-range offset" {
   assert_true(
     (try? @tempo.DateTime::parse("2024-03-15T12:34:56+24:00")) is Err(_),

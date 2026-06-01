@@ -749,7 +749,18 @@ pub fn DateTime::parse(s : String) -> DateTime raise TempoError {
   if offset_minutes == 0 {
     base
   } else {
-    base.sub(Duration::minutes(offset_minutes.to_int64()))
+    let total_min = (hour * 60 + minute - offset_minutes).to_int64()
+    let day_delta = floor_div64(total_min, 1440L).to_int()
+    let minute_of_day = floor_mod64(total_min, 1440L).to_int()
+    {
+      date: date.add_days(day_delta),
+      time: Time::new(
+        minute_of_day / 60,
+        minute_of_day % 60,
+        second,
+        nanosecond,
+      ),
+    }
   }
 }
 
