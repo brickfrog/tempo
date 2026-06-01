@@ -111,6 +111,10 @@ test "Date::add_months wraps years and handles negatives" {
     @tempo.Date::new(2024, 2, 15),
   )
   assert_eq(
+    @tempo.Date::new(2024, 3, 31).add_months(-1),
+    @tempo.Date::new(2024, 2, 29),
+  )
+  assert_eq(
     @tempo.Date::new(2024, 1, 10).add_months(-1),
     @tempo.Date::new(2023, 12, 10),
   )
