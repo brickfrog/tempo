@@ -9,7 +9,7 @@ pub(all) suberror TempoError {
 }
 
 ///|
-pub impl Show for TempoError with output(self, logger) {
+pub impl Show for TempoError with fn output(self, logger) {
   match self {
     TempoError(msg) => logger.write_string("TempoError: " + msg)
   }
@@ -406,17 +406,17 @@ pub fn Duration::is_negative(self : Duration) -> Bool {
 // ─── Duration arithmetic ──────────────────────────────────────────────────────
 
 ///|
-pub impl Add for Duration with add(self, other : Duration) -> Duration {
+pub impl Add for Duration with fn add(self, other : Duration) -> Duration {
   { nanoseconds: self.nanoseconds + other.nanoseconds }
 }
 
 ///|
-pub impl Sub for Duration with sub(self, other : Duration) -> Duration {
+pub impl Sub for Duration with fn sub(self, other : Duration) -> Duration {
   { nanoseconds: self.nanoseconds - other.nanoseconds }
 }
 
 ///|
-pub impl Neg for Duration with neg(self) -> Duration {
+pub impl Neg for Duration with fn neg(self) -> Duration {
   { nanoseconds: -self.nanoseconds }
 }
 
@@ -554,24 +554,24 @@ pub fn Time::format(self : Time) -> String {
 }
 
 ///|
-pub impl Show for Date with output(self, logger) {
+pub impl Show for Date with fn output(self, logger) {
   logger.write_string(
     "\{pad4_year(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}",
   )
 }
 
 ///|
-pub impl Show for Time with output(self, logger) {
+pub impl Show for Time with fn output(self, logger) {
   logger.write_string(self.format())
 }
 
 ///|
-pub impl Show for DateTime with output(self, logger) {
+pub impl Show for DateTime with fn output(self, logger) {
   logger.write_string(self.format())
 }
 
 ///|
-pub impl Show for Duration with output(self, logger) {
+pub impl Show for Duration with fn output(self, logger) {
   logger.write_string(self.to_string_repr())
 }
 
