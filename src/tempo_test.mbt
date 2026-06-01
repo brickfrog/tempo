@@ -149,6 +149,14 @@ test "Date::add_years handles negative and normal dates" {
 }
 
 ///|
+test "Date::add_years avoids Int month overflow" {
+  assert_eq(
+    @tempo.Date::new(2024, 1, 1).add_years(178_956_971),
+    @tempo.Date::new(178958995, 1, 1),
+  )
+}
+
+///|
 test "Date::day_of_week ISO" {
   // 1970-01-01 Thursday; 2024-01-01 Monday; 2024-03-15 Friday
   assert_eq(@tempo.Date::new(1970, 1, 1).day_of_week(), 4)
