@@ -60,8 +60,9 @@ test {
 
 ## Parsing
 
-Accepts RFC 3339 / ISO 8601. Only UTC offsets (`Z`, `+00:00`, `-00:00`) are
-accepted — others raise `TempoError`.
+Accepts RFC 3339 / ISO 8601. UTC markers (`Z`, `+00:00`, `-00:00`) and fixed
+numeric offsets are accepted. Parsed values are stored as UTC `DateTime`s; the
+original offset is not retained.
 
 ```moonbit nocheck
 ///|
@@ -74,13 +75,8 @@ test {
 ```moonbit nocheck
 ///|
 test {
-  let result = try {
-    @tempo.DateTime::parse("2026-03-28T14:31:43+09:00") |> ignore
-    "ok"
-  } catch {
-    @tempo.TempoError(_) => "error"
-  }
-  assert_eq(result, "error")
+  let dt = @tempo.DateTime::parse("2026-03-28T14:31:43+09:00")
+  inspect(dt.format(), content="2026-03-28T05:31:43Z")
 }
 ```
 

@@ -695,7 +695,7 @@ fn parse_frac_ns(view : StringView) -> (Int, StringView) raise TempoError {
 
 ///|
 /// Parse an RFC 3339 / ISO 8601 datetime string.
-/// Only UTC is accepted: 'Z', '+00:00', or '-00:00'.
+/// Fixed numeric offsets are accepted and normalized to UTC.
 pub fn DateTime::parse(s : String) -> DateTime raise TempoError {
   let v = s.view()
   let (year, v) = parse_digits(v, 4)
@@ -719,19 +719,21 @@ pub fn DateTime::parse(s : String) -> DateTime raise TempoError {
     ['.', .. rest] => parse_frac_ns(rest)
     _ => (0, v)
   }
-  // Timezone: Z or ±HH:MM (only UTC accepted)
-  let v = match v {
-    ['Z' | 'z', .. rest] => rest
+  // Timezone: Z or ±HH:MM.
+  let (v, offset_minutes) = match v {
+    ['Z' | 'z', .. rest] => (rest, 0)
     ['+' | '-' as sign, .. rest] => {
       let (tz_h, rest) = parse_digits(rest, 2)
       let rest = consume(rest, ':')
       let (tz_m, rest) = parse_digits(rest, 2)
-      if tz_h != 0 || tz_m != 0 {
+      if tz_h > 23 || tz_m > 59 {
         raise TempoError(
-          "non-UTC offset '\{sign}\{pad2(tz_h)}:\{pad2(tz_m)}' not supported",
+          "offset '\{sign}\{pad2(tz_h)}:\{pad2(tz_m)}' out of range",
         )
       }
-      rest
+      let minutes = tz_h * 60 + tz_m
+      let minutes = if sign == '-' { -minutes } else { minutes }
+      (rest, minutes)
     }
     [c, ..] => raise TempoError("expected timezone, got '\{c}'")
     [] => raise TempoError("unexpected end of input, expected timezone")
@@ -743,7 +745,12 @@ pub fn DateTime::parse(s : String) -> DateTime raise TempoError {
   }
   let date = Date::new(year, month, day)
   let time = Time::new(hour, minute, second, nanosecond)
-  { date, time }
+  let base = { date, time }
+  if offset_minutes == 0 {
+    base
+  } else {
+    base.sub(Duration::minutes(offset_minutes.to_int64()))
+  }
 }
 
 ///|
