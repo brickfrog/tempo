@@ -69,6 +69,82 @@ test "Date::add_days leap day" {
 }
 
 ///|
+test "Date::add_months clamps end of month" {
+  assert_eq(
+    @tempo.Date::new(2023, 1, 31).add_months(1),
+    @tempo.Date::new(2023, 2, 28),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 1, 31).add_months(1),
+    @tempo.Date::new(2024, 2, 29),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 3, 31).add_months(1),
+    @tempo.Date::new(2024, 4, 30),
+  )
+}
+
+///|
+test "Date::add_months preserves valid target day" {
+  assert_eq(
+    @tempo.Date::new(2024, 1, 31).add_months(2),
+    @tempo.Date::new(2024, 3, 31),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 2, 28).add_months(1),
+    @tempo.Date::new(2024, 3, 28),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 1, 31).add_months(12),
+    @tempo.Date::new(2025, 1, 31),
+  )
+}
+
+///|
+test "Date::add_months wraps years and handles negatives" {
+  assert_eq(
+    @tempo.Date::new(2024, 12, 10).add_months(1),
+    @tempo.Date::new(2025, 1, 10),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 3, 15).add_months(-1),
+    @tempo.Date::new(2024, 2, 15),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 1, 10).add_months(-1),
+    @tempo.Date::new(2023, 12, 10),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 1, 31).add_months(25),
+    @tempo.Date::new(2026, 2, 28),
+  )
+}
+
+///|
+test "Date::add_years clamps leap day" {
+  assert_eq(
+    @tempo.Date::new(2024, 2, 29).add_years(1),
+    @tempo.Date::new(2025, 2, 28),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 2, 29).add_years(4),
+    @tempo.Date::new(2028, 2, 29),
+  )
+}
+
+///|
+test "Date::add_years handles negative and normal dates" {
+  assert_eq(
+    @tempo.Date::new(2024, 2, 29).add_years(-1),
+    @tempo.Date::new(2023, 2, 28),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 3, 15).add_years(1),
+    @tempo.Date::new(2025, 3, 15),
+  )
+}
+
+///|
 test "Date::day_of_week ISO" {
   // 1970-01-01 Thursday; 2024-01-01 Monday; 2024-03-15 Friday
   assert_eq(@tempo.Date::new(1970, 1, 1).day_of_week(), 4)

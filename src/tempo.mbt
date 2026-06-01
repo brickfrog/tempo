@@ -129,6 +129,37 @@ pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
 // ─── Date arithmetic ──────────────────────────────────────────────────────────
 
 ///|
+fn shift_year_month(year : Int, month : Int, months : Int) -> (Int, Int) {
+  let total = year.to_int64() * 12L + (month - 1).to_int64() + months.to_int64()
+  let new_year = floor_div64(total, 12L).to_int()
+  let new_month = floor_mod64(total, 12L).to_int() + 1
+  (new_year, new_month)
+}
+
+///|
+/// Add a signed number of calendar months to this date.
+///
+/// If the original day does not exist in the target month, the result is
+/// clamped to that month's last day. Clamping is non-sticky: 2024-02-28 plus
+/// one month is 2024-03-28, not 2024-03-31.
+pub fn Date::add_months(self : Date, months : Int) -> Date {
+  let (year, month) = shift_year_month(self.year, self.month, months)
+  let max_day = days_in_month(year, month)
+  let day = if self.day > max_day { max_day } else { self.day }
+  { year, month, day }
+}
+
+///|
+/// Add a signed number of calendar years to this date.
+///
+/// If the original day does not exist in the target year/month, the result is
+/// clamped to that month's last day, so leap day moves to February 28 in
+/// non-leap target years.
+pub fn Date::add_years(self : Date, years : Int) -> Date {
+  self.add_months(years * 12)
+}
+
+///|
 /// Add a signed number of calendar days to this date (proleptic Gregorian).
 pub fn Date::add_days(self : Date, days : Int) -> Date {
   let base = days_from_civil(self.year, self.month, self.day)
