@@ -52,16 +52,15 @@ You can browse and install extra skills here:
 
 ## Design decisions (do not re-flag in audits)
 
-- **pad2/pad4/pad9 unrolled branches:** Deliberate. Each branch produces one
-  string interpolation with zero intermediate allocation. Not worth a generic
-  `pad(n, width)` unless profiling shows formatting is a bottleneck.
+- **pad2/pad4_i64/pad9 unrolled branches:** Deliberate. Each branch produces
+  one string interpolation with zero intermediate allocation. Not worth a
+  generic `pad(n, width)` unless profiling shows formatting is a bottleneck.
 
-- **pad4_year abort on Int::min_value:** Intentional programmer-error trap.
-  `Int::min_value` cannot be negated to a positive `Int`. This year can be
-  reached at the arithmetic envelope via `Date::add_days` carry from a
-  `Date::new`-constructable extreme year; ordinary calendar dates are
-  unaffected. Future option: handle via `Int64` arithmetic to eliminate the
-  abort.
+- **Full-range year formatting:** `pad4_year` computes the year magnitude in
+  `Int64`, so every `Date.year : Int` value, including `Int::min_value`, formats
+  without aborting. Negative years and years with more than four digits use ISO
+  8601-style expanded-year text; parsing remains limited to 4-digit positive
+  years.
 
 - **floor_div64 / floor_mod64:** Required. MoonBit stdlib does not provide floor
   division for `Int64`. MoonBit's `/` truncates toward zero; these round toward
@@ -81,12 +80,17 @@ You can browse and install extra skills here:
 
 - **fmt_frac while loop:** Intentional. `StringView` lacks `trim_end(Char)`.
 
-- **FixedOffsetDateTime::format extreme-year abort:** Does NOT introduce a
-  distinct fallible-formatting contract. The abort arises from the same
-  bounded-`Int` date arithmetic (`Date::add_days`, `pad4_year`) used by
-  `Date`/`DateTime`; the local-time projection can carry into an
-  unrepresentable year only at year ≈ `Int` extremes. A
-  FixedOffsetDateTime-only constructor bound would make its domain inconsistent
-  with `DateTime` without solving the root cause, so this is documented and
-  tested as the current boundary. The real fix (checked / wider epoch-day
-  arithmetic) is tempo-oj8.
+- **Date arithmetic absolute boundary:** Core Date epoch-day math uses `Int64`
+  intermediates, so Date-to-epoch-day and epoch-day-to-Date round-trips are
+  correct throughout the representable `Int` year range. Infallible
+  `Date::add_days`, `Date::add_months`, and `Date::add_years` wrap if the result
+  would carry the year outside the absolute `Int` envelope, matching the
+  DateTime add/sub/diff wrap convention. Callers that need overflow detection
+  should use `Date::add_days_checked`, `Date::add_months_checked`, or
+  `Date::add_years_checked`, which return `None` on overflow.
+
+- **ISO week residual overflow:** `Date::from_iso_week` raises `TempoError` if
+  the requested ISO week date would produce a calendar year outside the
+  representable `Int` range. `Date::format_iso_week` computes the ISO week-year
+  with `Int64` intermediates, so formatting can show the expanded week-year just
+  outside the `Date.year` envelope at the absolute boundary.

@@ -23,9 +23,12 @@ pub struct Date {
   day : Int
 } derive(Compare, Eq, Hash)
 pub fn Date::add_days(Self, Int) -> Self
+pub fn Date::add_days_checked(Self, Int) -> Self?
 pub fn Date::add_months(Self, Int) -> Self
+pub fn Date::add_months_checked(Self, Int) -> Self?
 pub fn Date::add_period(Self, Period) -> Self raise TempoError
 pub fn Date::add_years(Self, Int) -> Self
+pub fn Date::add_years_checked(Self, Int) -> Self?
 pub fn Date::clamp(Self, Self, Self) -> Self
 pub fn Date::day_of_week(Self) -> Int
 pub fn Date::day_of_year(Self) -> Int
