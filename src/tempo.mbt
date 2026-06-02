@@ -267,7 +267,8 @@ pub struct Time {
 } derive(Eq, Compare)
 
 ///|
-/// Units supported by `DateTime::truncate_to`, ordered smallest to largest.
+/// Units supported by `DateTime::truncate_to` and `DateTime::round_to`, ordered
+/// smallest to largest.
 pub(all) enum TimeUnit {
   Second
   Minute
@@ -282,6 +283,24 @@ pub impl Show for TimeUnit with fn output(self, logger) {
     Minute => logger.write_string("Minute")
     Hour => logger.write_string("Hour")
     Day => logger.write_string("Day")
+  }
+}
+
+///|
+/// Rounding modes for `DateTime::round_to`, ordered from earlier-boundary
+/// preference to nearest-boundary behavior.
+pub(all) enum RoundMode {
+  Floor
+  Ceil
+  HalfExpand
+} derive(Eq, Compare, Hash)
+
+///|
+pub impl Show for RoundMode with fn output(self, logger) {
+  match self {
+    Floor => logger.write_string("Floor")
+    Ceil => logger.write_string("Ceil")
+    HalfExpand => logger.write_string("HalfExpand")
   }
 }
 
@@ -901,6 +920,75 @@ pub fn DateTime::truncate_to(self : DateTime, unit : TimeUnit) -> DateTime {
     Hour =>
       { ..self, time: { ..self.time, minute: 0, second: 0, nanosecond: 0 } }
     Day => self.start_of_day()
+  }
+}
+
+///|
+/// Round this DateTime to the requested unit boundary.
+///
+/// `Floor` is equivalent to `truncate_to(unit)`. `Ceil` rounds to the next
+/// boundary only when there is a remainder. `HalfExpand` rounds to the nearest
+/// boundary, with exact half-unit ties rounded up toward the later boundary.
+///
+/// Rounding is anchored to the calendar day and carries with `Date::add_days`,
+/// avoiding Unix-nanosecond conversion for dates outside the Int64 nanosecond
+/// timestamp range.
+pub fn DateTime::round_to(
+  self : DateTime,
+  unit : TimeUnit,
+  mode : RoundMode,
+) -> DateTime {
+  let floored = self.truncate_to(unit)
+  let t = self.time
+  let unit_ns = match unit {
+    Second => ns_per_sec
+    Minute => ns_per_min
+    Hour => ns_per_hour
+    Day => 86_400L * ns_per_sec
+  }
+  let rem_ns = match unit {
+    Second => t.nanosecond.to_int64()
+    Minute => t.second.to_int64() * ns_per_sec + t.nanosecond.to_int64()
+    Hour =>
+      (t.minute.to_int64() * 60L + t.second.to_int64()) * ns_per_sec +
+      t.nanosecond.to_int64()
+    Day =>
+      (
+        t.hour.to_int64() * 3600L +
+        t.minute.to_int64() * 60L +
+        t.second.to_int64()
+      ) *
+      ns_per_sec +
+      t.nanosecond.to_int64()
+  }
+  let round_up = match mode {
+    Floor => false
+    Ceil => rem_ns > 0L
+    HalfExpand => rem_ns * 2L >= unit_ns
+  }
+  if !round_up {
+    floored
+  } else {
+    let unit_secs = match unit {
+      Second => 1
+      Minute => 60
+      Hour => 3600
+      Day => 86_400
+    }
+    let ft = floored.time
+    let sod = ft.hour * 3600 + ft.minute * 60 + ft.second
+    let total = sod + unit_secs
+    let day_carry = total / 86_400
+    let r = total % 86_400
+    {
+      date: floored.date.add_days(day_carry),
+      time: {
+        hour: r / 3600,
+        minute: r % 3600 / 60,
+        second: r % 60,
+        nanosecond: 0,
+      },
+    }
   }
 }
 

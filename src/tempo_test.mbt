@@ -243,6 +243,115 @@ test "DateTime truncate_to day is calendar anchored for far future dates" {
 }
 
 ///|
+test "DateTime::round_to hour modes" {
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T14:30:00Z")
+    .round_to(@tempo.Hour, @tempo.HalfExpand)
+    .format(),
+    "2024-03-15T15:00:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T14:29:59.999999999Z")
+    .round_to(@tempo.Hour, @tempo.HalfExpand)
+    .format(),
+    "2024-03-15T14:00:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T14:31:00Z")
+    .round_to(@tempo.Hour, @tempo.HalfExpand)
+    .format(),
+    "2024-03-15T15:00:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T14:59:00Z")
+    .round_to(@tempo.Hour, @tempo.Floor)
+    .format(),
+    "2024-03-15T14:00:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T14:00:00Z")
+    .round_to(@tempo.Hour, @tempo.Ceil)
+    .format(),
+    "2024-03-15T14:00:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T14:01:00Z")
+    .round_to(@tempo.Hour, @tempo.Ceil)
+    .format(),
+    "2024-03-15T15:00:00Z",
+  )
+}
+
+///|
+test "DateTime::round_to minute half expand" {
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T14:31:29Z")
+    .round_to(@tempo.Minute, @tempo.HalfExpand)
+    .format(),
+    "2024-03-15T14:31:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T14:31:30Z")
+    .round_to(@tempo.Minute, @tempo.HalfExpand)
+    .format(),
+    "2024-03-15T14:32:00Z",
+  )
+}
+
+///|
+test "DateTime::round_to day half expand carries date" {
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T11:59:59Z")
+    .round_to(@tempo.Day, @tempo.HalfExpand)
+    .format(),
+    "2024-03-15T00:00:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T12:00:00Z")
+    .round_to(@tempo.Day, @tempo.HalfExpand)
+    .format(),
+    "2024-03-16T00:00:00Z",
+  )
+}
+
+///|
+test "DateTime::round_to ceil carries across day and month" {
+  assert_eq(
+    @tempo.DateTime::parse("2024-03-15T23:30:00Z")
+    .round_to(@tempo.Hour, @tempo.Ceil)
+    .format(),
+    "2024-03-16T00:00:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::parse("2024-02-29T23:30:00Z")
+    .round_to(@tempo.Hour, @tempo.Ceil)
+    .format(),
+    "2024-03-01T00:00:00Z",
+  )
+}
+
+///|
+test "DateTime::round_to far future avoids epoch nanos overflow" {
+  assert_eq(
+    @tempo.DateTime::parse("3000-01-01T14:31:30Z")
+    .round_to(@tempo.Minute, @tempo.HalfExpand)
+    .format(),
+    "3000-01-01T14:32:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::parse("3000-01-01T23:30:00Z")
+    .round_to(@tempo.Hour, @tempo.Ceil)
+    .format(),
+    "3000-01-02T00:00:00Z",
+  )
+}
+
+///|
+test "RoundMode Show output" {
+  inspect(@tempo.HalfExpand, content="HalfExpand")
+}
+
+///|
 test "DateTime accessors and component updaters" {
   let date = @tempo.Date::new(2024, 3, 15)
   let time = @tempo.Time::new(12, 34, 56, 789)
