@@ -48,19 +48,53 @@ Added to all public functions.
 
 ---
 
-## v0.3 — next
+## v0.4 — shipped
+
+**Fixed-offset parsing**
+`DateTime::parse` accepts RFC 3339 numeric offsets (`-04:00`, `+09:00`) and
+normalizes to UTC.
+
+**Calendar arithmetic**
+`Date::add_months`, `Date::add_years` (end-of-month clamping);
+`start_of_month` / `end_of_month` / `start_of_year` / `end_of_year` on `Date`
+and `DateTime`.
+
+**Field updaters & accessors**
+`with_year` … `with_nanosecond` on `Date` / `Time` / `DateTime`;
+`DateTime::to_date` / `to_time`.
+
+**Typed enums**
+`Weekday` and `Month` (Int conversions, navigation); `Date::weekday`,
+`Date::month_enum`.
+
+**Duration scalar ops**
+`abs`, `is_positive`, `signum`, `multiply`, `checked_multiply`, `divide`.
+
+**Timestamp interop**
+`from_unix_millis` / `to_unix_millis`, `from_unix_micros` / `to_unix_micros`.
+
+---
+
+## next
 
 **Sub-second `now()` on native**
-See v0.2. Requires a `.c` stub in the build.
+Requires a `.c` stub in the build.
 
-**`Date::parse` / `Date::format`**
-Date-only strings: `2026-03-28`.
+**`FixedOffsetDateTime`**
+Retain the display offset instead of normalizing to UTC.
 
-**`Time::parse` / `Time::format`**
-Time-only strings: `14:31:43`, `14:31:43.123Z`.
+**Calendar-aware `Period` / `YearMonth`**
+Year/month durations distinct from the nanosecond `Duration`.
 
-**Docstring coverage**
-Public API docstrings are sparse.
+**Rounding & comparison helpers**
+`truncate_to` / `round_to`, `start_of_day`, `is_before` / `is_after` / `clamp`,
+date intervals.
+
+**ISO week & ordinal dates**
+`iso_week`, `from_ordinal`, week-date / ordinal string formats.
+
+**Hash & JSON**
+`derive(Hash)` for map keys; `ToJson` / `FromJson`.
 
 ---
 
