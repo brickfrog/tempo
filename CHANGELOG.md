@@ -45,3 +45,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrated the module manifest from `moon.mod.json` to the TOML `moon.mod`, and
   trait implementations to the `with fn` syntax, for the May 2026 MoonBit
   toolchain. (#13)
+
+## [0.3.4] - 2026-05-13
+
+### Fixed
+- Compatibility with the May 2026 MoonBit toolchain.
+
+## [0.3.3] - 2026-04-29
+
+### Changed
+- Replaced a deprecated `StringView` allocation.
+
+## [0.3.2] - 2026-04-12
+
+### Fixed
+- `Duration::to_string_repr` guards `Int64::min_value`, which cannot be negated.
+
+## [0.3.1] - 2026-04-08
+
+### Fixed
+- JS backend: `Int64` FFI returns `BigInt` directly, for newer-runtime compatibility.
+
+## [0.3.0] - 2026-04-08
+
+### Added
+- `Duration::is_zero`, `Duration::is_negative`, and the `Duration::as_days` accessor.
+
+## [0.2.3] - 2026-04-05
+
+### Changed
+- Internal test coverage and design documentation.
+
+## [0.2.2] - 2026-03-31
+
+### Changed
+- Internal migration from `loop` to `for`.
+
+## [0.2.1] - 2026-03-28
+
+### Fixed
+- Added the `source` field to the manifest so the package resolves as `@tempo`.
+
+## [0.2.0] - 2026-03-28
+
+### Added
+- `Date::parse` / `Date::format` for date-only strings (`2024-03-28`).
+- `Time::parse` / `Time::format` for time-only strings (`14:31:43`, `14:31:43.123`).
+- `Date` calendar arithmetic: `add_days`, `day_of_week`, `day_of_year`, `days_until`.
+- `Duration::weeks` constructor and `Duration::as_weeks` accessor.
+- ISO 8601 expanded-year formatting for negative years.
+
+## [0.1.0] - 2026-03-28
+
+### Added
+- Core types `Date`, `Time`, `DateTime`, `Duration`.
+- RFC 3339 / ISO 8601 `DateTime::parse` and `DateTime::format`.
+- Unix timestamp conversion: `from_unix_seconds`/`from_unix_nanos` and `to_unix_seconds`/`to_unix_nanos`.
+- `DateTime` arithmetic (`add`, `sub`, `diff`) and `Duration` operators.
+- `Duration` constructors (`nanoseconds` … `days`) and accessors (`as_nanoseconds` … `as_hours`).
+- `DateTime::now` (POSIX `time(2)` on native, `Date.now()` on js/wasm-gc).
+- `Show`, `Eq`, `Compare` for all types.
+- Calendar helpers `is_leap_year` and `days_in_month`.
