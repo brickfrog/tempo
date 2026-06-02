@@ -825,7 +825,9 @@ pub fn Date::format(self : Date) -> String {
 }
 
 ///|
-/// Format this year-month as 'YYYY-MM'.
+/// Format this year-month as `YYYY-MM` for four-digit years. Negative years and
+/// years >= 10000 use the same expanded-year output as `Date::format`; those
+/// expanded strings cannot be round-tripped through `YearMonth::parse`.
 pub fn YearMonth::format(self : YearMonth) -> String {
   "\{pad4_year(self.year)}-\{pad2(self.month)}"
 }
