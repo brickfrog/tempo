@@ -824,6 +824,38 @@ test "to_unix_nanos_checked accepts min representable instant" {
 }
 
 ///|
+test "to_unix_nanos_checked agrees with wrapping conversion at bounds" {
+  let max = @tempo.DateTime::max_unix_nanos()
+  let max_dt = @tempo.DateTime::from_unix_nanos(max)
+  assert_true(max_dt.to_unix_nanos_checked() == Some(max))
+  assert_eq(max_dt.to_unix_nanos(), max)
+  let min = @tempo.DateTime::min_unix_nanos()
+  let min_dt = @tempo.DateTime::from_unix_nanos(min)
+  assert_true(min_dt.to_unix_nanos_checked() == Some(min))
+  assert_eq(min_dt.to_unix_nanos(), min)
+}
+
+///|
+test "to_unix_nanos_checked rejects instants just outside bounds" {
+  assert_true(
+    @tempo.DateTime::parse("2262-04-11T23:47:16.854775808Z").to_unix_nanos_checked()
+    is None,
+  )
+  assert_true(
+    @tempo.DateTime::parse("2262-04-11T23:47:17Z").to_unix_nanos_checked()
+    is None,
+  )
+  assert_true(
+    @tempo.DateTime::parse("1677-09-21T00:12:43.145224191Z").to_unix_nanos_checked()
+    is None,
+  )
+  assert_true(
+    @tempo.DateTime::parse("1677-09-21T00:12:42.145224192Z").to_unix_nanos_checked()
+    is None,
+  )
+}
+
+///|
 test "DateTime Unix nanos representable bounds" {
   assert_eq(@tempo.DateTime::min_unix_nanos(), -9_223_372_036_854_775_808L)
   assert_eq(@tempo.DateTime::max_unix_nanos(), 9_223_372_036_854_775_807L)
