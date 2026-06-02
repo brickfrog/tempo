@@ -2346,7 +2346,8 @@ pub fn DateTime::format(self : DateTime) -> String {
 }
 
 ///|
-/// Format this DateTime as a fixed-width UTC timestamp:
+/// Format this DateTime as a UTC timestamp with a fixed-width fractional
+/// second. For years 0..9999, the whole output is fixed-width:
 /// `YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`.
 ///
 /// The fractional-second field is always present with exactly 9 nanosecond
