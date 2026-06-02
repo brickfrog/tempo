@@ -19,6 +19,8 @@ pub struct Date {
   day : Int
 } derive(Compare, Eq)
 pub fn Date::add_days(Self, Int) -> Self
+pub fn Date::add_months(Self, Int) -> Self
+pub fn Date::add_years(Self, Int) -> Self
 pub fn Date::day_of_week(Self) -> Int
 pub fn Date::day_of_year(Self) -> Int
 pub fn Date::days_until(Self, Self) -> Int
