@@ -593,6 +593,43 @@ test "Date::day_of_year" {
 }
 
 ///|
+test "Date::from_ordinal valid days" {
+  assert_eq(@tempo.Date::from_ordinal(2024, 1), @tempo.Date::new(2024, 1, 1))
+  assert_eq(
+    @tempo.Date::from_ordinal(2024, 366),
+    @tempo.Date::new(2024, 12, 31),
+  )
+  assert_eq(@tempo.Date::from_ordinal(2024, 60), @tempo.Date::new(2024, 2, 29))
+}
+
+///|
+test "Date::from_ordinal invalid days" {
+  assert_true((try? @tempo.Date::from_ordinal(2023, 366)) is Err(_))
+  assert_true((try? @tempo.Date::from_ordinal(2024, 0)) is Err(_))
+}
+
+///|
+test "Date::from_ordinal is inverse of day_of_year" {
+  let jan1 = @tempo.Date::new(2024, 1, 1)
+  assert_eq(@tempo.Date::from_ordinal(jan1.year, jan1.day_of_year()), jan1)
+  let leap_day = @tempo.Date::new(2024, 2, 29)
+  assert_eq(
+    @tempo.Date::from_ordinal(leap_day.year, leap_day.day_of_year()),
+    leap_day,
+  )
+  let leap_dec31 = @tempo.Date::new(2024, 12, 31)
+  assert_eq(
+    @tempo.Date::from_ordinal(leap_dec31.year, leap_dec31.day_of_year()),
+    leap_dec31,
+  )
+  let common_dec31 = @tempo.Date::new(2023, 12, 31)
+  assert_eq(
+    @tempo.Date::from_ordinal(common_dec31.year, common_dec31.day_of_year()),
+    common_dec31,
+  )
+}
+
+///|
 test "Date::days_until" {
   let a = @tempo.Date::new(2024, 3, 1)
   let b = @tempo.Date::new(2024, 3, 15)
@@ -629,6 +666,17 @@ test "Date::parse valid" {
 test "Date::format" {
   let d = @tempo.Date::new(2024, 3, 5)
   assert_eq(d.format(), "2024-03-05")
+}
+
+///|
+test "Date::format_ordinal" {
+  assert_eq(@tempo.Date::new(2024, 1, 1).format_ordinal(), "2024-001")
+  assert_eq(@tempo.Date::new(2024, 7, 20).format_ordinal(), "2024-202")
+  let d = @tempo.Date::new(2024, 7, 20)
+  assert_eq(
+    @tempo.Date::from_ordinal(d.year, d.day_of_year()).format_ordinal(),
+    d.format_ordinal(),
+  )
 }
 
 ///|

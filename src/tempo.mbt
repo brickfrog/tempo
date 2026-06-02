@@ -420,6 +420,20 @@ pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
   { year, month, day }
 }
 
+///|
+/// Create a `Date` from `year` and day-of-year in 1..365, or 1..366 for a
+/// leap year.
+pub fn Date::from_ordinal(
+  year : Int,
+  day_of_year : Int,
+) -> Date raise TempoError {
+  let days_in_year = if is_leap_year(year) { 366 } else { 365 }
+  if day_of_year < 1 || day_of_year > days_in_year {
+    raise TempoError("day_of_year \{day_of_year} out of range for year \{year}")
+  }
+  Date::new(year, 1, 1).add_days(day_of_year - 1)
+}
+
 // ─── Date arithmetic ──────────────────────────────────────────────────────────
 
 ///|
@@ -747,6 +761,12 @@ pub fn Date::parse(s : String) -> Date raise TempoError {
 /// Format this date as 'YYYY-MM-DD'.
 pub fn Date::format(self : Date) -> String {
   "\{pad4(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}"
+}
+
+///|
+/// Format this date as 'YYYY-DDD', where `DDD` is day-of-year in 001..366.
+pub fn Date::format_ordinal(self : Date) -> String {
+  "\{pad4_year(self.year)}-\{pad3(self.day_of_year())}"
 }
 
 ///|
@@ -1696,6 +1716,19 @@ pub fn DateTime::until(self : DateTime, later : DateTime) -> Duration {
 ///|
 fn pad2(n : Int) -> String {
   if n < 10 {
+    "0\{n}"
+  } else {
+    "\{n}"
+  }
+}
+
+// Zero-pad an integer to 3 digits.
+
+///|
+fn pad3(n : Int) -> String {
+  if n < 10 {
+    "00\{n}"
+  } else if n < 100 {
     "0\{n}"
   } else {
     "\{n}"
