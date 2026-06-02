@@ -96,6 +96,7 @@ pub fn DateTime::end_of_month(Self) -> Self
 pub fn DateTime::end_of_year(Self) -> Self
 pub fn DateTime::epoch() -> Self
 pub fn DateTime::format(Self) -> String
+pub fn DateTime::format_fixed(Self) -> String
 pub fn DateTime::from_unix_micros(Int64) -> Self
 pub fn DateTime::from_unix_millis(Int64) -> Self
 pub fn DateTime::from_unix_nanos(Int64) -> Self

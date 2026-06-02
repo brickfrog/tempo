@@ -1585,6 +1585,45 @@ test "DateTime::format nanosecond precision" {
 }
 
 ///|
+test "DateTime::format_fixed whole second keeps nanoseconds" {
+  let dt = @tempo.DateTime::from_unix_seconds(0L)
+  assert_eq(dt.format_fixed(), "1970-01-01T00:00:00.000000000Z")
+}
+
+///|
+test "DateTime::format_fixed pads parsed fractional seconds" {
+  let dt = @tempo.DateTime::parse("2024-07-21T17:11:00.5Z")
+  assert_eq(dt.format_fixed(), "2024-07-21T17:11:00.500000000Z")
+}
+
+///|
+test "DateTime::format_fixed sorts lexicographically for in-range years" {
+  let t1 = @tempo.DateTime::parse("2024-07-21T17:11:00.499999999Z")
+  let t2 = @tempo.DateTime::parse("2024-07-21T17:11:00.5Z")
+  let year_end = @tempo.DateTime::parse("2024-12-31T23:59:59.999999999Z")
+  let next_year = @tempo.DateTime::parse("2025-01-01T00:00:00.000000000Z")
+  assert_eq(t1 < t2, true)
+  assert_eq(t1.format_fixed() < t2.format_fixed(), true)
+  assert_eq(year_end < next_year, true)
+  assert_eq(year_end.format_fixed() < next_year.format_fixed(), true)
+}
+
+///|
+test "DateTime::format_fixed in-range outputs share width" {
+  let first = @tempo.DateTime::new(
+    @tempo.Date::new(0, 1, 1),
+    @tempo.Time::new(0, 0, 0, 0),
+  ).format_fixed()
+  let middle = @tempo.DateTime::parse("2024-07-21T17:11:00.5Z").format_fixed()
+  let last = @tempo.DateTime::new(
+    @tempo.Date::new(9999, 12, 31),
+    @tempo.Time::new(23, 59, 59, 999_999_999),
+  ).format_fixed()
+  assert_eq(first.length(), middle.length())
+  assert_eq(middle.length(), last.length())
+}
+
+///|
 test "DateTime::format negative year" {
   let d = @tempo.Date::new(-500, 6, 15)
   let t = @tempo.Time::new(12, 0, 0, 0)
