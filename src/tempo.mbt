@@ -23,7 +23,7 @@ pub struct Date {
   year : Int
   month : Int // 1–12
   day : Int // 1–31
-} derive(Eq, Compare)
+} derive(Eq, Compare, Hash)
 
 ///|
 /// A calendar date interval with an inclusive end date: `[start, end]`.
@@ -264,7 +264,7 @@ pub struct Time {
   minute : Int // 0–59
   second : Int // 0–59
   nanosecond : Int // 0–999_999_999
-} derive(Eq, Compare)
+} derive(Eq, Compare, Hash)
 
 ///|
 /// Units supported by `DateTime::truncate_to` and `DateTime::round_to`, ordered
@@ -309,7 +309,7 @@ pub impl Show for RoundMode with fn output(self, logger) {
 pub struct DateTime {
   date : Date
   time : Time
-} derive(Eq, Compare)
+} derive(Eq, Compare, Hash)
 
 ///|
 /// A DateTime interval with a half-open end instant: `[start, end)`.
@@ -327,7 +327,7 @@ pub(all) struct Interval {
 /// A signed duration stored as total nanoseconds.
 pub struct Duration {
   nanoseconds : Int64
-} derive(Eq, Compare)
+} derive(Eq, Compare, Hash)
 
 // ─── Calendar helpers ─────────────────────────────────────────────────────────
 
