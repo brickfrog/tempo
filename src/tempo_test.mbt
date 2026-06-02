@@ -416,6 +416,59 @@ test "Date boundary adjusters for month and year starts" {
 }
 
 ///|
+test "Date quarter boundary accessors" {
+  assert_eq(@tempo.Date::new(2024, 3, 31).quarter(), 1)
+  assert_eq(@tempo.Date::new(2024, 4, 1).quarter(), 2)
+  assert_eq(@tempo.Date::new(2024, 7, 1).quarter(), 3)
+  assert_eq(@tempo.Date::new(2024, 10, 1).quarter(), 4)
+}
+
+///|
+test "Date days_in_year and is_leap accessors" {
+  assert_eq(@tempo.Date::new(2024, 1, 1).days_in_year(), 366)
+  assert_eq(@tempo.Date::new(2023, 1, 1).days_in_year(), 365)
+  assert_eq(@tempo.Date::new(2024, 1, 1).is_leap(), true)
+  assert_eq(@tempo.Date::new(1900, 1, 1).is_leap(), false)
+  assert_eq(@tempo.Date::new(2000, 1, 1).is_leap(), true)
+}
+
+///|
+test "Date quarter boundary adjusters" {
+  assert_eq(
+    @tempo.Date::new(2024, 2, 10).start_of_quarter(),
+    @tempo.Date::new(2024, 1, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 2, 10).end_of_quarter(),
+    @tempo.Date::new(2024, 3, 31),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 5, 15).start_of_quarter(),
+    @tempo.Date::new(2024, 4, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 5, 15).end_of_quarter(),
+    @tempo.Date::new(2024, 6, 30),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 8, 20).start_of_quarter(),
+    @tempo.Date::new(2024, 7, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 8, 20).end_of_quarter(),
+    @tempo.Date::new(2024, 9, 30),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 11, 30).start_of_quarter(),
+    @tempo.Date::new(2024, 10, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 11, 30).end_of_quarter(),
+    @tempo.Date::new(2024, 12, 31),
+  )
+}
+
+///|
 test "DateTime boundary adjusters preserve time of day" {
   let dt = @tempo.DateTime::parse("2024-03-15T14:30:00Z")
   assert_eq(dt.start_of_month().format(), "2024-03-01T14:30:00Z")
@@ -716,6 +769,106 @@ test "Month Show output" {
 }
 
 ///|
+test "YearMonth::new valid exposes fields and month enum" {
+  let ym = @tempo.YearMonth::new(2024, 2)
+  assert_eq(ym.year, 2024)
+  assert_eq(ym.month, 2)
+  assert_true(ym.month_enum() == @tempo.February)
+}
+
+///|
+test "YearMonth::new rejects invalid months" {
+  assert_true((try? @tempo.YearMonth::new(2024, 0)) is Err(_))
+  assert_true((try? @tempo.YearMonth::new(2024, 13)) is Err(_))
+}
+
+///|
+test "YearMonth::length is leap-aware" {
+  assert_eq(@tempo.YearMonth::new(2024, 2).length(), 29)
+  assert_eq(@tempo.YearMonth::new(2023, 2).length(), 28)
+}
+
+///|
+test "YearMonth::at_day and at_end_of_month" {
+  let feb = @tempo.YearMonth::new(2024, 2)
+  assert_eq(feb.at_day(29), @tempo.Date::new(2024, 2, 29))
+  assert_true((try? @tempo.YearMonth::new(2023, 2).at_day(29)) is Err(_))
+  assert_eq(feb.at_end_of_month(), @tempo.Date::new(2024, 2, 29))
+  assert_eq(
+    @tempo.YearMonth::new(2023, 4).at_end_of_month(),
+    @tempo.Date::new(2023, 4, 30),
+  )
+}
+
+///|
+test "YearMonth::plus_months crosses year boundaries" {
+  assert_eq(
+    @tempo.YearMonth::new(2024, 11).plus_months(3),
+    @tempo.YearMonth::new(2025, 2),
+  )
+  assert_eq(
+    @tempo.YearMonth::new(2024, 2).plus_months(-3),
+    @tempo.YearMonth::new(2023, 11),
+  )
+}
+
+///|
+test "YearMonth::plus_years preserves month with Int64 intermediate" {
+  assert_eq(
+    @tempo.YearMonth::new(2024, 2).plus_years(1),
+    @tempo.YearMonth::new(2025, 2),
+  )
+  assert_eq(
+    @tempo.YearMonth::new(2024, 2).plus_years(-1),
+    @tempo.YearMonth::new(2023, 2),
+  )
+  assert_eq(
+    @tempo.YearMonth::new(2024, 1).plus_years(178_956_971),
+    @tempo.YearMonth::new(178958995, 1),
+  )
+}
+
+///|
+test "YearMonth::format parse round-trip and Show" {
+  let ym = @tempo.YearMonth::new(2024, 2)
+  assert_eq(ym.format(), "2024-02")
+  assert_eq(@tempo.YearMonth::parse("2024-02"), ym)
+  assert_eq(@tempo.YearMonth::parse(ym.format()), ym)
+  inspect(ym, content="2024-02")
+}
+
+///|
+test "YearMonth::parse rejects malformed or out-of-range input" {
+  assert_true((try? @tempo.YearMonth::parse("2024-00")) is Err(_))
+  assert_true((try? @tempo.YearMonth::parse("2024-13")) is Err(_))
+  assert_true((try? @tempo.YearMonth::parse("2024-2")) is Err(_))
+  assert_true((try? @tempo.YearMonth::parse("2024-02x")) is Err(_))
+  assert_true((try? @tempo.YearMonth::parse("abcd-01")) is Err(_))
+}
+
+///|
+test "YearMonth Compare orders chronologically" {
+  assert_eq(
+    @tempo.YearMonth::new(2024, 1) < @tempo.YearMonth::new(2024, 2),
+    true,
+  )
+  assert_eq(
+    @tempo.YearMonth::new(2023, 12) < @tempo.YearMonth::new(2024, 1),
+    true,
+  )
+}
+
+///|
+test "YearMonth is a hash collection key" {
+  let values : Map[@tempo.YearMonth, String] = {}
+  let feb = @tempo.YearMonth::new(2024, 2)
+  values.set(feb, "leap-february")
+  assert_true(
+    values.get(@tempo.YearMonth::new(2024, 2)) == Some("leap-february"),
+  )
+}
+
+///|
 test "Date typed weekday and month accessors" {
   let d = @tempo.Date::new(2024, 3, 15)
   assert_eq(d.weekday().to_int(), d.day_of_week())
@@ -801,6 +954,43 @@ test "Date::day_of_year" {
 }
 
 ///|
+test "Date::from_ordinal valid days" {
+  assert_eq(@tempo.Date::from_ordinal(2024, 1), @tempo.Date::new(2024, 1, 1))
+  assert_eq(
+    @tempo.Date::from_ordinal(2024, 366),
+    @tempo.Date::new(2024, 12, 31),
+  )
+  assert_eq(@tempo.Date::from_ordinal(2024, 60), @tempo.Date::new(2024, 2, 29))
+}
+
+///|
+test "Date::from_ordinal invalid days" {
+  assert_true((try? @tempo.Date::from_ordinal(2023, 366)) is Err(_))
+  assert_true((try? @tempo.Date::from_ordinal(2024, 0)) is Err(_))
+}
+
+///|
+test "Date::from_ordinal is inverse of day_of_year" {
+  let jan1 = @tempo.Date::new(2024, 1, 1)
+  assert_eq(@tempo.Date::from_ordinal(jan1.year, jan1.day_of_year()), jan1)
+  let leap_day = @tempo.Date::new(2024, 2, 29)
+  assert_eq(
+    @tempo.Date::from_ordinal(leap_day.year, leap_day.day_of_year()),
+    leap_day,
+  )
+  let leap_dec31 = @tempo.Date::new(2024, 12, 31)
+  assert_eq(
+    @tempo.Date::from_ordinal(leap_dec31.year, leap_dec31.day_of_year()),
+    leap_dec31,
+  )
+  let common_dec31 = @tempo.Date::new(2023, 12, 31)
+  assert_eq(
+    @tempo.Date::from_ordinal(common_dec31.year, common_dec31.day_of_year()),
+    common_dec31,
+  )
+}
+
+///|
 test "Date::days_until" {
   let a = @tempo.Date::new(2024, 3, 1)
   let b = @tempo.Date::new(2024, 3, 15)
@@ -837,6 +1027,17 @@ test "Date::parse valid" {
 test "Date::format" {
   let d = @tempo.Date::new(2024, 3, 5)
   assert_eq(d.format(), "2024-03-05")
+}
+
+///|
+test "Date::format_ordinal" {
+  assert_eq(@tempo.Date::new(2024, 1, 1).format_ordinal(), "2024-001")
+  assert_eq(@tempo.Date::new(2024, 7, 20).format_ordinal(), "2024-202")
+  let d = @tempo.Date::new(2024, 7, 20)
+  assert_eq(
+    @tempo.Date::from_ordinal(d.year, d.day_of_year()).format_ordinal(),
+    d.format_ordinal(),
+  )
 }
 
 ///|

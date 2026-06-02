@@ -29,12 +29,17 @@ pub fn Date::add_years(Self, Int) -> Self
 pub fn Date::clamp(Self, Self, Self) -> Self
 pub fn Date::day_of_week(Self) -> Int
 pub fn Date::day_of_year(Self) -> Int
+pub fn Date::days_in_year(Self) -> Int
 pub fn Date::days_until(Self, Self) -> Int
 pub fn Date::end_of_month(Self) -> Self
+pub fn Date::end_of_quarter(Self) -> Self
 pub fn Date::end_of_year(Self) -> Self
 pub fn Date::format(Self) -> String
+pub fn Date::format_ordinal(Self) -> String
+pub fn Date::from_ordinal(Int, Int) -> Self raise TempoError
 pub fn Date::is_after(Self, Self) -> Bool
 pub fn Date::is_before(Self, Self) -> Bool
+pub fn Date::is_leap(Self) -> Bool
 pub fn Date::max(Self, Self) -> Self
 pub fn Date::min(Self, Self) -> Self
 pub fn Date::month_enum(Self) -> Month
@@ -45,7 +50,9 @@ pub fn Date::nth_weekday_of_month(Int, Int, Weekday, Int) -> Self raise TempoErr
 pub fn Date::parse(String) -> Self raise TempoError
 pub fn Date::previous(Self, Weekday) -> Self
 pub fn Date::previous_or_same(Self, Weekday) -> Self
+pub fn Date::quarter(Self) -> Int
 pub fn Date::start_of_month(Self) -> Self
+pub fn Date::start_of_quarter(Self) -> Self
 pub fn Date::start_of_year(Self) -> Self
 pub fn Date::until(Self, Self) -> Period raise TempoError
 pub fn Date::weekday(Self) -> Weekday
@@ -276,6 +283,21 @@ pub fn Weekday::number_from_sunday(Self) -> Int
 pub fn Weekday::previous(Self) -> Self
 pub fn Weekday::to_int(Self) -> Int
 pub impl Show for Weekday
+
+pub(all) struct YearMonth {
+  year : Int
+  month : Int
+} derive(Compare, Eq, Hash)
+pub fn YearMonth::at_day(Self, Int) -> Date raise TempoError
+pub fn YearMonth::at_end_of_month(Self) -> Date
+pub fn YearMonth::format(Self) -> String
+pub fn YearMonth::length(Self) -> Int
+pub fn YearMonth::month_enum(Self) -> Month
+pub fn YearMonth::new(Int, Int) -> Self raise TempoError
+pub fn YearMonth::parse(String) -> Self raise TempoError
+pub fn YearMonth::plus_months(Self, Int) -> Self
+pub fn YearMonth::plus_years(Self, Int) -> Self
+pub impl Show for YearMonth
 
 // Type aliases
 

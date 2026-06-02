@@ -38,6 +38,13 @@ pub(all) struct Period {
 } derive(Eq, Hash)
 
 ///|
+/// A calendar year and month in the proleptic Gregorian calendar.
+pub(all) struct YearMonth {
+  year : Int
+  month : Int // 1–12
+} derive(Eq, Compare, Hash)
+
+///|
 /// A calendar date interval with an inclusive end date: `[start, end]`.
 ///
 /// This mirrors NodaTime's DateInterval-vs-Interval convention split:
@@ -590,6 +597,31 @@ pub fn Period::is_zero(self : Period) -> Bool {
   self.years == 0 && self.months == 0 && self.days == 0
 }
 
+// ─── Additional calendar constructors ────────────────────────────────────────
+
+///|
+/// Create a `Date` from `year` and day-of-year in 1..365, or 1..366 for a
+/// leap year.
+pub fn Date::from_ordinal(
+  year : Int,
+  day_of_year : Int,
+) -> Date raise TempoError {
+  let days_in_year = if is_leap_year(year) { 366 } else { 365 }
+  if day_of_year < 1 || day_of_year > days_in_year {
+    raise TempoError("day_of_year \{day_of_year} out of range for year \{year}")
+  }
+  Date::new(year, 1, 1).add_days(day_of_year - 1)
+}
+
+///|
+/// Create a `YearMonth`, validating that `month` is 1–12.
+pub fn YearMonth::new(year : Int, month : Int) -> YearMonth raise TempoError {
+  if month < 1 || month > 12 {
+    raise TempoError("month \{month} out of range 1–12")
+  }
+  { year, month }
+}
+
 // ─── Date arithmetic ──────────────────────────────────────────────────────────
 
 ///|
@@ -670,6 +702,24 @@ pub fn Date::add_period(self : Date, period : Period) -> Date raise TempoError {
 }
 
 ///|
+fn YearMonth::plus_months64(self : YearMonth, months : Int64) -> YearMonth {
+  let (year, month) = shift_year_month(self.year, self.month, months)
+  { year, month }
+}
+
+///|
+/// Add a signed number of calendar months to this year-month.
+pub fn YearMonth::plus_months(self : YearMonth, months : Int) -> YearMonth {
+  self.plus_months64(months.to_int64())
+}
+
+///|
+/// Add a signed number of calendar years to this year-month.
+pub fn YearMonth::plus_years(self : YearMonth, years : Int) -> YearMonth {
+  self.plus_months64(years.to_int64() * 12L)
+}
+
+///|
 /// Return a copy of this date with `year` replaced, validating the result.
 pub fn Date::with_year(self : Date, year : Int) -> Date raise TempoError {
   Date::new(year, self.month, self.day)
@@ -715,6 +765,54 @@ pub fn Date::start_of_year(self : Date) -> Date {
 /// Return the last day of this date's calendar year.
 pub fn Date::end_of_year(self : Date) -> Date {
   { ..self, month: 12, day: 31 }
+}
+
+///|
+/// Calendar quarter number in 1..4.
+pub fn Date::quarter(self : Date) -> Int {
+  match self.month {
+    1 | 2 | 3 => 1
+    4 | 5 | 6 => 2
+    7 | 8 | 9 => 3
+    10 | 11 | 12 => 4
+    _ => abort("Date month out of range")
+  }
+}
+
+///|
+/// `true` if this date's year is a leap year.
+pub fn Date::is_leap(self : Date) -> Bool {
+  is_leap_year(self.year)
+}
+
+///|
+/// Number of days in this date's calendar year.
+pub fn Date::days_in_year(self : Date) -> Int {
+  if self.is_leap() {
+    366
+  } else {
+    365
+  }
+}
+
+///|
+/// Return the first day of this date's calendar quarter.
+pub fn Date::start_of_quarter(self : Date) -> Date {
+  let month = match self.quarter() {
+    1 => 1
+    2 => 4
+    3 => 7
+    4 => 10
+    _ => abort("Date::quarter returned out-of-range quarter")
+  }
+  { ..self, month, day: 1 }
+}
+
+///|
+/// Return the last day of this date's calendar quarter.
+pub fn Date::end_of_quarter(self : Date) -> Date {
+  let month = self.start_of_quarter().month + 2
+  { ..self, month, day: days_in_month(self.year, month) }
 }
 
 ///|
@@ -842,6 +940,33 @@ pub fn Date::month_enum(self : Date) -> Month {
     Some(month) => month
     None => abort("Date month out of range")
   }
+}
+
+///|
+/// Calendar month for this year-month.
+pub fn YearMonth::month_enum(self : YearMonth) -> Month {
+  match Month::from_int(self.month) {
+    Some(month) => month
+    None => abort("YearMonth month out of range")
+  }
+}
+
+///|
+/// Number of days in this year-month.
+pub fn YearMonth::length(self : YearMonth) -> Int {
+  self.month_enum().days_in(self.year)
+}
+
+///|
+/// Return the date in this year-month at `day`, validating the day.
+pub fn YearMonth::at_day(self : YearMonth, day : Int) -> Date raise TempoError {
+  Date::new(self.year, self.month, day)
+}
+
+///|
+/// Return the last date in this year-month.
+pub fn YearMonth::at_end_of_month(self : YearMonth) -> Date {
+  { year: self.year, month: self.month, day: self.length() }
 }
 
 ///|
@@ -1001,9 +1126,39 @@ pub fn Date::parse(s : String) -> Date raise TempoError {
 }
 
 ///|
+/// Parse a calendar year-month in 'YYYY-MM' format.
+pub fn YearMonth::parse(s : String) -> YearMonth raise TempoError {
+  let v = s.view()
+  let (year, v) = parse_digits(v, 4)
+  let v = consume(v, '-')
+  let (month, v) = parse_digits(v, 2)
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  YearMonth::new(year, month)
+}
+
+///|
 /// Format this date as 'YYYY-MM-DD'.
 pub fn Date::format(self : Date) -> String {
   "\{pad4(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}"
+}
+
+///|
+/// Format this date as an ordinal date using ISO 8601 expanded-year output
+/// (see `pad4_year`), followed by day-of-year in 001..366.
+pub fn Date::format_ordinal(self : Date) -> String {
+  "\{pad4_year(self.year)}-\{pad3(self.day_of_year())}"
+}
+
+///|
+/// Format this year-month using the same year text as `Date::format`, followed
+/// by `-` and a zero-padded month. Years in 0..9999 produce `YYYY-MM`; negative
+/// years and years >= 10000 produce expanded-year strings that cannot be
+/// round-tripped through `YearMonth::parse`.
+pub fn YearMonth::format(self : YearMonth) -> String {
+  "\{pad4_year(self.year)}-\{pad2(self.month)}"
 }
 
 ///|
@@ -1959,6 +2114,19 @@ fn pad2(n : Int) -> String {
   }
 }
 
+// Zero-pad an integer to 3 digits.
+
+///|
+fn pad3(n : Int) -> String {
+  if n < 10 {
+    "00\{n}"
+  } else if n < 100 {
+    "0\{n}"
+  } else {
+    "\{n}"
+  }
+}
+
 // Zero-pad an integer to 4 digits.
 
 ///|
@@ -2265,6 +2433,11 @@ pub impl Show for Date with fn output(self, logger) {
   logger.write_string(
     "\{pad4_year(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}",
   )
+}
+
+///|
+pub impl Show for YearMonth with fn output(self, logger) {
+  logger.write_string(self.format())
 }
 
 ///|
