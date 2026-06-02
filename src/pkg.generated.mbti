@@ -32,8 +32,12 @@ pub fn Date::days_until(Self, Self) -> Int
 pub fn Date::end_of_month(Self) -> Self
 pub fn Date::end_of_year(Self) -> Self
 pub fn Date::format(Self) -> String
+pub fn Date::format_iso_week(Self) -> String
+pub fn Date::from_iso_week(Int, Int, Int) -> Self raise TempoError
 pub fn Date::is_after(Self, Self) -> Bool
 pub fn Date::is_before(Self, Self) -> Bool
+pub fn Date::iso_week(Self) -> Int
+pub fn Date::iso_week_year(Self) -> Int
 pub fn Date::max(Self, Self) -> Self
 pub fn Date::min(Self, Self) -> Self
 pub fn Date::month_enum(Self) -> Month

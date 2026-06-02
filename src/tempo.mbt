@@ -539,6 +539,69 @@ pub fn Date::weekday(self : Date) -> Weekday {
 }
 
 ///|
+fn iso_week1_monday(week_year : Int) -> Date {
+  let jan4 = { year: week_year, month: 1, day: 4 }
+  jan4.add_days(1 - jan4.weekday().number_from_monday())
+}
+
+///|
+fn iso_weeks_in_year(week_year : Int) -> Int {
+  let jan1 = { year: week_year, month: 1, day: 1 }
+  let jan1_weekday = jan1.weekday().number_from_monday()
+  if jan1_weekday == 4 || (jan1_weekday == 3 && is_leap_year(week_year)) {
+    53
+  } else {
+    52
+  }
+}
+
+///|
+/// ISO 8601 week-numbering year for this date.
+///
+/// This can differ from the calendar year near New Year; for example,
+/// 2021-01-01 belongs to ISO week year 2020.
+pub fn Date::iso_week_year(self : Date) -> Int {
+  self.add_days(4 - self.weekday().number_from_monday()).year
+}
+
+///|
+/// ISO 8601 week number in 1..53 for this date.
+pub fn Date::iso_week(self : Date) -> Int {
+  let week_year = self.iso_week_year()
+  let week1 = iso_week1_monday(week_year)
+  week1.days_until(self) / 7 + 1
+}
+
+///|
+/// Create a date from an ISO 8601 week date.
+///
+/// `week_year` is the ISO week-numbering year, `week` is 1..52 or 1..53
+/// depending on that year, and `weekday` is Monday = 1 through Sunday = 7.
+pub fn Date::from_iso_week(
+  week_year : Int,
+  week : Int,
+  weekday : Int,
+) -> Date raise TempoError {
+  let max_week = iso_weeks_in_year(week_year)
+  if week < 1 || week > max_week {
+    raise TempoError("ISO week \{week} out of range for \{week_year}")
+  }
+  let wd = match Weekday::from_int(weekday) {
+    Some(wd) => wd
+    None => raise TempoError("ISO weekday \{weekday} out of range 1–7")
+  }
+  let days = (week - 1).to_int64() * 7L +
+    (wd.number_from_monday() - 1).to_int64()
+  iso_week1_monday(week_year).add_days(days.to_int())
+}
+
+///|
+/// Format this date as an ISO 8601 week date: `YYYY-Www-D`.
+pub fn Date::format_iso_week(self : Date) -> String {
+  "\{pad4_year(self.iso_week_year())}-W\{pad2(self.iso_week())}-\{self.weekday().number_from_monday()}"
+}
+
+///|
 fn positive_mod7(n : Int) -> Int {
   (n % 7 + 7) % 7
 }
