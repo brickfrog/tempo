@@ -21,12 +21,17 @@ pub struct Date {
 pub fn Date::add_days(Self, Int) -> Self
 pub fn Date::add_months(Self, Int) -> Self
 pub fn Date::add_years(Self, Int) -> Self
+pub fn Date::clamp(Self, Self, Self) -> Self
 pub fn Date::day_of_week(Self) -> Int
 pub fn Date::day_of_year(Self) -> Int
 pub fn Date::days_until(Self, Self) -> Int
 pub fn Date::end_of_month(Self) -> Self
 pub fn Date::end_of_year(Self) -> Self
 pub fn Date::format(Self) -> String
+pub fn Date::is_after(Self, Self) -> Bool
+pub fn Date::is_before(Self, Self) -> Bool
+pub fn Date::max(Self, Self) -> Self
+pub fn Date::min(Self, Self) -> Self
 pub fn Date::month_enum(Self) -> Month
 pub fn Date::new(Int, Int, Int) -> Self raise TempoError
 pub fn Date::parse(String) -> Self raise TempoError
@@ -43,6 +48,7 @@ pub struct DateTime {
   time : Time
 } derive(Compare, Eq)
 pub fn DateTime::add(Self, Duration) -> Self
+pub fn DateTime::clamp(Self, Self, Self) -> Self
 pub fn DateTime::diff(Self, Self) -> Duration
 pub fn DateTime::end_of_day(Self) -> Self
 pub fn DateTime::end_of_month(Self) -> Self
@@ -53,9 +59,14 @@ pub fn DateTime::from_unix_micros(Int64) -> Self
 pub fn DateTime::from_unix_millis(Int64) -> Self
 pub fn DateTime::from_unix_nanos(Int64) -> Self
 pub fn DateTime::from_unix_seconds(Int64) -> Self
+pub fn DateTime::is_after(Self, Self) -> Bool
+pub fn DateTime::is_before(Self, Self) -> Bool
+pub fn DateTime::max(Self, Self) -> Self
+pub fn DateTime::min(Self, Self) -> Self
 pub fn DateTime::new(Date, Time) -> Self
 pub fn DateTime::now() -> Self
 pub fn DateTime::parse(String) -> Self raise TempoError
+pub fn DateTime::since(Self, Self) -> Duration
 pub fn DateTime::start_of_day(Self) -> Self
 pub fn DateTime::start_of_month(Self) -> Self
 pub fn DateTime::start_of_year(Self) -> Self
@@ -67,6 +78,7 @@ pub fn DateTime::to_unix_millis(Self) -> Int64
 pub fn DateTime::to_unix_nanos(Self) -> Int64
 pub fn DateTime::to_unix_seconds(Self) -> Int64
 pub fn DateTime::truncate_to(Self, TimeUnit) -> Self
+pub fn DateTime::until(Self, Self) -> Duration
 pub fn DateTime::with_date(Self, Date) -> Self
 pub fn DateTime::with_day(Self, Int) -> Self raise TempoError
 pub fn DateTime::with_hour(Self, Int) -> Self raise TempoError
@@ -137,7 +149,12 @@ pub struct Time {
   second : Int
   nanosecond : Int
 } derive(Compare, Eq)
+pub fn Time::clamp(Self, Self, Self) -> Self
 pub fn Time::format(Self) -> String
+pub fn Time::is_after(Self, Self) -> Bool
+pub fn Time::is_before(Self, Self) -> Bool
+pub fn Time::max(Self, Self) -> Self
+pub fn Time::min(Self, Self) -> Self
 pub fn Time::new(Int, Int, Int, Int) -> Self raise TempoError
 pub fn Time::parse(String) -> Self raise TempoError
 pub fn Time::with_hour(Self, Int) -> Self raise TempoError

@@ -430,6 +430,22 @@ test "Date::days_until" {
 }
 
 ///|
+test "Date comparison helpers" {
+  let jan = @tempo.Date::new(2024, 1, 1)
+  let feb = @tempo.Date::new(2024, 2, 1)
+  let mar = @tempo.Date::new(2024, 3, 1)
+  assert_eq(jan.is_before(feb), true)
+  assert_eq(feb.is_before(jan), false)
+  assert_eq(feb.is_after(jan), true)
+  assert_eq(jan.is_after(feb), false)
+  assert_eq(mar.min(jan), jan)
+  assert_eq(jan.max(mar), mar)
+  assert_eq(jan.clamp(feb, mar), feb)
+  assert_eq(feb.clamp(jan, mar), feb)
+  assert_eq(mar.add_days(1).clamp(jan, mar), mar)
+}
+
+///|
 test "Date::parse valid" {
   let d = @tempo.Date::parse("2024-03-15")
   assert_eq(d.year, 2024)
@@ -485,6 +501,22 @@ test "Time::with field updaters reject invalid times" {
     (try? @tempo.Time::new(12, 34, 56, 789).with_nanosecond(1_000_000_000))
     is Err(_),
   )
+}
+
+///|
+test "Time comparison helpers" {
+  let early = @tempo.Time::new(8, 0, 0, 0)
+  let mid = @tempo.Time::new(12, 0, 0, 0)
+  let late = @tempo.Time::new(17, 0, 0, 0)
+  assert_eq(early.is_before(mid), true)
+  assert_eq(mid.is_before(early), false)
+  assert_eq(mid.is_after(early), true)
+  assert_eq(early.is_after(mid), false)
+  assert_eq(late.min(early), early)
+  assert_eq(early.max(late), late)
+  assert_eq(early.clamp(mid, late), mid)
+  assert_eq(mid.clamp(early, late), mid)
+  assert_eq(late.clamp(early, mid), mid)
 }
 
 ///|
@@ -1121,6 +1153,25 @@ test "DateTime compare" {
   assert_eq(a < b, true)
   assert_eq(b > a, true)
   assert_eq(a == a, true)
+}
+
+///|
+test "DateTime comparison helpers and elapsed wrappers" {
+  let dt = @tempo.DateTime::parse("2024-03-15T12:00:00Z")
+  let dt2 = dt.add(@tempo.Duration::hours(2L))
+  let dt3 = dt.add(@tempo.Duration::hours(3L))
+  assert_eq(dt.is_before(dt2), true)
+  assert_eq(dt2.is_before(dt), false)
+  assert_eq(dt2.is_after(dt), true)
+  assert_eq(dt.is_after(dt2), false)
+  assert_eq(dt3.min(dt), dt)
+  assert_eq(dt.max(dt3), dt3)
+  assert_eq(dt.clamp(dt2, dt3), dt2)
+  assert_eq(dt2.clamp(dt, dt3), dt2)
+  assert_eq(dt3.clamp(dt, dt2), dt2)
+  assert_eq(dt2.since(dt).as_hours(), 2L)
+  assert_eq(dt.until(dt2).as_hours(), 2L)
+  assert_eq(dt.since(dt2).as_hours(), -2L)
 }
 
 ///|
