@@ -733,6 +733,20 @@ pub fn DateTime::from_unix_nanos(ns : Int64) -> DateTime {
 }
 
 ///|
+/// Convert a Unix timestamp in milliseconds to a `DateTime`.
+/// Negative values represent dates before the Unix epoch.
+pub fn DateTime::from_unix_millis(ms : Int64) -> DateTime {
+  DateTime::from_unix_nanos(ms * 1_000_000L)
+}
+
+///|
+/// Convert a Unix timestamp in microseconds to a `DateTime`.
+/// Negative values represent dates before the Unix epoch.
+pub fn DateTime::from_unix_micros(us : Int64) -> DateTime {
+  DateTime::from_unix_nanos(us * 1_000L)
+}
+
+///|
 /// Convert this DateTime to a Unix timestamp in seconds (nanoseconds truncated).
 pub fn DateTime::to_unix_seconds(self : DateTime) -> Int64 {
   let days = days_from_civil(self.date.year, self.date.month, self.date.day)
@@ -749,6 +763,19 @@ pub fn DateTime::to_unix_seconds(self : DateTime) -> Int64 {
 /// `to_unix_seconds` instead.
 pub fn DateTime::to_unix_nanos(self : DateTime) -> Int64 {
   self.to_unix_seconds() * 1_000_000_000L + self.time.nanosecond.to_int64()
+}
+
+///|
+/// Convert this `DateTime` to a Unix timestamp in milliseconds.
+pub fn DateTime::to_unix_millis(self : DateTime) -> Int64 {
+  self.to_unix_seconds() * 1000L + (self.time.nanosecond / 1_000_000).to_int64()
+}
+
+///|
+/// Convert this `DateTime` to a Unix timestamp in microseconds.
+pub fn DateTime::to_unix_micros(self : DateTime) -> Int64 {
+  self.to_unix_seconds() * 1_000_000L +
+  (self.time.nanosecond / 1_000).to_int64()
 }
 
 // ─── Duration constructors ────────────────────────────────────────────────────
