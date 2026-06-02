@@ -2063,6 +2063,15 @@ test "Duration::hours" {
 }
 
 ///|
+test "Duration fractional total accessors" {
+  assert_eq(@tempo.Duration::milliseconds(1500L).as_seconds_f64(), 1.5)
+  assert_eq(@tempo.Duration::minutes(90L).as_hours_f64(), 1.5)
+  assert_eq(@tempo.Duration::seconds(30L).as_minutes_f64(), 0.5)
+  assert_eq(@tempo.Duration::milliseconds(-1500L).as_seconds_f64(), -1.5)
+  assert_eq(@tempo.Duration::seconds(0L).as_hours_f64(), 0.0)
+}
+
+///|
 test "Duration op_add" {
   let a = @tempo.Duration::seconds(30L)
   let b = @tempo.Duration::seconds(30L)

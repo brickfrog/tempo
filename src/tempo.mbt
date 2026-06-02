@@ -1917,15 +1917,42 @@ pub fn Duration::as_seconds(self : Duration) -> Int64 {
 }
 
 ///|
+/// Total seconds in this duration as a `Double`.
+///
+/// `Double` has a ~53-bit mantissa, so magnitudes beyond ~2^53 nanoseconds
+/// (~104 days) lose sub-unit precision.
+pub fn Duration::as_seconds_f64(self : Duration) -> Double {
+  self.nanoseconds.to_double() / 1_000_000_000.0
+}
+
+///|
 /// Total whole minutes in this duration (truncated toward zero).
 pub fn Duration::as_minutes(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_min
 }
 
 ///|
+/// Total minutes in this duration as a `Double`.
+///
+/// `Double` has a ~53-bit mantissa, so magnitudes beyond ~2^53 nanoseconds
+/// (~104 days) lose sub-unit precision.
+pub fn Duration::as_minutes_f64(self : Duration) -> Double {
+  self.nanoseconds.to_double() / 60_000_000_000.0
+}
+
+///|
 /// Total whole hours in this duration (truncated toward zero).
 pub fn Duration::as_hours(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_hour
+}
+
+///|
+/// Total hours in this duration as a `Double`.
+///
+/// `Double` has a ~53-bit mantissa, so magnitudes beyond ~2^53 nanoseconds
+/// (~104 days) lose sub-unit precision.
+pub fn Duration::as_hours_f64(self : Duration) -> Double {
+  self.nanoseconds.to_double() / 3_600_000_000_000.0
 }
 
 ///|
