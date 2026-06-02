@@ -1941,7 +1941,7 @@ fn parse_frac_ns(view : StringView) -> (Int, StringView) raise TempoError {
 }
 
 ///|
-let duration_calendar_units_error : String = "calendar units (years/months) are not representable as a fixed Duration; use a Period instead"
+let duration_calendar_units_error : String = "calendar units (years/months) are not representable as a fixed Duration; use a calendar-period representation instead"
 
 ///|
 fn parse_duration_number(
@@ -2011,7 +2011,7 @@ fn duration_reject_time_order() -> Unit raise TempoError {
 /// `PnDTnHnMnS`, with optional fractional seconds and leading sign.
 ///
 /// Calendar units (`Y` years or date-part `M` months) raise `TempoError`; use a
-/// future calendar `Period` type for those units.
+/// calendar-period representation for those units.
 pub fn Duration::parse_iso(s : String) -> Duration raise TempoError {
   let (negative, v) = match s.view() {
     ['-', .. rest] => (true, rest)
@@ -2090,7 +2090,9 @@ pub fn Duration::parse_iso(s : String) -> Duration raise TempoError {
           }
           ['.', .. frac_view] => {
             if !in_time {
-              raise TempoError("fractional seconds require 'T'")
+              raise TempoError(
+                "fractional components are only supported for seconds in the time part after 'T'",
+              )
             }
             if time_rank >= 3 {
               duration_reject_time_order()
