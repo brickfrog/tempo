@@ -386,8 +386,8 @@ in the stdlib hash `Map`/`Set`.
 ///|
 test {
   let counts : Map[@tempo.Date, Int] = {}
-  counts[@tempo.Date::new(2024, 3, 15)] = 3
-  assert_eq(counts[@tempo.Date::new(2024, 3, 15)], Some(3))
+  counts.set(@tempo.Date::new(2024, 3, 15), 3)
+  assert_eq(counts.get(@tempo.Date::new(2024, 3, 15)), Some(3))
 }
 ```
 
