@@ -26,6 +26,226 @@ pub struct Date {
 } derive(Eq, Compare)
 
 ///|
+/// ISO 8601 weekday, ordered Monday through Sunday.
+pub(all) enum Weekday {
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Saturday
+  Sunday
+} derive(Eq, Compare, Hash)
+
+///|
+/// ISO 8601 weekday number: Monday = 1 through Sunday = 7.
+pub fn Weekday::to_int(self : Weekday) -> Int {
+  match self {
+    Monday => 1
+    Tuesday => 2
+    Wednesday => 3
+    Thursday => 4
+    Friday => 5
+    Saturday => 6
+    Sunday => 7
+  }
+}
+
+///|
+/// Convert an ISO weekday number (1..7) to a `Weekday`.
+pub fn Weekday::from_int(n : Int) -> Weekday? {
+  match n {
+    1 => Some(Monday)
+    2 => Some(Tuesday)
+    3 => Some(Wednesday)
+    4 => Some(Thursday)
+    5 => Some(Friday)
+    6 => Some(Saturday)
+    7 => Some(Sunday)
+    _ => None
+  }
+}
+
+///|
+/// ISO 8601 weekday number: Monday = 1 through Sunday = 7.
+pub fn Weekday::number_from_monday(self : Weekday) -> Int {
+  self.to_int()
+}
+
+///|
+/// Sunday-based weekday number: Sunday = 1 through Saturday = 7.
+pub fn Weekday::number_from_sunday(self : Weekday) -> Int {
+  match self {
+    Sunday => 1
+    Monday => 2
+    Tuesday => 3
+    Wednesday => 4
+    Thursday => 5
+    Friday => 6
+    Saturday => 7
+  }
+}
+
+///|
+/// Next weekday, wrapping Sunday to Monday.
+pub fn Weekday::next(self : Weekday) -> Weekday {
+  match self {
+    Monday => Tuesday
+    Tuesday => Wednesday
+    Wednesday => Thursday
+    Thursday => Friday
+    Friday => Saturday
+    Saturday => Sunday
+    Sunday => Monday
+  }
+}
+
+///|
+/// Previous weekday, wrapping Monday to Sunday.
+pub fn Weekday::previous(self : Weekday) -> Weekday {
+  match self {
+    Monday => Sunday
+    Tuesday => Monday
+    Wednesday => Tuesday
+    Thursday => Wednesday
+    Friday => Thursday
+    Saturday => Friday
+    Sunday => Saturday
+  }
+}
+
+///|
+pub impl Show for Weekday with fn output(self, logger) {
+  match self {
+    Monday => logger.write_string("Monday")
+    Tuesday => logger.write_string("Tuesday")
+    Wednesday => logger.write_string("Wednesday")
+    Thursday => logger.write_string("Thursday")
+    Friday => logger.write_string("Friday")
+    Saturday => logger.write_string("Saturday")
+    Sunday => logger.write_string("Sunday")
+  }
+}
+
+///|
+/// Calendar month, ordered January through December.
+pub(all) enum Month {
+  January
+  February
+  March
+  April
+  May
+  June
+  July
+  August
+  September
+  October
+  November
+  December
+} derive(Eq, Compare, Hash)
+
+///|
+/// Calendar month number: January = 1 through December = 12.
+pub fn Month::to_int(self : Month) -> Int {
+  match self {
+    January => 1
+    February => 2
+    March => 3
+    April => 4
+    May => 5
+    June => 6
+    July => 7
+    August => 8
+    September => 9
+    October => 10
+    November => 11
+    December => 12
+  }
+}
+
+///|
+/// Convert a calendar month number (1..12) to a `Month`.
+pub fn Month::from_int(n : Int) -> Month? {
+  match n {
+    1 => Some(January)
+    2 => Some(February)
+    3 => Some(March)
+    4 => Some(April)
+    5 => Some(May)
+    6 => Some(June)
+    7 => Some(July)
+    8 => Some(August)
+    9 => Some(September)
+    10 => Some(October)
+    11 => Some(November)
+    12 => Some(December)
+    _ => None
+  }
+}
+
+///|
+/// Next month, wrapping December to January.
+pub fn Month::next(self : Month) -> Month {
+  match self {
+    January => February
+    February => March
+    March => April
+    April => May
+    May => June
+    June => July
+    July => August
+    August => September
+    September => October
+    October => November
+    November => December
+    December => January
+  }
+}
+
+///|
+/// Previous month, wrapping January to December.
+pub fn Month::previous(self : Month) -> Month {
+  match self {
+    January => December
+    February => January
+    March => February
+    April => March
+    May => April
+    June => May
+    July => June
+    August => July
+    September => August
+    October => September
+    November => October
+    December => November
+  }
+}
+
+///|
+/// Number of days in this month for `year`.
+pub fn Month::days_in(self : Month, year : Int) -> Int {
+  days_in_month(year, self.to_int())
+}
+
+///|
+pub impl Show for Month with fn output(self, logger) {
+  match self {
+    January => logger.write_string("January")
+    February => logger.write_string("February")
+    March => logger.write_string("March")
+    April => logger.write_string("April")
+    May => logger.write_string("May")
+    June => logger.write_string("June")
+    July => logger.write_string("July")
+    August => logger.write_string("August")
+    September => logger.write_string("September")
+    October => logger.write_string("October")
+    November => logger.write_string("November")
+    December => logger.write_string("December")
+  }
+}
+
+///|
 /// A time of day with nanosecond precision (UTC).
 pub struct Time {
   hour : Int // 0–23
@@ -227,6 +447,30 @@ pub fn Date::day_of_week(self : Date) -> Int {
   // Align so Monday (1970-01-05, etc.) is remainder 0.
   let idx = floor_mod64(d - 4L, 7L)
   idx.to_int() + 1
+}
+
+///|
+/// ISO 8601 weekday for this date.
+pub fn Date::weekday(self : Date) -> Weekday {
+  match self.day_of_week() {
+    1 => Monday
+    2 => Tuesday
+    3 => Wednesday
+    4 => Thursday
+    5 => Friday
+    6 => Saturday
+    7 => Sunday
+    _ => abort("Date::day_of_week returned out-of-range weekday")
+  }
+}
+
+///|
+/// Calendar month for this date.
+pub fn Date::month_enum(self : Date) -> Month {
+  match Month::from_int(self.month) {
+    Some(month) => month
+    None => abort("Date month out of range")
+  }
 }
 
 ///|

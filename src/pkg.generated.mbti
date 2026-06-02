@@ -27,10 +27,12 @@ pub fn Date::days_until(Self, Self) -> Int
 pub fn Date::end_of_month(Self) -> Self
 pub fn Date::end_of_year(Self) -> Self
 pub fn Date::format(Self) -> String
+pub fn Date::month_enum(Self) -> Month
 pub fn Date::new(Int, Int, Int) -> Self raise TempoError
 pub fn Date::parse(String) -> Self raise TempoError
 pub fn Date::start_of_month(Self) -> Self
 pub fn Date::start_of_year(Self) -> Self
+pub fn Date::weekday(Self) -> Weekday
 pub fn Date::with_day(Self, Int) -> Self raise TempoError
 pub fn Date::with_month(Self, Int) -> Self raise TempoError
 pub fn Date::with_year(Self, Int) -> Self raise TempoError
@@ -95,6 +97,27 @@ pub impl Neg for Duration
 pub impl Show for Duration
 pub impl Sub for Duration
 
+pub(all) enum Month {
+  January
+  February
+  March
+  April
+  May
+  June
+  July
+  August
+  September
+  October
+  November
+  December
+} derive(Compare, Eq, Hash)
+pub fn Month::days_in(Self, Int) -> Int
+pub fn Month::from_int(Int) -> Self?
+pub fn Month::next(Self) -> Self
+pub fn Month::previous(Self) -> Self
+pub fn Month::to_int(Self) -> Int
+pub impl Show for Month
+
 pub struct Time {
   hour : Int
   minute : Int
@@ -109,6 +132,23 @@ pub fn Time::with_minute(Self, Int) -> Self raise TempoError
 pub fn Time::with_nanosecond(Self, Int) -> Self raise TempoError
 pub fn Time::with_second(Self, Int) -> Self raise TempoError
 pub impl Show for Time
+
+pub(all) enum Weekday {
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Saturday
+  Sunday
+} derive(Compare, Eq, Hash)
+pub fn Weekday::from_int(Int) -> Self?
+pub fn Weekday::next(Self) -> Self
+pub fn Weekday::number_from_monday(Self) -> Int
+pub fn Weekday::number_from_sunday(Self) -> Int
+pub fn Weekday::previous(Self) -> Self
+pub fn Weekday::to_int(Self) -> Int
+pub impl Show for Weekday
 
 // Type aliases
 
