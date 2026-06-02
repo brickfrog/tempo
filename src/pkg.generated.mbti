@@ -34,6 +34,8 @@ pub fn Date::end_of_month(Self) -> Self
 pub fn Date::end_of_quarter(Self) -> Self
 pub fn Date::end_of_year(Self) -> Self
 pub fn Date::format(Self) -> String
+pub fn Date::format_ordinal(Self) -> String
+pub fn Date::from_ordinal(Int, Int) -> Self raise TempoError
 pub fn Date::is_after(Self, Self) -> Bool
 pub fn Date::is_before(Self, Self) -> Bool
 pub fn Date::is_leap(Self) -> Bool
