@@ -251,6 +251,21 @@ pub fn Weekday::previous(Self) -> Self
 pub fn Weekday::to_int(Self) -> Int
 pub impl Show for Weekday
 
+pub(all) struct YearMonth {
+  year : Int
+  month : Int
+} derive(Compare, Eq, Hash)
+pub fn YearMonth::at_day(Self, Int) -> Date raise TempoError
+pub fn YearMonth::at_end_of_month(Self) -> Date
+pub fn YearMonth::format(Self) -> String
+pub fn YearMonth::length(Self) -> Int
+pub fn YearMonth::month_enum(Self) -> Month
+pub fn YearMonth::new(Int, Int) -> Self raise TempoError
+pub fn YearMonth::parse(String) -> Self raise TempoError
+pub fn YearMonth::plus_months(Self, Int) -> Self
+pub fn YearMonth::plus_years(Self, Int) -> Self
+pub impl Show for YearMonth
+
 // Type aliases
 
 // Traits

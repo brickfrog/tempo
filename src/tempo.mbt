@@ -26,6 +26,13 @@ pub struct Date {
 } derive(Eq, Compare, Hash)
 
 ///|
+/// A calendar year and month in the proleptic Gregorian calendar.
+pub(all) struct YearMonth {
+  year : Int
+  month : Int // 1–12
+} derive(Eq, Compare, Hash)
+
+///|
 /// A calendar date interval with an inclusive end date: `[start, end]`.
 ///
 /// This mirrors NodaTime's DateInterval-vs-Interval convention split:
@@ -420,6 +427,15 @@ pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
   { year, month, day }
 }
 
+///|
+/// Create a `YearMonth`, validating that `month` is 1–12.
+pub fn YearMonth::new(year : Int, month : Int) -> YearMonth raise TempoError {
+  if month < 1 || month > 12 {
+    raise TempoError("month \{month} out of range 1–12")
+  }
+  { year, month }
+}
+
 // ─── Date arithmetic ──────────────────────────────────────────────────────────
 
 ///|
@@ -456,6 +472,24 @@ pub fn Date::add_months(self : Date, months : Int) -> Date {
 /// non-leap target years.
 pub fn Date::add_years(self : Date, years : Int) -> Date {
   self.add_months64(years.to_int64() * 12L)
+}
+
+///|
+fn YearMonth::plus_months64(self : YearMonth, months : Int64) -> YearMonth {
+  let (year, month) = shift_year_month(self.year, self.month, months)
+  { year, month }
+}
+
+///|
+/// Add a signed number of calendar months to this year-month.
+pub fn YearMonth::plus_months(self : YearMonth, months : Int) -> YearMonth {
+  self.plus_months64(months.to_int64())
+}
+
+///|
+/// Add a signed number of calendar years to this year-month.
+pub fn YearMonth::plus_years(self : YearMonth, years : Int) -> YearMonth {
+  self.plus_months64(years.to_int64() * 12L)
 }
 
 ///|
@@ -623,6 +657,33 @@ pub fn Date::month_enum(self : Date) -> Month {
 }
 
 ///|
+/// Calendar month for this year-month.
+pub fn YearMonth::month_enum(self : YearMonth) -> Month {
+  match Month::from_int(self.month) {
+    Some(month) => month
+    None => abort("YearMonth month out of range")
+  }
+}
+
+///|
+/// Number of days in this year-month.
+pub fn YearMonth::length(self : YearMonth) -> Int {
+  self.month_enum().days_in(self.year)
+}
+
+///|
+/// Return the date in this year-month at `day`, validating the day.
+pub fn YearMonth::at_day(self : YearMonth, day : Int) -> Date raise TempoError {
+  Date::new(self.year, self.month, day)
+}
+
+///|
+/// Return the last date in this year-month.
+pub fn YearMonth::at_end_of_month(self : YearMonth) -> Date {
+  { year: self.year, month: self.month, day: self.length() }
+}
+
+///|
 /// Day of year in 1..366 (1 = January 1).
 pub fn Date::day_of_year(self : Date) -> Int {
   let y = self.year
@@ -744,9 +805,29 @@ pub fn Date::parse(s : String) -> Date raise TempoError {
 }
 
 ///|
+/// Parse a calendar year-month in 'YYYY-MM' format.
+pub fn YearMonth::parse(s : String) -> YearMonth raise TempoError {
+  let v = s.view()
+  let (year, v) = parse_digits(v, 4)
+  let v = consume(v, '-')
+  let (month, v) = parse_digits(v, 2)
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  YearMonth::new(year, month)
+}
+
+///|
 /// Format this date as 'YYYY-MM-DD'.
 pub fn Date::format(self : Date) -> String {
   "\{pad4(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}"
+}
+
+///|
+/// Format this year-month as 'YYYY-MM'.
+pub fn YearMonth::format(self : YearMonth) -> String {
+  "\{pad4_year(self.year)}-\{pad2(self.month)}"
 }
 
 ///|
@@ -1987,6 +2068,11 @@ pub impl Show for Date with fn output(self, logger) {
   logger.write_string(
     "\{pad4_year(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}",
   )
+}
+
+///|
+pub impl Show for YearMonth with fn output(self, logger) {
+  logger.write_string(self.format())
 }
 
 ///|
