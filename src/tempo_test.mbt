@@ -157,6 +157,214 @@ test "Date::add_years avoids Int month overflow" {
 }
 
 ///|
+test "Period stores calendar fields structurally" {
+  let p = @tempo.Period::of(0, 15, 0)
+  assert_eq(p.years, 0)
+  assert_eq(p.months, 15)
+  assert_eq(p.days, 0)
+  assert_eq(p.years(), 0)
+  assert_eq(p.months(), 15)
+  assert_eq(p.days(), 0)
+  assert_eq(@tempo.Period::of_years(2), @tempo.Period::of(2, 0, 0))
+  assert_eq(@tempo.Period::of_months(15), p)
+  assert_eq(@tempo.Period::of_days(30), @tempo.Period::of(0, 0, 30))
+  assert_eq(@tempo.Period::zero(), @tempo.Period::of(0, 0, 0))
+  assert_eq(@tempo.Period::of(0, 15, 0) == @tempo.Period::of(1, 3, 0), false)
+}
+
+///|
+test "Period normalization rolls months only" {
+  assert_eq(
+    @tempo.Period::of(1, 15, 0).normalized(),
+    @tempo.Period::of(2, 3, 0),
+  )
+  assert_eq(
+    @tempo.Period::of(0, 15, 5).normalized(),
+    @tempo.Period::of(1, 3, 5),
+  )
+  assert_eq(
+    @tempo.Period::of(1, -25, 0).normalized(),
+    @tempo.Period::of(-1, -1, 0),
+  )
+  assert_eq(@tempo.Period::of(2, 3, 5).to_total_months(), 27L)
+}
+
+///|
+test "Period normalization raises on Int overflow" {
+  assert_true(
+    (try? @tempo.Period::of(@int.MAX_VALUE, @int.MAX_VALUE, 0).normalized())
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Period::of(@int.MIN_VALUE, @int.MIN_VALUE, 0).normalized())
+    is Err(_),
+  )
+}
+
+///|
+test "Period field arithmetic is checked and non-normalizing" {
+  assert_eq(
+    @tempo.Period::of(1, 15, 3).plus(@tempo.Period::of(2, -5, 7)),
+    @tempo.Period::of(3, 10, 10),
+  )
+  assert_eq(
+    @tempo.Period::of(1, 15, 3).minus(@tempo.Period::of(2, -5, 7)),
+    @tempo.Period::of(-1, 20, -4),
+  )
+  assert_eq(@tempo.Period::of(1, -2, 3).negated(), @tempo.Period::of(-1, 2, -3))
+  assert_eq(@tempo.Period::zero().is_zero(), true)
+  assert_eq(@tempo.Period::of(0, 0, 1).is_zero(), false)
+  assert_true(
+    (try? @tempo.Period::of(@int.MAX_VALUE, 0, 0).plus(
+      @tempo.Period::of(1, 0, 0),
+    ))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Period::of(@int.MIN_VALUE, 0, 0).negated()) is Err(_),
+  )
+}
+
+///|
+test "Period of_weeks stores checked days" {
+  assert_eq(@tempo.Period::of_weeks(2), @tempo.Period::of(0, 0, 14))
+  assert_true((try? @tempo.Period::of_weeks(@int.MAX_VALUE)) is Err(_))
+}
+
+///|
+test "Date::add_period applies months before days" {
+  assert_eq(
+    @tempo.Date::new(2024, 1, 31).add_period(@tempo.Period::of(0, 1, 0)),
+    @tempo.Date::new(2024, 2, 29),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 1, 31).add_period(@tempo.Period::of(0, 0, 30)),
+    @tempo.Date::new(2024, 3, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 2, 29).add_period(@tempo.Period::of(0, 13, 0)),
+    @tempo.Date::new(2025, 3, 29),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 1, 31).add_period(@tempo.Period::of(1, 1, 1)),
+    @tempo.Date::new(2025, 3, 1),
+  )
+}
+
+///|
+test "Date::add_period raises on date overflow" {
+  assert_true(
+    (try? @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_period(
+      @tempo.Period::of_months(1),
+    ))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Date::new(@int.MIN_VALUE, 1, 1).add_period(
+      @tempo.Period::of_months(-1),
+    ))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_period(
+      @tempo.Period::of_days(1),
+    ))
+    is Err(_),
+  )
+}
+
+///|
+test "Date::until returns round-tripping Periods" {
+  let forward = @tempo.Date::new(2024, 1, 31)
+  let forward_end = @tempo.Date::new(2024, 3, 30)
+  let forward_period = forward.until(forward_end)
+  assert_eq(forward.add_period(forward_period), forward_end)
+  assert_eq(forward_period, @tempo.Period::of(0, 1, 30))
+  let backward_clamp = @tempo.Date::new(2023, 3, 30)
+  let backward_clamp_end = @tempo.Date::new(2023, 2, 28)
+  let backward_clamp_period = backward_clamp.until(backward_clamp_end)
+  assert_eq(
+    backward_clamp.add_period(backward_clamp_period),
+    backward_clamp_end,
+  )
+  assert_eq(backward_clamp_period, @tempo.Period::of(0, -1, 0))
+  let backward_leap_clamp = @tempo.Date::new(2024, 3, 30)
+  let backward_leap_clamp_end = @tempo.Date::new(2024, 1, 31)
+  let backward_leap_clamp_period = backward_leap_clamp.until(
+    backward_leap_clamp_end,
+  )
+  assert_eq(
+    backward_leap_clamp.add_period(backward_leap_clamp_period),
+    backward_leap_clamp_end,
+  )
+  assert_eq(backward_leap_clamp_period, @tempo.Period::of(0, -1, -29))
+  let forward_clamp = @tempo.Date::new(2024, 1, 31)
+  let forward_clamp_end = @tempo.Date::new(2024, 3, 1)
+  let forward_clamp_period = forward_clamp.until(forward_clamp_end)
+  assert_eq(forward_clamp.add_period(forward_clamp_period), forward_clamp_end)
+  assert_eq(forward_clamp_period, @tempo.Period::of(0, 1, 1))
+  let negative_non_clamp = @tempo.Date::new(2024, 5, 15)
+  let negative_non_clamp_end = @tempo.Date::new(2024, 3, 10)
+  let negative_non_clamp_period = negative_non_clamp.until(
+    negative_non_clamp_end,
+  )
+  assert_eq(
+    negative_non_clamp.add_period(negative_non_clamp_period),
+    negative_non_clamp_end,
+  )
+  assert_eq(negative_non_clamp_period, @tempo.Period::of(0, -2, -5))
+}
+
+///|
+test "Date::until raises when Period fields cannot represent distance" {
+  assert_true(
+    (try? @tempo.Date::new(@int.MIN_VALUE, 1, 1).until(
+      @tempo.Date::new(@int.MAX_VALUE, 12, 31),
+    ))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Date::new(@int.MAX_VALUE, 12, 31).until(
+      @tempo.Date::new(@int.MIN_VALUE, 1, 1),
+    ))
+    is Err(_),
+  )
+}
+
+///|
+test "Period format parse round-trips date components" {
+  assert_eq(@tempo.Period::of(1, 2, 3).format(), "P1Y2M3D")
+  assert_eq(@tempo.Period::zero().format(), "P0D")
+  assert_eq(@tempo.Period::of(-1, -2, -3).format(), "P-1Y-2M-3D")
+  let values = [
+    @tempo.Period::zero(),
+    @tempo.Period::of(1, 2, 3),
+    @tempo.Period::of(-1, -2, -3),
+    @tempo.Period::of(0, 15, 0),
+    @tempo.Period::of(0, 0, -14),
+  ]
+  for p in values {
+    assert_eq(@tempo.Period::parse(p.format()), p)
+  }
+  assert_eq(@tempo.Period::parse("P2W"), @tempo.Period::of(0, 0, 14))
+  assert_eq(@tempo.Period::parse("P-2W"), @tempo.Period::of(0, 0, -14))
+  assert_true((try? @tempo.Period::parse("P1YT2H")) is Err(_))
+  assert_true((try? @tempo.Period::parse("PT2H")) is Err(_))
+  inspect(@tempo.Period::of(1, 2, 3), content="P1Y2M3D")
+}
+
+///|
+test "Period is a hash collection key" {
+  let values : Map[@tempo.Period, String] = {}
+  values.set(@tempo.Period::of(0, 15, 0), "fifteen months")
+  values.set(@tempo.Period::of(1, 3, 0), "one year three months")
+  assert_true(values.get(@tempo.Period::of(0, 15, 0)) == Some("fifteen months"))
+  assert_true(
+    values.get(@tempo.Period::of(1, 3, 0)) == Some("one year three months"),
+  )
+}
+
+///|
 test "Date::with field updaters" {
   let d = @tempo.Date::new(2024, 3, 15)
   assert_eq(d.with_day(1), @tempo.Date::new(2024, 3, 1))
