@@ -1308,6 +1308,30 @@ test "Duration::checked_multiply" {
 }
 
 ///|
+test "Duration::checked_add and checked_sub" {
+  assert_true(
+    @tempo.Duration::seconds(2L).checked_add(@tempo.Duration::seconds(3L)) ==
+    Some(@tempo.Duration::seconds(5L)),
+  )
+  assert_true(
+    @tempo.Duration::nanoseconds(@tempo.DateTime::max_unix_nanos()).checked_add(
+      @tempo.Duration::nanoseconds(1L),
+    )
+    is None,
+  )
+  assert_true(
+    @tempo.Duration::seconds(5L).checked_sub(@tempo.Duration::seconds(3L)) ==
+    Some(@tempo.Duration::seconds(2L)),
+  )
+  assert_true(
+    @tempo.Duration::nanoseconds(@tempo.DateTime::min_unix_nanos()).checked_sub(
+      @tempo.Duration::nanoseconds(1L),
+    )
+    is None,
+  )
+}
+
+///|
 test "Duration::divide" {
   assert_eq(
     @tempo.Duration::seconds(6L).divide(2L),
@@ -1374,6 +1398,39 @@ test "DateTime::diff negative" {
   let b = @tempo.DateTime::from_unix_seconds(0L)
   let d = b.diff(a)
   assert_eq(d.as_nanoseconds(), -3_600_000_000_000L)
+}
+
+///|
+test "DateTime::checked_add and checked_sub" {
+  let epoch = @tempo.DateTime::epoch()
+  let one_hour = @tempo.Duration::hours(1L)
+  assert_true(epoch.checked_add(one_hour) == Some(epoch.add(one_hour)))
+  assert_true(epoch.checked_sub(one_hour) == Some(epoch.sub(one_hour)))
+  let far_future = @tempo.DateTime::parse("3000-01-01T00:00:00Z")
+  assert_true(far_future.checked_add(@tempo.Duration::seconds(1L)) is None)
+  assert_true(far_future.checked_sub(@tempo.Duration::seconds(1L)) is None)
+  assert_true(
+    @tempo.DateTime::from_unix_nanos(@tempo.DateTime::max_unix_nanos()).checked_add(
+      @tempo.Duration::nanoseconds(1L),
+    )
+    is None,
+  )
+  assert_true(
+    @tempo.DateTime::from_unix_nanos(@tempo.DateTime::min_unix_nanos()).checked_sub(
+      @tempo.Duration::nanoseconds(1L),
+    )
+    is None,
+  )
+}
+
+///|
+test "DateTime::checked_diff" {
+  let epoch = @tempo.DateTime::epoch()
+  let later = epoch.add(@tempo.Duration::hours(1L))
+  assert_true(later.checked_diff(epoch) == Some(@tempo.Duration::hours(1L)))
+  let far_future = @tempo.DateTime::parse("3000-01-01T00:00:00Z")
+  assert_true(far_future.checked_diff(epoch) is None)
+  assert_true(epoch.checked_diff(far_future) is None)
 }
 
 ///|
