@@ -298,6 +298,85 @@ test {
 }
 ```
 
+## Rounding and truncation
+
+`start_of_day`/`end_of_day`, `truncate_to(unit)` (floor to a `TimeUnit`), and
+`round_to(unit, mode)` snap a `DateTime` to a boundary. `round_to` takes a
+`RoundMode` of `Floor`, `Ceil`, or `HalfExpand` (ties round up).
+
+```moonbit nocheck
+///|
+test {
+  let dt = @tempo.DateTime::parse("2024-03-15T14:31:43.125Z")
+  inspect(dt.start_of_day().format(), content="2024-03-15T00:00:00Z")
+  inspect(dt.truncate_to(@tempo.Hour).format(), content="2024-03-15T14:00:00Z")
+
+  let half = @tempo.DateTime::parse("2024-03-15T14:30:00Z")
+  inspect(
+    half.round_to(@tempo.Hour, @tempo.HalfExpand).format(),
+    content="2024-03-15T15:00:00Z",
+  )
+}
+```
+
+## Comparison
+
+Named helpers over the derived ordering: `is_before`/`is_after`, `min`/`max`,
+and `clamp` for `Date`/`Time`/`DateTime`, plus wall-clock `DateTime::since`/
+`until` (over `diff`).
+
+```moonbit nocheck
+///|
+test {
+  let a = @tempo.Date::new(2024, 1, 1)
+  let b = @tempo.Date::new(2024, 2, 1)
+  assert_eq(a.is_before(b), true)
+  assert_eq(a.max(b), b)
+
+  let dt = @tempo.DateTime::parse("2024-03-15T12:00:00Z")
+  let later = dt.add(@tempo.Duration::hours(2L))
+  inspect(later.since(dt).as_hours(), content="2")
+}
+```
+
+## Intervals
+
+`DateInterval` is an inclusive `[start, end]` range of dates; `Interval` is a
+half-open `[start, end)` range of datetimes. Both provide `contains`,
+`overlaps`, and `intersection`.
+
+```moonbit nocheck
+///|
+test {
+  let span = @tempo.DateInterval::{
+    start: @tempo.Date::new(2024, 1, 1),
+    end: @tempo.Date::new(2024, 1, 10),
+  }
+  assert_eq(span.contains(@tempo.Date::new(2024, 1, 5)), true)
+  inspect(span.length_in_days(), content="10")
+}
+```
+
+## Weekday navigation
+
+`Date::next`/`previous` find the nearest date on a weekday (strictly
+after/before); `next_or_same`/`previous_or_same` include the date itself; and
+`nth_weekday_of_month` finds the nth occurrence (a negative `n` counts from the
+end).
+
+```moonbit nocheck
+///|
+test {
+  let fri = @tempo.Date::new(2024, 3, 15) // a Friday
+  inspect(fri.next(@tempo.Monday).format(), content="2024-03-18")
+  inspect(fri.previous(@tempo.Monday).format(), content="2024-03-11")
+
+  // 3rd Tuesday of March 2024
+  let t = @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Tuesday, 3)
+  inspect(t.format(), content="2024-03-19")
+}
+```
+
 ## Date and Time parsing/formatting
 
 ```moonbit nocheck

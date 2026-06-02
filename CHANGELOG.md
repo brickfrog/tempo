@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-02
+
+### Added
+
+- `DateTime::start_of_day` / `end_of_day`, and `truncate_to(unit)` flooring to a
+  `TimeUnit` (`Second` / `Minute` / `Hour` / `Day`). (#23)
+- Comparison helpers `is_before` / `is_after` / `min` / `max` / `clamp` for
+  `Date`, `Time`, and `DateTime`, plus wall-clock `DateTime::since` / `until`. (#24)
+- `DateInterval` (inclusive `[start, end]`) and `Interval` (half-open
+  `[start, end)`) range types with `contains`, `overlaps`, `intersection`, and
+  `length_in_days` / `to_duration`. (#25)
+- `DateTime::round_to(unit, mode)` with a `RoundMode` of `Floor` / `Ceil` /
+  `HalfExpand` (ties round up). (#26)
+- Weekday navigation on `Date`: `next` / `previous` / `next_or_same` /
+  `previous_or_same`, and `nth_weekday_of_month` (negative `n` counts from the
+  end; an occurrence outside the month raises `TempoError`). (#27)
+
 ## [0.4.0] - 2026-06-02
 
 ### Added
