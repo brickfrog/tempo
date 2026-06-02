@@ -1580,6 +1580,7 @@ test "DateTime::format_with tokens and literals" {
 test "DateTime::format_with rejects unknown token" {
   let dt = @tempo.DateTime::parse("2024-03-15T12:34:56Z")
   assert_true((try? dt.format_with("{ZZ}")) is Err(_))
+  assert_true((try? dt.format_with("{YYYY}}")) is Err(_))
 }
 
 ///|

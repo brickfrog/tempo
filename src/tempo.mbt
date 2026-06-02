@@ -2349,9 +2349,9 @@ pub fn DateTime::format(self : DateTime) -> String {
 /// Format this DateTime with a brace-token pattern.
 ///
 /// Supported tokens are `{YYYY}`, `{MM}`, `{DD}`, `{HH}`, `{mm}`, `{ss}`,
-/// `{fff}`, and `{nnnnnnnnn}`. Text outside tokens is copied literally. Use
-/// `{{` and `}}` to emit literal braces. Unknown or unterminated `{...}` tokens
-/// raise `TempoError`.
+/// `{fff}`, and `{nnnnnnnnn}`. Non-brace text outside tokens is copied
+/// literally. Use `{{` and `}}` to emit literal braces. Unknown tokens and
+/// unmatched braces raise `TempoError`.
 pub fn DateTime::format_with(
   self : DateTime,
   pattern : String,
@@ -2377,9 +2377,13 @@ pub fn DateTime::format_with(
         buf.write_string(format_datetime_pattern_token(self, token))
         i = end + 1
       }
-    } else if pattern[i] == '}' && i + 1 < len && pattern[i + 1] == '}' {
-      buf.write_string("}")
-      i += 2
+    } else if pattern[i] == '}' {
+      if i + 1 < len && pattern[i + 1] == '}' {
+        buf.write_string("}")
+        i += 2
+      } else {
+        raise TempoError("unmatched closing brace in datetime format pattern")
+      }
     } else {
       buf.write_string(pattern[i:i + 1].to_owned())
       i += 1
