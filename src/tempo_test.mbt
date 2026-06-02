@@ -1137,6 +1137,122 @@ test "DateTime::parse offset normalization matches Z equivalent" {
 }
 
 ///|
+test "FixedOffsetDateTime::parse retains negative offset" {
+  let dt = @tempo.FixedOffsetDateTime::parse("2024-07-21T17:11:00-04:00")
+  assert_eq(dt.offset_seconds(), -14400)
+  assert_eq(dt.to_utc().format(), "2024-07-21T21:11:00Z")
+  assert_eq(dt.format(), "2024-07-21T17:11:00-04:00")
+}
+
+///|
+test "FixedOffsetDateTime::parse retains positive offset" {
+  let dt = @tempo.FixedOffsetDateTime::parse("2024-07-21T17:11:00+05:30")
+  assert_eq(dt.offset_seconds(), 19800)
+  assert_eq(dt.to_utc().format(), "2024-07-21T11:41:00Z")
+  assert_eq(dt.format(), "2024-07-21T17:11:00+05:30")
+}
+
+///|
+test "FixedOffsetDateTime::parse retains UTC offset" {
+  let dt = @tempo.FixedOffsetDateTime::parse("2024-07-21T17:11:00Z")
+  assert_eq(dt.offset_seconds(), 0)
+  assert_eq(dt.to_utc().format(), "2024-07-21T17:11:00Z")
+  assert_eq(dt.format(), "2024-07-21T17:11:00Z")
+}
+
+///|
+test "FixedOffsetDateTime::parse round-trips offset strings" {
+  let negative = "2024-07-21T17:11:00-04:00"
+  let positive = "2024-07-21T17:11:00+05:30"
+  assert_eq(@tempo.FixedOffsetDateTime::parse(negative).format(), negative)
+  assert_eq(@tempo.FixedOffsetDateTime::parse(positive).format(), positive)
+}
+
+///|
+test "FixedOffsetDateTime::from_datetime_and_offset bundles instant and offset" {
+  let utc = @tempo.DateTime::parse("2024-07-21T21:11:00Z")
+  let dt = @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, -14400)
+  assert_eq(dt.to_utc(), utc)
+  assert_eq(dt.offset_seconds(), -14400)
+  assert_eq(dt.format(), "2024-07-21T17:11:00-04:00")
+}
+
+///|
+test "FixedOffsetDateTime::from_datetime_and_offset rejects invalid offsets" {
+  let utc = @tempo.DateTime::parse("2024-07-21T21:11:00Z")
+  assert_true(
+    (try? @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 61))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 86400))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, -86400))
+    is Err(_),
+  )
+}
+
+///|
+test "FixedOffsetDateTime::format supports max positive offset" {
+  let s = "2024-07-21T00:00:00+23:59"
+  let dt = @tempo.FixedOffsetDateTime::parse(s)
+  assert_eq(dt.offset_seconds(), 23 * 3600 + 59 * 60)
+  assert_eq(dt.to_utc().format(), "2024-07-20T00:01:00Z")
+  assert_eq(dt.format(), s)
+  assert_eq(
+    @tempo.FixedOffsetDateTime::from_datetime_and_offset(
+      @tempo.DateTime::parse("2024-07-20T00:01:00Z"),
+      23 * 3600 + 59 * 60,
+    ).format(),
+    s,
+  )
+}
+
+///|
+test "panic format_extreme_year_boundary" {
+  let dt = @tempo.DateTime::new(
+    @tempo.Date::new(@int.MAX_VALUE, 12, 31),
+    @tempo.Time::new(23, 59, 0, 0),
+  )
+  @tempo.FixedOffsetDateTime::from_datetime_and_offset(dt, 60).format()
+  |> ignore
+}
+
+///|
+test "FixedOffsetDateTime Eq and Compare include offset" {
+  let utc = @tempo.DateTime::parse("2024-07-21T21:11:00Z")
+  let a = @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, -14400)
+  let b = @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, -14400)
+  let c = @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 0)
+  assert_eq(a == b, true)
+  assert_eq(a == c, false)
+  assert_eq(a < c, true)
+}
+
+///|
+test "FixedOffsetDateTime is a hash collection key" {
+  let dt = @tempo.FixedOffsetDateTime::parse("2024-07-21T17:11:00-04:00")
+  let values : Map[@tempo.FixedOffsetDateTime, String] = {}
+  values.set(dt, "offset")
+  assert_true(values.get(dt) == Some("offset"))
+}
+
+///|
+test "FixedOffsetDateTime::format carries local date across midnight" {
+  let utc = @tempo.DateTime::parse("2024-07-21T23:30:00Z")
+  let dt = @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 7200)
+  assert_eq(dt.format(), "2024-07-22T01:30:00+02:00")
+}
+
+///|
+test "Show FixedOffsetDateTime writes formatted value" {
+  let dt = @tempo.FixedOffsetDateTime::parse("2024-07-21T17:11:00-04:00")
+  inspect(dt, content="2024-07-21T17:11:00-04:00")
+}
+
+///|
 test "DateTime::parse rejects out-of-range offset" {
   assert_true(
     (try? @tempo.DateTime::parse("2024-03-15T12:34:56+24:00")) is Err(_),

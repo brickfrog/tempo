@@ -1,5 +1,5 @@
 // tempo — UTC-only date/time library for MoonBit
-// Types: Date, Time, DateTime, Duration
+// Types: Date, Time, DateTime, FixedOffsetDateTime, Duration
 // Features: Unix timestamps, RFC 3339 parsing/formatting, arithmetic
 
 ///|
@@ -309,6 +309,18 @@ pub impl Show for RoundMode with fn output(self, logger) {
 pub struct DateTime {
   date : Date
   time : Time
+} derive(Eq, Compare, Hash)
+
+///|
+/// A UTC instant paired with a fixed numeric display offset.
+///
+/// `DateTime` is tempo's primary timestamp type. Use `FixedOffsetDateTime` only
+/// for wire formats and interop surfaces where a timestamp carries an explicit
+/// numeric offset but no IANA time zone. The stored instant is normalized UTC;
+/// the offset is retained only as a display hint.
+pub struct FixedOffsetDateTime {
+  priv utc : DateTime
+  priv offset_seconds : Int
 } derive(Eq, Compare, Hash)
 
 ///|
@@ -850,6 +862,47 @@ pub fn DateTime::to_date(self : DateTime) -> Date {
 /// Return the time component of this `DateTime`.
 pub fn DateTime::to_time(self : DateTime) -> Time {
   self.time
+}
+
+///|
+/// Bundle a UTC instant with a fixed numeric display offset in seconds.
+///
+/// The `utc` argument is the UTC instant and is stored as-is. `DateTime`
+/// remains tempo's primary timestamp type; this wrapper is for wire-format
+/// interop when a timestamp carries an explicit numeric offset but no IANA
+/// time zone.
+///
+/// Raises `TempoError` when `offset_seconds` is not whole-minute granularity or
+/// is outside the RFC 3339 fixed-offset range ±23:59.
+pub fn FixedOffsetDateTime::from_datetime_and_offset(
+  utc : DateTime,
+  offset_seconds : Int,
+) -> FixedOffsetDateTime raise TempoError {
+  validate_fixed_offset_seconds(offset_seconds)
+  { utc, offset_seconds }
+}
+
+///|
+fn validate_fixed_offset_seconds(offset_seconds : Int) -> Unit raise TempoError {
+  if offset_seconds % 60 != 0 {
+    raise TempoError("fixed offset must be whole-minute granularity")
+  }
+  let max_offset_seconds = 23 * 3600 + 59 * 60
+  if offset_seconds < -max_offset_seconds || offset_seconds > max_offset_seconds {
+    raise TempoError("fixed offset out of RFC 3339 range ±23:59")
+  }
+}
+
+///|
+/// Return the stored UTC instant.
+pub fn FixedOffsetDateTime::to_utc(self : FixedOffsetDateTime) -> DateTime {
+  self.utc
+}
+
+///|
+/// Return the retained fixed display offset in seconds.
+pub fn FixedOffsetDateTime::offset_seconds(self : FixedOffsetDateTime) -> Int {
+  self.offset_seconds
 }
 
 ///|
@@ -1727,14 +1780,75 @@ fn fmt_frac(ns : Int) -> String {
 /// Note: expanded-year output (years outside 0000–9999) cannot be round-tripped
 /// through `DateTime::parse`, which accepts only 4-digit positive years (RFC 3339).
 pub fn DateTime::format(self : DateTime) -> String {
-  let d = self.date
-  let t = self.time
+  format_datetime_without_zone(self) + "Z"
+}
+
+///|
+fn format_datetime_without_zone(dt : DateTime) -> String {
+  let d = dt.date
+  let t = dt.time
   let base = "\{pad4_year(d.year)}-\{pad2(d.month)}-\{pad2(d.day)}T\{pad2(t.hour)}:\{pad2(t.minute)}:\{pad2(t.second)}"
   if t.nanosecond == 0 {
-    base + "Z"
+    base
   } else {
-    base + "." + fmt_frac(t.nanosecond) + "Z"
+    base + "." + fmt_frac(t.nanosecond)
   }
+}
+
+///|
+fn shift_datetime_by_seconds(dt : DateTime, offset_seconds : Int) -> DateTime {
+  let t = dt.time
+  let seconds_of_day = t.hour * 3600 + t.minute * 60 + t.second
+  let total_seconds = seconds_of_day.to_int64() + offset_seconds.to_int64()
+  let day_delta = floor_div64(total_seconds, 86400L).to_int()
+  let local_second = floor_mod64(total_seconds, 86400L).to_int()
+  {
+    date: dt.date.add_days(day_delta),
+    time: {
+      hour: local_second / 3600,
+      minute: local_second % 3600 / 60,
+      second: local_second % 60,
+      nanosecond: t.nanosecond,
+    },
+  }
+}
+
+///|
+fn format_offset_suffix(offset_seconds : Int) -> String {
+  if offset_seconds == 0 {
+    "Z"
+  } else {
+    let offset = offset_seconds.to_int64()
+    let sign = if offset < 0L { "-" } else { "+" }
+    let abs_seconds = if offset < 0L { -offset } else { offset }
+    let total_minutes = abs_seconds / 60L
+    let hours = (total_minutes / 60L).to_int()
+    let minutes = (total_minutes % 60L).to_int()
+    "\{sign}\{pad2(hours)}:\{pad2(minutes)}"
+  }
+}
+
+///|
+/// Format the local wall-clock time with the retained fixed offset.
+///
+/// The local wall-clock is computed as the stored UTC instant plus
+/// `offset_seconds`; the fixed offset suffix is `Z` for zero and `+HH:MM` /
+/// `-HH:MM` otherwise. This is for RFC 3339-style interop only; `DateTime`
+/// remains the primary UTC timestamp type.
+///
+/// Note: formatting can abort when the local-time projection carries the year
+/// near the `Int` extremes — it uses the same bounded-`Int` date arithmetic
+/// (`Date::add_days`) and year padding (`pad4_year`) as `Date`/`DateTime`.
+/// This is a known implementation boundary shared with those primitives, not a
+/// property unique to `FixedOffsetDateTime`; it lies outside the current
+/// arithmetic envelope (year ≈ ±2.1e9, far past where `Date::add_days` already
+/// overflows). Ordinary timestamps and calendar dates are unaffected. The real
+/// fix is a core-arithmetic hardening pass (checked / Int64 epoch-day
+/// intermediates), tracked in tempo-oj8.
+pub fn FixedOffsetDateTime::format(self : FixedOffsetDateTime) -> String {
+  let wall_clock = shift_datetime_by_seconds(self.utc, self.offset_seconds)
+  format_datetime_without_zone(wall_clock) +
+  format_offset_suffix(self.offset_seconds)
 }
 
 ///|
@@ -1882,6 +1996,11 @@ pub impl Show for Time with fn output(self, logger) {
 
 ///|
 pub impl Show for DateTime with fn output(self, logger) {
+  logger.write_string(self.format())
+}
+
+///|
+pub impl Show for FixedOffsetDateTime with fn output(self, logger) {
   logger.write_string(self.format())
 }
 
@@ -2192,6 +2311,24 @@ pub fn Duration::parse_iso(s : String) -> Duration raise TempoError {
 /// Parse an RFC 3339 / ISO 8601 datetime string.
 /// Fixed numeric offsets are accepted and normalized to UTC.
 pub fn DateTime::parse(s : String) -> DateTime raise TempoError {
+  let (utc, _) = parse_rfc3339_parts(s)
+  utc
+}
+
+///|
+/// Parse an RFC 3339 datetime string, retaining the explicit fixed offset.
+///
+/// The stored instant is normalized UTC. The parsed numeric offset is retained
+/// only for formatting/interoperability; it is not an IANA time zone.
+pub fn FixedOffsetDateTime::parse(
+  s : String,
+) -> FixedOffsetDateTime raise TempoError {
+  let (utc, offset_seconds) = parse_rfc3339_parts(s)
+  FixedOffsetDateTime::from_datetime_and_offset(utc, offset_seconds)
+}
+
+///|
+fn parse_rfc3339_parts(s : String) -> (DateTime, Int) raise TempoError {
   let v = s.view()
   let (year, v) = parse_digits(v, 4)
   let v = consume(v, '-')
@@ -2241,7 +2378,7 @@ pub fn DateTime::parse(s : String) -> DateTime raise TempoError {
   let date = Date::new(year, month, day)
   let time = Time::new(hour, minute, second, nanosecond)
   let base = { date, time }
-  if offset_minutes == 0 {
+  let utc = if offset_minutes == 0 {
     base
   } else {
     let total_min = (hour * 60 + minute - offset_minutes).to_int64()
@@ -2257,6 +2394,7 @@ pub fn DateTime::parse(s : String) -> DateTime raise TempoError {
       ),
     }
   }
+  (utc, offset_minutes * 60)
 }
 
 ///|
