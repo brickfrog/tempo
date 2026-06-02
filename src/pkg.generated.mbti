@@ -17,7 +17,7 @@ pub struct Date {
   year : Int
   month : Int
   day : Int
-} derive(Compare, Eq)
+} derive(Compare, Eq, Hash)
 pub fn Date::add_days(Self, Int) -> Self
 pub fn Date::add_months(Self, Int) -> Self
 pub fn Date::add_years(Self, Int) -> Self
@@ -60,7 +60,7 @@ pub fn DateInterval::overlaps(Self, Self) -> Bool
 pub struct DateTime {
   date : Date
   time : Time
-} derive(Compare, Eq)
+} derive(Compare, Eq, Hash)
 pub fn DateTime::add(Self, Duration) -> Self
 pub fn DateTime::checked_add(Self, Duration) -> Self?
 pub fn DateTime::checked_diff(Self, Self) -> Duration?
@@ -113,7 +113,7 @@ pub impl Show for DateTime
 
 pub struct Duration {
   nanoseconds : Int64
-} derive(Compare, Eq)
+} derive(Compare, Eq, Hash)
 pub fn Duration::abs(Self) -> Self
 pub fn Duration::as_days(Self) -> Int64
 pub fn Duration::as_hours(Self) -> Int64
@@ -187,7 +187,7 @@ pub struct Time {
   minute : Int
   second : Int
   nanosecond : Int
-} derive(Compare, Eq)
+} derive(Compare, Eq, Hash)
 pub fn Time::clamp(Self, Self, Self) -> Self
 pub fn Time::format(Self) -> String
 pub fn Time::is_after(Self, Self) -> Bool

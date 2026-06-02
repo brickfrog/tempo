@@ -1459,6 +1459,57 @@ test "DateTime compare" {
 }
 
 ///|
+test "core types are hash collection keys" {
+  let dates : Map[@tempo.Date, String] = {}
+  dates.set(@tempo.Date::new(2024, 1, 1), "new-year")
+  dates.set(@tempo.Date::new(2024, 2, 29), "leap")
+  assert_true(dates.get(@tempo.Date::new(2024, 1, 1)) == Some("new-year"))
+  assert_true(dates.get(@tempo.Date::new(2024, 2, 29)) == Some("leap"))
+  let date_set : Set[@tempo.Date] = Set([
+    @tempo.Date::new(2024, 1, 1),
+    @tempo.Date::new(2024, 2, 29),
+  ])
+  assert_eq(date_set.contains(@tempo.Date::new(2024, 2, 29)), true)
+  let times : Map[@tempo.Time, Int] = {}
+  times.set(@tempo.Time::new(9, 30, 0, 0), 1)
+  times.set(@tempo.Time::new(17, 45, 30, 123), 2)
+  assert_true(times.get(@tempo.Time::new(9, 30, 0, 0)) == Some(1))
+  assert_true(times.get(@tempo.Time::new(17, 45, 30, 123)) == Some(2))
+  let time_set : Set[@tempo.Time] = Set([
+    @tempo.Time::new(9, 30, 0, 0),
+    @tempo.Time::new(17, 45, 30, 123),
+  ])
+  assert_eq(time_set.contains(@tempo.Time::new(17, 45, 30, 123)), true)
+  let date_times : Map[@tempo.DateTime, Int] = {}
+  date_times.set(@tempo.DateTime::parse("2024-01-01T00:00:00Z"), 1)
+  date_times.set(@tempo.DateTime::parse("2024-02-29T12:30:00Z"), 2)
+  assert_true(
+    date_times.get(@tempo.DateTime::parse("2024-01-01T00:00:00Z")) == Some(1),
+  )
+  assert_true(
+    date_times.get(@tempo.DateTime::parse("2024-02-29T12:30:00Z")) == Some(2),
+  )
+  let date_time_set : Set[@tempo.DateTime] = Set([
+    @tempo.DateTime::parse("2024-01-01T00:00:00Z"),
+    @tempo.DateTime::parse("2024-02-29T12:30:00Z"),
+  ])
+  assert_eq(
+    date_time_set.contains(@tempo.DateTime::parse("2024-02-29T12:30:00Z")),
+    true,
+  )
+  let durations : Map[@tempo.Duration, String] = {}
+  durations.set(@tempo.Duration::seconds(5L), "short")
+  durations.set(@tempo.Duration::hours(2L), "long")
+  assert_true(durations.get(@tempo.Duration::seconds(5L)) == Some("short"))
+  assert_true(durations.get(@tempo.Duration::hours(2L)) == Some("long"))
+  let duration_set : Set[@tempo.Duration] = Set([
+    @tempo.Duration::seconds(5L),
+    @tempo.Duration::hours(2L),
+  ])
+  assert_eq(duration_set.contains(@tempo.Duration::hours(2L)), true)
+}
+
+///|
 test "DateTime comparison helpers and elapsed wrappers" {
   let dt = @tempo.DateTime::parse("2024-03-15T12:00:00Z")
   let dt2 = dt.add(@tempo.Duration::hours(2L))
