@@ -280,11 +280,39 @@ test "Date::until returns round-tripping Periods" {
   let forward_period = forward.until(forward_end)
   assert_eq(forward.add_period(forward_period), forward_end)
   assert_eq(forward_period, @tempo.Period::of(0, 1, 30))
-  let negative = @tempo.Date::new(2024, 3, 30)
-  let negative_end = @tempo.Date::new(2024, 1, 31)
-  let negative_period = negative.until(negative_end)
-  assert_eq(negative.add_period(negative_period), negative_end)
-  assert_eq(negative_period, @tempo.Period::of(0, -1, -29))
+  let backward_clamp = @tempo.Date::new(2023, 3, 30)
+  let backward_clamp_end = @tempo.Date::new(2023, 2, 28)
+  let backward_clamp_period = backward_clamp.until(backward_clamp_end)
+  assert_eq(
+    backward_clamp.add_period(backward_clamp_period),
+    backward_clamp_end,
+  )
+  assert_eq(backward_clamp_period, @tempo.Period::of(0, -1, 0))
+  let backward_leap_clamp = @tempo.Date::new(2024, 3, 30)
+  let backward_leap_clamp_end = @tempo.Date::new(2024, 1, 31)
+  let backward_leap_clamp_period = backward_leap_clamp.until(
+    backward_leap_clamp_end,
+  )
+  assert_eq(
+    backward_leap_clamp.add_period(backward_leap_clamp_period),
+    backward_leap_clamp_end,
+  )
+  assert_eq(backward_leap_clamp_period, @tempo.Period::of(0, -1, -29))
+  let forward_clamp = @tempo.Date::new(2024, 1, 31)
+  let forward_clamp_end = @tempo.Date::new(2024, 3, 1)
+  let forward_clamp_period = forward_clamp.until(forward_clamp_end)
+  assert_eq(forward_clamp.add_period(forward_clamp_period), forward_clamp_end)
+  assert_eq(forward_clamp_period, @tempo.Period::of(0, 1, 1))
+  let negative_non_clamp = @tempo.Date::new(2024, 5, 15)
+  let negative_non_clamp_end = @tempo.Date::new(2024, 3, 10)
+  let negative_non_clamp_period = negative_non_clamp.until(
+    negative_non_clamp_end,
+  )
+  assert_eq(
+    negative_non_clamp.add_period(negative_non_clamp_period),
+    negative_non_clamp_end,
+  )
+  assert_eq(negative_non_clamp_period, @tempo.Period::of(0, -2, -5))
 }
 
 ///|

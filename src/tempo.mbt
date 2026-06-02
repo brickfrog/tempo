@@ -878,22 +878,17 @@ pub fn Date::days_until(self : Date, other : Date) -> Int {
 /// clamping and the day-borrow behavior used by `java.time.LocalDate.until`.
 pub fn Date::until(self : Date, other : Date) -> Period raise TempoError {
   let mut total_months = other.proleptic_month() - self.proleptic_month()
-  let mut days = other.day - self.day
-  if total_months > 0L && days < 0 {
+  let provisional_days = other.day - self.day
+  if total_months > 0L && provisional_days < 0 {
     total_months -= 1L
-    let adjusted = self.add_months64_checked(total_months)
-    days = int64_to_int_checked(
-      other.epoch_day() - adjusted.epoch_day(),
-      "period days",
-    )
-  } else if total_months < 0L && days > 0 {
+  } else if total_months < 0L && provisional_days > 0 {
     total_months += 1L
-    let adjusted = self.add_months64_checked(total_months)
-    days = int64_to_int_checked(
-      other.epoch_day() - adjusted.epoch_day(),
-      "period days",
-    )
   }
+  let anchor = self.add_months64_checked(total_months)
+  let days = int64_to_int_checked(
+    other.epoch_day() - anchor.epoch_day(),
+    "period days",
+  )
   {
     years: int64_to_int_checked(total_months / 12L, "period years"),
     months: int64_to_int_checked(total_months % 12L, "period months"),
