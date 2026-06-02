@@ -916,6 +916,10 @@ test "Duration::multiply" {
     @tempo.Duration::seconds(2L).multiply(0L),
     @tempo.Duration::seconds(0L),
   )
+  assert_eq(
+    @tempo.Duration::nanoseconds(9_223_372_036_854_775_807L).multiply(2L),
+    @tempo.Duration::nanoseconds(-2L),
+  )
 }
 
 ///|
@@ -936,6 +940,12 @@ test "Duration::checked_multiply" {
     )
     is None,
   )
+  assert_true(
+    @tempo.Duration::nanoseconds(9_223_372_036_854_775_807L).checked_multiply(
+      0L,
+    ) ==
+    Some(@tempo.Duration::nanoseconds(0L)),
+  )
 }
 
 ///|
@@ -946,6 +956,18 @@ test "Duration::divide" {
   )
   assert_eq(
     @tempo.Duration::nanoseconds(7L).divide(2L),
+    @tempo.Duration::nanoseconds(3L),
+  )
+  assert_eq(
+    @tempo.Duration::nanoseconds(-7L).divide(2L),
+    @tempo.Duration::nanoseconds(-3L),
+  )
+  assert_eq(
+    @tempo.Duration::nanoseconds(7L).divide(-2L),
+    @tempo.Duration::nanoseconds(-3L),
+  )
+  assert_eq(
+    @tempo.Duration::nanoseconds(-7L).divide(-2L),
     @tempo.Duration::nanoseconds(3L),
   )
   assert_true((try? @tempo.Duration::seconds(1L).divide(0L)) is Err(_))
