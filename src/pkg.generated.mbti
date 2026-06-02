@@ -128,6 +128,7 @@ pub fn Duration::checked_multiply(Self, Int64) -> Self?
 pub fn Duration::checked_sub(Self, Self) -> Self?
 pub fn Duration::days(Int64) -> Self
 pub fn Duration::divide(Self, Int64) -> Self raise TempoError
+pub fn Duration::format_iso(Self) -> String
 pub fn Duration::hours(Int64) -> Self
 pub fn Duration::is_negative(Self) -> Bool
 pub fn Duration::is_positive(Self) -> Bool
@@ -137,6 +138,7 @@ pub fn Duration::milliseconds(Int64) -> Self
 pub fn Duration::minutes(Int64) -> Self
 pub fn Duration::multiply(Self, Int64) -> Self
 pub fn Duration::nanoseconds(Int64) -> Self
+pub fn Duration::parse_iso(String) -> Self raise TempoError
 pub fn Duration::seconds(Int64) -> Self
 pub fn Duration::signum(Self) -> Int
 pub fn Duration::weeks(Int64) -> Self
