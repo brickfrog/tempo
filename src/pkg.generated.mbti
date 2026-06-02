@@ -154,6 +154,7 @@ pub fn Duration::days(Int64) -> Self
 pub fn Duration::divide(Self, Int64) -> Self raise TempoError
 pub fn Duration::format_iso(Self) -> String
 pub fn Duration::hours(Int64) -> Self
+pub fn Duration::humanize(Self) -> String
 pub fn Duration::is_negative(Self) -> Bool
 pub fn Duration::is_positive(Self) -> Bool
 pub fn Duration::is_zero(Self) -> Bool
