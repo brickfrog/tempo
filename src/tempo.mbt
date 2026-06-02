@@ -292,32 +292,32 @@ pub fn DateTime::epoch() -> DateTime {
 
 ///|
 /// Return this DateTime at the start of its calendar month.
-/// Preserves the time-of-day; compose with a future `start_of_day` if midnight
-/// is desired.
+/// Preserves the time-of-day; rebuild with `DateTime::new` and a zero `Time` if
+/// midnight is desired.
 pub fn DateTime::start_of_month(self : DateTime) -> DateTime {
   DateTime::new(self.date.start_of_month(), self.time)
 }
 
 ///|
 /// Return this DateTime at the end of its calendar month.
-/// Preserves the time-of-day; compose with a future `start_of_day` if midnight
-/// is desired.
+/// Preserves the time-of-day; rebuild with `DateTime::new` and a zero `Time` if
+/// midnight is desired.
 pub fn DateTime::end_of_month(self : DateTime) -> DateTime {
   DateTime::new(self.date.end_of_month(), self.time)
 }
 
 ///|
 /// Return this DateTime at the start of its calendar year.
-/// Preserves the time-of-day; compose with a future `start_of_day` if midnight
-/// is desired.
+/// Preserves the time-of-day; rebuild with `DateTime::new` and a zero `Time` if
+/// midnight is desired.
 pub fn DateTime::start_of_year(self : DateTime) -> DateTime {
   DateTime::new(self.date.start_of_year(), self.time)
 }
 
 ///|
 /// Return this DateTime at the end of its calendar year.
-/// Preserves the time-of-day; compose with a future `start_of_day` if midnight
-/// is desired.
+/// Preserves the time-of-day; rebuild with `DateTime::new` and a zero `Time` if
+/// midnight is desired.
 pub fn DateTime::end_of_year(self : DateTime) -> DateTime {
   DateTime::new(self.date.end_of_year(), self.time)
 }
