@@ -558,6 +558,61 @@ test "to_unix_nanos roundtrip" {
 }
 
 ///|
+test "from_unix_millis epoch" {
+  assert_eq(@tempo.DateTime::from_unix_millis(0L), @tempo.DateTime::epoch())
+  assert_eq(@tempo.DateTime::epoch().to_unix_millis(), 0L)
+}
+
+///|
+test "from_unix_millis fractional roundtrip" {
+  let ms = 1500L
+  assert_eq(@tempo.DateTime::from_unix_millis(ms).to_unix_millis(), ms)
+}
+
+///|
+test "from_unix_millis negative roundtrip" {
+  let ms = -500L
+  assert_eq(@tempo.DateTime::from_unix_millis(ms).to_unix_millis(), ms)
+}
+
+///|
+test "from_unix_micros epoch plus one second" {
+  assert_eq(
+    @tempo.DateTime::from_unix_micros(1_000_000L),
+    @tempo.DateTime::from_unix_seconds(1L),
+  )
+}
+
+///|
+test "from_unix_micros fractional roundtrip" {
+  let us = 2_500_000L
+  assert_eq(@tempo.DateTime::from_unix_micros(us).to_unix_micros(), us)
+}
+
+///|
+test "from_unix_micros negative roundtrip" {
+  let us = -1_500_000L
+  assert_eq(@tempo.DateTime::from_unix_micros(us).to_unix_micros(), us)
+}
+
+///|
+test "to_unix_millis uses floor seconds plus subsecond millis" {
+  let dt = @tempo.DateTime::from_unix_nanos(1710506096_123_456_789L)
+  assert_eq(dt.to_unix_millis(), dt.to_unix_seconds() * 1000L + 123L)
+}
+
+///|
+test "to_unix_millis and micros support wide range" {
+  let dt = @tempo.DateTime::parse("3000-01-01T00:00:00Z")
+  let ms = 32_503_680_000_000L
+  let us = 32_503_680_000_000_000L
+  assert_eq(dt.to_unix_millis(), ms)
+  assert_eq(dt.to_unix_micros(), us)
+  assert_eq(@tempo.DateTime::from_unix_millis(ms), dt)
+  assert_eq(@tempo.DateTime::from_unix_micros(us), dt)
+}
+
+///|
 test "DateTime::format no sub-second" {
   let dt = @tempo.DateTime::from_unix_seconds(0L)
   assert_eq(dt.format(), "1970-01-01T00:00:00Z")
