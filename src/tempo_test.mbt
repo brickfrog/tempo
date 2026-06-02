@@ -1586,6 +1586,7 @@ test "DateInterval::contains includes both date boundaries" {
   let end = @tempo.Date::new(2024, 1, 10)
   let range = date_interval(start, end)
   assert_eq(range.contains(start), true)
+  assert_eq(range.contains(@tempo.Date::new(2024, 1, 5)), true)
   assert_eq(range.contains(end), true)
   assert_eq(range.contains(@tempo.Date::new(2023, 12, 31)), false)
   assert_eq(range.contains(@tempo.Date::new(2024, 1, 11)), false)
@@ -1610,6 +1611,7 @@ test "DateInterval::overlaps includes touching inclusive ends" {
     @tempo.Date::new(2024, 1, 12),
   )
   assert_eq(range.overlaps(touching), true)
+  assert_eq(touching.overlaps(range), true)
   assert_eq(range.overlaps(inside), true)
   assert_eq(range.overlaps(disjoint), false)
 }
@@ -1632,6 +1634,14 @@ test "DateInterval::intersection uses inclusive bounds" {
     @tempo.Date::new(2024, 1, 11),
     @tempo.Date::new(2024, 1, 12),
   )
+  let gap_a = date_interval(
+    @tempo.Date::new(2024, 1, 1),
+    @tempo.Date::new(2024, 1, 5),
+  )
+  let gap_b = date_interval(
+    @tempo.Date::new(2024, 1, 10),
+    @tempo.Date::new(2024, 1, 15),
+  )
   assert_true(
     range.intersection(overlapping) ==
     Some(
@@ -1648,6 +1658,7 @@ test "DateInterval::intersection uses inclusive bounds" {
     ),
   )
   assert_true(range.intersection(disjoint) is None)
+  assert_true(gap_a.intersection(gap_b) is None)
 }
 
 ///|
@@ -1668,9 +1679,11 @@ test "DateInterval::length_in_days is inclusive" {
 test "Interval::contains includes start and excludes end" {
   let start = @tempo.DateTime::parse("2024-01-01T00:00:00Z")
   let end = start.add(@tempo.Duration::hours(2L))
+  let end_minus_one_ns = end.sub(@tempo.Duration::nanoseconds(1L))
   let range = interval(start, end)
   assert_eq(range.contains(start), true)
   assert_eq(range.contains(start.add(@tempo.Duration::hours(1L))), true)
+  assert_eq(range.contains(end_minus_one_ns), true)
   assert_eq(range.contains(end), false)
   assert_eq(range.contains(start.sub(@tempo.Duration::nanoseconds(1L))), false)
 }
@@ -1688,6 +1701,7 @@ test "Interval::overlaps treats touching half-open bounds as disjoint" {
   let touching_before = interval(start.sub(@tempo.Duration::hours(1L)), start)
   assert_eq(range.overlaps(overlapping), true)
   assert_eq(range.overlaps(touching_after), false)
+  assert_eq(touching_after.overlaps(range), false)
   assert_eq(range.overlaps(touching_before), false)
 }
 
@@ -1701,11 +1715,16 @@ test "Interval::intersection uses half-open bounds" {
     start.add(@tempo.Duration::hours(3L)),
   )
   let touching = interval(end, end.add(@tempo.Duration::hours(1L)))
+  let gap = interval(
+    end.add(@tempo.Duration::hours(1L)),
+    end.add(@tempo.Duration::hours(2L)),
+  )
   assert_true(
     range.intersection(overlapping) ==
     Some(interval(start.add(@tempo.Duration::hours(1L)), end)),
   )
   assert_true(range.intersection(touching) is None)
+  assert_true(range.intersection(gap) is None)
 }
 
 ///|
