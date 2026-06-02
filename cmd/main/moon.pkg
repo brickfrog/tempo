@@ -1,7 +1,0 @@
-// import {
-//   "brickfrog/tempo" @lib,
-// }
-
-options(
-  "is-main": true,
-)
