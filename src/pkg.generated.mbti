@@ -24,6 +24,7 @@ pub struct Date {
 } derive(Compare, Eq, Hash)
 pub fn Date::add_days(Self, Int) -> Self
 pub fn Date::add_months(Self, Int) -> Self
+pub fn Date::add_period(Self, Period) -> Self raise TempoError
 pub fn Date::add_years(Self, Int) -> Self
 pub fn Date::clamp(Self, Self, Self) -> Self
 pub fn Date::day_of_week(Self) -> Int
@@ -46,6 +47,7 @@ pub fn Date::previous(Self, Weekday) -> Self
 pub fn Date::previous_or_same(Self, Weekday) -> Self
 pub fn Date::start_of_month(Self) -> Self
 pub fn Date::start_of_year(Self) -> Self
+pub fn Date::until(Self, Self) -> Period
 pub fn Date::weekday(Self) -> Weekday
 pub fn Date::with_day(Self, Int) -> Self raise TempoError
 pub fn Date::with_month(Self, Int) -> Self raise TempoError
@@ -196,6 +198,30 @@ pub fn Month::next(Self) -> Self
 pub fn Month::previous(Self) -> Self
 pub fn Month::to_int(Self) -> Int
 pub impl Show for Month
+
+pub(all) struct Period {
+  years : Int
+  months : Int
+  days : Int
+} derive(Eq, Hash)
+pub fn Period::days(Self) -> Int
+pub fn Period::format(Self) -> String
+pub fn Period::is_zero(Self) -> Bool
+pub fn Period::minus(Self, Self) -> Self raise TempoError
+pub fn Period::months(Self) -> Int
+pub fn Period::negated(Self) -> Self raise TempoError
+pub fn Period::normalized(Self) -> Self
+pub fn Period::of(Int, Int, Int) -> Self
+pub fn Period::of_days(Int) -> Self
+pub fn Period::of_months(Int) -> Self
+pub fn Period::of_weeks(Int) -> Self raise TempoError
+pub fn Period::of_years(Int) -> Self
+pub fn Period::parse(String) -> Self raise TempoError
+pub fn Period::plus(Self, Self) -> Self raise TempoError
+pub fn Period::to_total_months(Self) -> Int64
+pub fn Period::years(Self) -> Int
+pub fn Period::zero() -> Self
+pub impl Show for Period
 
 pub(all) enum RoundMode {
   Floor
