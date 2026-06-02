@@ -1569,3 +1569,148 @@ test "Date::parse roundtrip 2-digit year" {
   let d = @tempo.Date::new(50, 3, 5)
   assert_eq(d.format(), "0050-03-05")
 }
+
+///|
+fn date_interval(start : @tempo.Date, end : @tempo.Date) -> @tempo.DateInterval {
+  { start, end }
+}
+
+///|
+fn interval(start : @tempo.DateTime, end : @tempo.DateTime) -> @tempo.Interval {
+  { start, end }
+}
+
+///|
+test "DateInterval::contains includes both date boundaries" {
+  let start = @tempo.Date::new(2024, 1, 1)
+  let end = @tempo.Date::new(2024, 1, 10)
+  let range = date_interval(start, end)
+  assert_eq(range.contains(start), true)
+  assert_eq(range.contains(end), true)
+  assert_eq(range.contains(@tempo.Date::new(2023, 12, 31)), false)
+  assert_eq(range.contains(@tempo.Date::new(2024, 1, 11)), false)
+}
+
+///|
+test "DateInterval::overlaps includes touching inclusive ends" {
+  let range = date_interval(
+    @tempo.Date::new(2024, 1, 1),
+    @tempo.Date::new(2024, 1, 10),
+  )
+  let touching = date_interval(
+    @tempo.Date::new(2024, 1, 10),
+    @tempo.Date::new(2024, 1, 12),
+  )
+  let inside = date_interval(
+    @tempo.Date::new(2024, 1, 3),
+    @tempo.Date::new(2024, 1, 4),
+  )
+  let disjoint = date_interval(
+    @tempo.Date::new(2024, 1, 11),
+    @tempo.Date::new(2024, 1, 12),
+  )
+  assert_eq(range.overlaps(touching), true)
+  assert_eq(range.overlaps(inside), true)
+  assert_eq(range.overlaps(disjoint), false)
+}
+
+///|
+test "DateInterval::intersection uses inclusive bounds" {
+  let range = date_interval(
+    @tempo.Date::new(2024, 1, 1),
+    @tempo.Date::new(2024, 1, 10),
+  )
+  let overlapping = date_interval(
+    @tempo.Date::new(2024, 1, 5),
+    @tempo.Date::new(2024, 1, 12),
+  )
+  let touching = date_interval(
+    @tempo.Date::new(2024, 1, 10),
+    @tempo.Date::new(2024, 1, 12),
+  )
+  let disjoint = date_interval(
+    @tempo.Date::new(2024, 1, 11),
+    @tempo.Date::new(2024, 1, 12),
+  )
+  assert_true(
+    range.intersection(overlapping) ==
+    Some(
+      date_interval(@tempo.Date::new(2024, 1, 5), @tempo.Date::new(2024, 1, 10)),
+    ),
+  )
+  assert_true(
+    range.intersection(touching) ==
+    Some(
+      date_interval(
+        @tempo.Date::new(2024, 1, 10),
+        @tempo.Date::new(2024, 1, 10),
+      ),
+    ),
+  )
+  assert_true(range.intersection(disjoint) is None)
+}
+
+///|
+test "DateInterval::length_in_days is inclusive" {
+  let ten_days = date_interval(
+    @tempo.Date::new(2024, 1, 1),
+    @tempo.Date::new(2024, 1, 10),
+  )
+  let one_day = date_interval(
+    @tempo.Date::new(2024, 1, 10),
+    @tempo.Date::new(2024, 1, 10),
+  )
+  assert_eq(ten_days.length_in_days(), 10)
+  assert_eq(one_day.length_in_days(), 1)
+}
+
+///|
+test "Interval::contains includes start and excludes end" {
+  let start = @tempo.DateTime::parse("2024-01-01T00:00:00Z")
+  let end = start.add(@tempo.Duration::hours(2L))
+  let range = interval(start, end)
+  assert_eq(range.contains(start), true)
+  assert_eq(range.contains(start.add(@tempo.Duration::hours(1L))), true)
+  assert_eq(range.contains(end), false)
+  assert_eq(range.contains(start.sub(@tempo.Duration::nanoseconds(1L))), false)
+}
+
+///|
+test "Interval::overlaps treats touching half-open bounds as disjoint" {
+  let start = @tempo.DateTime::parse("2024-01-01T00:00:00Z")
+  let end = start.add(@tempo.Duration::hours(2L))
+  let range = interval(start, end)
+  let overlapping = interval(
+    start.add(@tempo.Duration::hours(1L)),
+    start.add(@tempo.Duration::hours(3L)),
+  )
+  let touching_after = interval(end, end.add(@tempo.Duration::hours(1L)))
+  let touching_before = interval(start.sub(@tempo.Duration::hours(1L)), start)
+  assert_eq(range.overlaps(overlapping), true)
+  assert_eq(range.overlaps(touching_after), false)
+  assert_eq(range.overlaps(touching_before), false)
+}
+
+///|
+test "Interval::intersection uses half-open bounds" {
+  let start = @tempo.DateTime::parse("2024-01-01T00:00:00Z")
+  let end = start.add(@tempo.Duration::hours(2L))
+  let range = interval(start, end)
+  let overlapping = interval(
+    start.add(@tempo.Duration::hours(1L)),
+    start.add(@tempo.Duration::hours(3L)),
+  )
+  let touching = interval(end, end.add(@tempo.Duration::hours(1L)))
+  assert_true(
+    range.intersection(overlapping) ==
+    Some(interval(start.add(@tempo.Duration::hours(1L)), end)),
+  )
+  assert_true(range.intersection(touching) is None)
+}
+
+///|
+test "Interval::to_duration returns end minus start" {
+  let start = @tempo.DateTime::parse("2024-01-01T00:00:00Z")
+  let range = interval(start, start.add(@tempo.Duration::hours(2L)))
+  assert_eq(range.to_duration(), @tempo.Duration::hours(2L))
+}

@@ -26,6 +26,18 @@ pub struct Date {
 } derive(Eq, Compare)
 
 ///|
+/// A calendar date interval with an inclusive end date: `[start, end]`.
+///
+/// This mirrors NodaTime's DateInterval-vs-Interval convention split:
+/// DateInterval is inclusive-end for whole calendar dates, while `Interval` is
+/// half-open for instants. Assumes `start <= end`; methods do not validate
+/// inverted intervals.
+pub(all) struct DateInterval {
+  start : Date
+  end : Date
+} derive(Eq)
+
+///|
 /// ISO 8601 weekday, ordered Monday through Sunday.
 pub(all) enum Weekday {
   Monday
@@ -279,6 +291,18 @@ pub struct DateTime {
   date : Date
   time : Time
 } derive(Eq, Compare)
+
+///|
+/// A DateTime interval with a half-open end instant: `[start, end)`.
+///
+/// This mirrors NodaTime's DateInterval-vs-Interval convention split:
+/// `DateInterval` is inclusive-end for calendar dates, while Interval is
+/// half-open for instants. Assumes `start <= end`; methods do not validate
+/// inverted intervals.
+pub(all) struct Interval {
+  start : DateTime
+  end : DateTime
+} derive(Eq)
 
 ///|
 /// A signed duration stored as total nanoseconds.
@@ -551,6 +575,45 @@ pub fn Date::clamp(self : Date, lo : Date, hi : Date) -> Date {
   } else {
     self
   }
+}
+
+// ─── DateInterval helpers ────────────────────────────────────────────────────
+
+///|
+/// `true` if `d` is in this inclusive-end date interval `[start, end]`.
+pub fn DateInterval::contains(self : DateInterval, d : Date) -> Bool {
+  self.start <= d && d <= self.end
+}
+
+///|
+/// `true` if this inclusive-end date interval shares at least one date with
+/// `other`.
+pub fn DateInterval::overlaps(
+  self : DateInterval,
+  other : DateInterval,
+) -> Bool {
+  self.start <= other.end && other.start <= self.end
+}
+
+///|
+/// Return the inclusive-end overlap between this date interval and `other`.
+pub fn DateInterval::intersection(
+  self : DateInterval,
+  other : DateInterval,
+) -> DateInterval? {
+  let s = self.start.max(other.start)
+  let e = self.end.min(other.end)
+  if s <= e {
+    Some({ start: s, end: e })
+  } else {
+    None
+  }
+}
+
+///|
+/// Inclusive day count for this date interval.
+pub fn DateInterval::length_in_days(self : DateInterval) -> Int {
+  self.start.days_until(self.end) + 1
 }
 
 ///|
@@ -1214,6 +1277,39 @@ pub fn DateTime::clamp(
   } else {
     self
   }
+}
+
+// ─── Interval helpers ────────────────────────────────────────────────────────
+
+///|
+/// `true` if `dt` is in this half-open DateTime interval `[start, end)`.
+pub fn Interval::contains(self : Interval, dt : DateTime) -> Bool {
+  self.start <= dt && dt < self.end
+}
+
+///|
+/// `true` if this half-open DateTime interval shares at least one instant with
+/// `other`.
+pub fn Interval::overlaps(self : Interval, other : Interval) -> Bool {
+  self.start < other.end && other.start < self.end
+}
+
+///|
+/// Return the half-open overlap between this DateTime interval and `other`.
+pub fn Interval::intersection(self : Interval, other : Interval) -> Interval? {
+  let s = self.start.max(other.start)
+  let e = self.end.min(other.end)
+  if s < e {
+    Some({ start: s, end: e })
+  } else {
+    None
+  }
+}
+
+///|
+/// Duration of this half-open DateTime interval (`end - start`).
+pub fn Interval::to_duration(self : Interval) -> Duration {
+  self.end.diff(self.start)
 }
 
 ///|
