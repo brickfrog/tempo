@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-02
+
+### Added
+
+- `YearMonth`, a year-and-month value with no day: `new`, `month_enum`,
+  `length`, `at_day`, `at_end_of_month`, `plus_months` / `plus_years`, and
+  `format` / `parse` (`YYYY-MM`), with `Eq` / `Compare` / `Hash`. `format` uses
+  the same expanded-year output as `Date::format` for years outside 0–9999, and
+  those expanded strings do not round-trip through `parse`. (#37)
+- `Period`, a calendar-aware `{ years, months, days }` value — the calendar
+  counterpart to the elapsed-time `Duration`. Constructors `of` / `of_years` /
+  `of_months` / `of_days` / `of_weeks` / `zero`; `normalized` rolls months into
+  years only and leaves days untouched; `to_total_months`; `plus` / `minus` /
+  `negated`; `is_zero`. `Date::add_period` applies years-and-months as a single
+  adjustment and then days; `Date::until` returns the period between two dates
+  and round-trips with `add_period`. ISO 8601 `PnYnMnD` `format` / `parse`.
+  Equality is structural, so 15 months is not equal to 1 year 3 months, and
+  there is no `Compare` (periods have no total order). Operations that would
+  overflow the `Int` fields raise `TempoError`. (#40)
+- ISO 8601 week dates on `Date`: `iso_week_year`, `iso_week` (1–53),
+  `from_iso_week(week_year, week, weekday)`, and `format_iso_week`
+  (`YYYY-Www-D`). (#38)
+- Ordinal dates on `Date`: `from_ordinal(year, day_of_year)` (leap-aware bounds)
+  and `format_ordinal` (`YYYY-DDD`). (#39)
+- `Date::quarter` (1–4), `days_in_year`, `is_leap`, `start_of_quarter`, and
+  `end_of_quarter`. (#36)
+
 ## [0.6.0] - 2026-06-02
 
 ### Added

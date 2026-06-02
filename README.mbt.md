@@ -479,6 +479,91 @@ test {
 }
 ```
 
+## Year-month
+
+`YearMonth` is a year-and-month value with no day — useful for billing periods
+and month-granular keys. `length` is leap-aware; `plus_months` / `plus_years`
+carry across years; `Compare` orders chronologically.
+
+```moonbit nocheck
+///|
+test {
+  let ym = @tempo.YearMonth::new(2024, 2)
+  inspect(ym.format(), content="2024-02")
+  inspect(ym.length(), content="29") // February 2024 is a leap year
+  inspect(ym.at_day(15).format(), content="2024-02-15")
+  inspect(ym.at_end_of_month().format(), content="2024-02-29")
+  inspect(ym.plus_months(11).format(), content="2025-01")
+  inspect(@tempo.YearMonth::parse("2025-01").format(), content="2025-01")
+}
+```
+
+## Periods
+
+`Period` is a calendar-aware `{ years, months, days }` value — the calendar
+counterpart to the elapsed-time `Duration`. It stores its fields exactly and is
+never auto-normalized (15 months stays 15 months), because applying a period is
+anchor-dependent: adding one month clamps to the end of a short month, while
+adding 30 days does not. `normalized` rolls months into years only.
+`Date::until` returns the period between two dates and round-trips with
+`add_period`. Operations that would overflow the `Int` fields raise.
+
+```moonbit nocheck
+///|
+test {
+  let p = @tempo.Period::of(1, 2, 10)
+  inspect(p.format(), content="P1Y2M10D")
+  inspect(@tempo.Period::of(0, 15, 0).normalized().format(), content="P1Y3M")
+
+  // Anchor-dependent: months adjust (with clamping) before days.
+  let d = @tempo.Date::new(2024, 1, 31)
+  inspect(d.add_period(@tempo.Period::of(0, 1, 0)).format(), content="2024-02-29")
+  inspect(d.add_period(@tempo.Period::of(0, 0, 30)).format(), content="2024-03-01")
+
+  // until round-trips with add_period.
+  let start = @tempo.Date::new(2024, 1, 15)
+  let end = @tempo.Date::new(2024, 3, 20)
+  let span = start.until(end)
+  inspect(span.format(), content="P2M5D")
+  assert_eq(start.add_period(span), end)
+}
+```
+
+## ISO week and ordinal dates
+
+`Date` exposes ISO 8601 week dates and ordinal (day-of-year) dates. The ISO
+week-numbering year can differ from the calendar year for dates near January 1
+and December 31.
+
+```moonbit nocheck
+///|
+test {
+  let d = @tempo.Date::new(2021, 1, 1)
+  assert_eq(d.iso_week_year(), 2020) // belongs to ISO week-year 2020
+  assert_eq(d.iso_week(), 53)
+  inspect(d.format_iso_week(), content="2020-W53-5")
+  inspect(@tempo.Date::from_iso_week(2020, 53, 5).format(), content="2021-01-01")
+
+  // Ordinal (day-of-year) dates, leap-aware.
+  inspect(@tempo.Date::from_ordinal(2024, 60).format(), content="2024-02-29")
+  inspect(@tempo.Date::new(2024, 12, 31).format_ordinal(), content="2024-366")
+}
+```
+
+## Quarters
+
+```moonbit nocheck
+///|
+test {
+  let d = @tempo.Date::new(2024, 5, 15)
+  assert_eq(d.quarter(), 2)
+  inspect(d.start_of_quarter().format(), content="2024-04-01")
+  inspect(d.end_of_quarter().format(), content="2024-06-30")
+  assert_eq(d.days_in_year(), 366)
+  assert_eq(d.is_leap(), true)
+}
+```
+
 ## Not included
 
 - **Timezones / DST** — planned as a separate `tempo-tz` package
