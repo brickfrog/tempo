@@ -547,6 +547,13 @@ test {
   // Ordinal (day-of-year) dates, leap-aware.
   inspect(@tempo.Date::from_ordinal(2024, 60).format(), content="2024-02-29")
   inspect(@tempo.Date::new(2024, 12, 31).format_ordinal(), content="2024-366")
+
+  // Parse the string forms (inverses of the format_* methods).
+  inspect(
+    @tempo.Date::parse_iso_week("2020-W53-5").format(),
+    content="2021-01-01",
+  )
+  inspect(@tempo.Date::parse_ordinal("2024-060").format(), content="2024-02-29")
 }
 ```
 
@@ -561,6 +568,43 @@ test {
   inspect(d.end_of_quarter().format(), content="2024-06-30")
   assert_eq(d.days_in_year(), 366)
   assert_eq(d.is_leap(), true)
+}
+```
+
+## Fractional and human-readable durations
+
+`as_seconds_f64` / `as_minutes_f64` / `as_hours_f64` give fractional totals as
+`Double`. `humanize` renders an English elapsed string (days/hours/minutes/
+seconds, non-zero components only, `-` prefix for negatives).
+
+```moonbit nocheck
+///|
+test {
+  inspect(@tempo.Duration::minutes(90).as_hours_f64(), content="1.5")
+  inspect(@tempo.Duration::milliseconds(1500).as_seconds_f64(), content="1.5")
+
+  let d = @tempo.Duration::hours(2) + @tempo.Duration::minutes(30)
+  inspect(d.humanize(), content="2 hours 30 minutes")
+  inspect(@tempo.Duration::seconds(1).humanize(), content="1 second")
+  inspect(@tempo.Duration::minutes(-90).humanize(), content="-1 hour 30 minutes")
+}
+```
+
+## Custom formatting
+
+`format_fixed` produces a fixed-width timestamp (always nine fractional digits)
+whose byte order matches chronological order for years 0–9999 — handy for log
+lines and database keys. `format_with` is a brace-token DSL: the tokens
+`{YYYY}`, `{MM}`, `{DD}`, `{HH}`, `{mm}`, `{ss}`, `{fff}`, and `{nnnnnnnnn}`
+substitute, everything else is literal, `{{` and `}}` emit literal braces, and
+an unknown token or unmatched brace raises.
+
+```moonbit nocheck
+///|
+test {
+  let dt = @tempo.DateTime::parse("2024-07-21T17:11:00.5Z")
+  inspect(dt.format_fixed(), content="2024-07-21T17:11:00.500000000Z")
+  inspect(dt.format_with("{YYYY}/{MM}/{DD} {HH}:{mm}"), content="2024/07/21 17:11")
 }
 ```
 

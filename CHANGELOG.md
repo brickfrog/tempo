@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-02
+
+### Added
+
+- `Duration::as_seconds_f64` / `as_minutes_f64` / `as_hours_f64` — fractional
+  totals as `Double`. Magnitudes beyond ~2^53 ns (~104 days) lose sub-unit
+  precision. (#43)
+- `Duration::humanize` — English elapsed formatting (e.g. `2 hours 30 minutes`):
+  days/hours/minutes/seconds, non-zero components only, negative durations
+  prefixed with `-`, sub-second magnitudes render as `0 seconds`. (#46)
+- `Date::parse_ordinal` (`YYYY-DDD`) and `Date::parse_iso_week` (`YYYY-Www-D`),
+  the inverses of `format_ordinal` / `format_iso_week`. (#45)
+- `DateTime::format_fixed` — fixed-width `YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ` with
+  always nine fractional digits; byte-for-byte string comparison matches
+  chronological order for years 0–9999. (#44)
+- `DateTime::format_with(pattern)` — a brace-token format DSL (`{YYYY}` `{MM}`
+  `{DD}` `{HH}` `{mm}` `{ss}` `{fff}` `{nnnnnnnnn}`), with `{{` / `}}` for literal
+  braces; unknown tokens and unmatched braces raise `TempoError`. (#47)
+- `Date::add_days_checked` / `add_months_checked` / `add_years_checked`, returning
+  `None` instead of wrapping when the result year leaves the `Int` range. (#42)
+
+### Changed
+
+- Hardened `Date` arithmetic against extreme-year `Int` overflow. `pad4_year` and
+  all formatting now handle the full `Int` year range (including `Int::min_value`)
+  instead of aborting; the epoch-day conversions use `Int64` so `add_days` and the
+  day↔date round-trip are correct across the whole `Int` year range (previously
+  wrong beyond ~±5.8M years). `Date::from_iso_week` now raises `TempoError` on a
+  residual out-of-range result year rather than silently wrapping. The infallible
+  `add_days` / `add_months` / `add_years` still wrap at the absolute `Int`-year
+  boundary; the new `*_checked` variants report it. (#42)
+
+### Fixed
+
+- `Date::format` and `Date::to_json` for negative (BCE) years now emit the proper
+  ISO 8601 expanded form (e.g. `-0001-01-01`), matching `DateTime::format`,
+  instead of the previous malformed `000-1-01-01`. (#42)
+
 ## [0.7.0] - 2026-06-02
 
 ### Added
