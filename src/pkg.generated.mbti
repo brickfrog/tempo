@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "brickfrog/tempo"
 
+import {
+  "moonbitlang/core/json",
+}
+
 // Values
 pub fn days_in_month(Int, Int) -> Int
 
@@ -47,6 +51,8 @@ pub fn Date::with_day(Self, Int) -> Self raise TempoError
 pub fn Date::with_month(Self, Int) -> Self raise TempoError
 pub fn Date::with_year(Self, Int) -> Self raise TempoError
 pub impl Show for Date
+pub impl ToJson for Date
+pub impl @json.FromJson for Date
 
 pub(all) struct DateInterval {
   start : Date
@@ -110,6 +116,8 @@ pub fn DateTime::with_second(Self, Int) -> Self raise TempoError
 pub fn DateTime::with_time(Self, Time) -> Self
 pub fn DateTime::with_year(Self, Int) -> Self raise TempoError
 pub impl Show for DateTime
+pub impl ToJson for DateTime
+pub impl @json.FromJson for DateTime
 
 pub struct Duration {
   nanoseconds : Int64
@@ -146,6 +154,8 @@ pub impl Add for Duration
 pub impl Neg for Duration
 pub impl Show for Duration
 pub impl Sub for Duration
+pub impl ToJson for Duration
+pub impl @json.FromJson for Duration
 
 pub(all) struct Interval {
   start : DateTime
@@ -203,6 +213,8 @@ pub fn Time::with_minute(Self, Int) -> Self raise TempoError
 pub fn Time::with_nanosecond(Self, Int) -> Self raise TempoError
 pub fn Time::with_second(Self, Int) -> Self raise TempoError
 pub impl Show for Time
+pub impl ToJson for Time
+pub impl @json.FromJson for Time
 
 pub(all) enum TimeUnit {
   Second

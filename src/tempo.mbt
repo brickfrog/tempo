@@ -1801,6 +1801,74 @@ pub fn Duration::format_iso(self : Duration) -> String {
 }
 
 ///|
+fn[T] json_decode_error(
+  path : @json.JsonPath,
+  msg : String,
+) -> T raise @json.JsonDecodeError {
+  raise @json.JsonDecodeError((path, msg))
+}
+
+///|
+pub impl ToJson for Date with fn to_json(self : Date) -> Json {
+  Json::string(self.format())
+}
+
+///|
+pub impl @json.FromJson for Date with fn from_json(json, path) {
+  guard json is String(s) else {
+    json_decode_error(path, "Date::from_json: expected string")
+  }
+  Date::parse(s) catch {
+    TempoError(msg) => json_decode_error(path, "Date::from_json: " + msg)
+  }
+}
+
+///|
+pub impl ToJson for Time with fn to_json(self : Time) -> Json {
+  Json::string(self.format())
+}
+
+///|
+pub impl @json.FromJson for Time with fn from_json(json, path) {
+  guard json is String(s) else {
+    json_decode_error(path, "Time::from_json: expected string")
+  }
+  Time::parse(s) catch {
+    TempoError(msg) => json_decode_error(path, "Time::from_json: " + msg)
+  }
+}
+
+///|
+pub impl ToJson for DateTime with fn to_json(self : DateTime) -> Json {
+  Json::string(self.format())
+}
+
+///|
+pub impl @json.FromJson for DateTime with fn from_json(json, path) {
+  guard json is String(s) else {
+    json_decode_error(path, "DateTime::from_json: expected string")
+  }
+  DateTime::parse(s) catch {
+    TempoError(msg) => json_decode_error(path, "DateTime::from_json: " + msg)
+  }
+}
+
+///|
+pub impl ToJson for Duration with fn to_json(self : Duration) -> Json {
+  Json::string(self.format_iso())
+}
+
+///|
+pub impl @json.FromJson for Duration with fn from_json(json, path) {
+  guard json is String(s) else {
+    json_decode_error(path, "Duration::from_json: expected string")
+  }
+  Duration::parse_iso(s) catch {
+    TempoError(msg) => json_decode_error(path, "Duration::from_json: " + msg)
+  }
+}
+
+///|
 pub impl Show for Date with fn output(self, logger) {
   logger.write_string(
     "\{pad4_year(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}",

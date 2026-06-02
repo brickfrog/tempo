@@ -1223,6 +1223,67 @@ test "Duration::parse_iso raises on component overflow" {
 }
 
 ///|
+fn assert_json_string(json : Json, expected : String) -> Unit raise {
+  match json {
+    String(actual) => assert_eq(actual, expected)
+    _ => assert_true(false)
+  }
+}
+
+///|
+test "JSON serializes tempo values as canonical strings" {
+  let date = @tempo.Date::parse("2024-03-15")
+  assert_json_string(date.to_json(), "2024-03-15")
+  let time = @tempo.Time::parse("14:31:43.5")
+  assert_json_string(time.to_json(), "14:31:43.5")
+  let datetime = @tempo.DateTime::parse("2024-07-21T17:11:00Z")
+  assert_json_string(datetime.to_json(), "2024-07-21T17:11:00Z")
+  let fractional = @tempo.DateTime::parse("2024-03-15T12:34:56.123456789Z")
+  assert_json_string(fractional.to_json(), "2024-03-15T12:34:56.123456789Z")
+  let duration = @tempo.Duration::hours(2L) + @tempo.Duration::minutes(30L)
+  assert_eq(duration.format_iso(), "PT2H30M")
+  assert_json_string(duration.to_json(), duration.format_iso())
+}
+
+///|
+test "JSON deserializes tempo canonical strings" {
+  let date = @tempo.Date::parse("2024-03-15")
+  assert_eq((@json.from_json(date.to_json()) : @tempo.Date), date)
+  let time = @tempo.Time::parse("14:31:43.5")
+  assert_eq((@json.from_json(time.to_json()) : @tempo.Time), time)
+  let datetime = @tempo.DateTime::parse("2024-03-15T12:34:56.123456789Z")
+  assert_eq((@json.from_json(datetime.to_json()) : @tempo.DateTime), datetime)
+  let duration = @tempo.Duration::hours(2L) + @tempo.Duration::minutes(30L)
+  assert_eq((@json.from_json(duration.to_json()) : @tempo.Duration), duration)
+}
+
+///|
+test "JSON deserialization rejects non-strings and invalid strings" {
+  assert_true((try? (@json.from_json(Json::number(1)) : @tempo.Date)) is Err(_))
+  assert_true((try? (@json.from_json(Json::number(1)) : @tempo.Time)) is Err(_))
+  assert_true(
+    (try? (@json.from_json(Json::number(1)) : @tempo.DateTime)) is Err(_),
+  )
+  assert_true(
+    (try? (@json.from_json(Json::number(1)) : @tempo.Duration)) is Err(_),
+  )
+  assert_true(
+    (try? (@json.from_json(Json::string("not-a-date")) : @tempo.Date)) is Err(_),
+  )
+  assert_true(
+    (try? (@json.from_json(Json::string("not-a-time")) : @tempo.Time)) is Err(_),
+  )
+  assert_true(
+    (try? (@json.from_json(Json::string("not-a-datetime")) : @tempo.DateTime))
+    is Err(_),
+  )
+  assert_true(
+    (try? (@json.from_json(Json::string("not-a-duration")) : @tempo.Duration))
+    is Err(_),
+  )
+}
+
+///|
 test "Duration::days" {
   let d = @tempo.Duration::days(1L)
   assert_eq(d.as_seconds(), 86_400L)
