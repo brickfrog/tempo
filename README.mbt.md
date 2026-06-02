@@ -377,6 +377,69 @@ test {
 }
 ```
 
+## Hashing
+
+`Date`, `Time`, `DateTime`, and `Duration` derive `Hash`, so they work as keys
+in the stdlib hash `Map`/`Set`.
+
+```moonbit nocheck
+///|
+test {
+  let counts : Map[@tempo.Date, Int] = {}
+  counts[@tempo.Date::new(2024, 3, 15)] = 3
+  assert_eq(counts[@tempo.Date::new(2024, 3, 15)], Some(3))
+}
+```
+
+## ISO 8601 durations
+
+`Duration::format_iso`/`parse_iso` round-trip the `PnDTnHnMnS` subset (days,
+hours, minutes, seconds with fractions). Years and months are rejected as
+calendar units.
+
+```moonbit nocheck
+///|
+test {
+  let d = @tempo.Duration::hours(2L) + @tempo.Duration::minutes(30L)
+  inspect(d.format_iso(), content="PT2H30M")
+  assert_eq(@tempo.Duration::parse_iso("PT2H30M"), d)
+}
+```
+
+## JSON
+
+`Date`, `Time`, `DateTime`, and `Duration` serialize to their canonical strings
+(RFC 3339 / ISO 8601) via `moonbitlang/core/json` — not field objects.
+
+```moonbit nocheck
+///|
+test {
+  let dt = @tempo.DateTime::parse("2024-07-21T17:11:00Z")
+  inspect(dt.to_json().stringify(), content="\"2024-07-21T17:11:00Z\"")
+}
+```
+
+## Overflow safety
+
+`to_unix_nanos` and the `add`/`sub`/`diff` operators wrap silently outside the
+Int64-nanosecond range (~1677–2262). The checked variants return `None` instead:
+`to_unix_nanos_checked`, `DateTime::checked_add`/`checked_sub`/`checked_diff`,
+and `Duration::checked_add`/`checked_sub`. `min_unix_nanos`/`max_unix_nanos`
+document the bounds.
+
+```moonbit nocheck
+///|
+test {
+  let far = @tempo.DateTime::parse("3000-01-01T00:00:00Z")
+  assert_eq(far.to_unix_nanos_checked(), None)
+
+  match @tempo.DateTime::epoch().checked_add(@tempo.Duration::hours(1L)) {
+    Some(dt) => inspect(dt.format(), content="1970-01-01T01:00:00Z")
+    None => ()
+  }
+}
+```
+
 ## Date and Time parsing/formatting
 
 ```moonbit nocheck
