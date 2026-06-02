@@ -43,6 +43,15 @@ pub fn Date::with_month(Self, Int) -> Self raise TempoError
 pub fn Date::with_year(Self, Int) -> Self raise TempoError
 pub impl Show for Date
 
+pub(all) struct DateInterval {
+  start : Date
+  end : Date
+} derive(Eq)
+pub fn DateInterval::contains(Self, Date) -> Bool
+pub fn DateInterval::intersection(Self, Self) -> Self?
+pub fn DateInterval::length_in_days(Self) -> Int
+pub fn DateInterval::overlaps(Self, Self) -> Bool
+
 pub struct DateTime {
   date : Date
   time : Time
@@ -121,6 +130,15 @@ pub impl Add for Duration
 pub impl Neg for Duration
 pub impl Show for Duration
 pub impl Sub for Duration
+
+pub(all) struct Interval {
+  start : DateTime
+  end : DateTime
+} derive(Eq)
+pub fn Interval::contains(Self, DateTime) -> Bool
+pub fn Interval::intersection(Self, Self) -> Self?
+pub fn Interval::overlaps(Self, Self) -> Bool
+pub fn Interval::to_duration(Self) -> Duration
 
 pub(all) enum Month {
   January
