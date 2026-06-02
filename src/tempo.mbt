@@ -26,6 +26,25 @@ pub struct Date {
 } derive(Eq, Compare, Hash)
 
 ///|
+/// A calendar-aware date period stored as exact year, month, and day fields.
+///
+/// This is a calendar-field vector, not an elapsed-time scalar. It is never
+/// auto-canonicalized: fifteen months stays fifteen months, and thirty days
+/// never becomes one month.
+pub(all) struct Period {
+  years : Int
+  months : Int
+  days : Int
+} derive(Eq, Hash)
+
+///|
+/// A calendar year and month in the proleptic Gregorian calendar.
+pub(all) struct YearMonth {
+  year : Int
+  month : Int // 1–12
+} derive(Eq, Compare, Hash)
+
+///|
 /// A calendar date interval with an inclusive end date: `[start, end]`.
 ///
 /// This mirrors NodaTime's DateInterval-vs-Interval convention split:
@@ -390,6 +409,25 @@ fn civil_from_days(z : Int64) -> (Int, Int, Int) {
   (y, m, d)
 }
 
+///|
+fn civil_from_days_checked(z : Int64) -> (Int, Int, Int) raise TempoError {
+  let z = match checked_i64_add(z, 719468L) {
+    Some(z) => z
+    None => raise TempoError("date epoch day overflows Int64")
+  }
+  let era = floor_div64(z, 146097L)
+  let doe = (z - era * 146097L).to_int() // 0..146096
+  let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365 // 0..399
+  let y64 = yoe.to_int64() + era * 400L
+  let doy = doe - (365 * yoe + yoe / 4 - yoe / 100) // 0..365
+  let mp = (5 * doy + 2) / 153 // 0..11
+  let d = doy - (153 * mp + 2) / 5 + 1 // 1..31
+  let m = if mp < 10 { mp + 3 } else { mp - 9 } // 1..12
+  let y64 = if m <= 2 { y64 + 1L } else { y64 }
+  let y = int64_to_int_checked(y64, "date year")
+  (y, m, d)
+}
+
 // Howard Hinnant's days_from_civil: (year, month, day) → days-since-epoch
 
 ///|
@@ -420,6 +458,170 @@ pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
   { year, month, day }
 }
 
+// ─── Period constructors and arithmetic ──────────────────────────────────────
+
+///|
+fn int64_to_int_checked(
+  value : Int64,
+  context : String,
+) -> Int raise TempoError {
+  if value < @int.MIN_VALUE.to_int64() || value > @int.MAX_VALUE.to_int64() {
+    raise TempoError("\{context} overflows Int")
+  }
+  value.to_int()
+}
+
+///|
+fn checked_int_add(a : Int, b : Int, context : String) -> Int raise TempoError {
+  int64_to_int_checked(a.to_int64() + b.to_int64(), context)
+}
+
+///|
+fn checked_int_sub(a : Int, b : Int, context : String) -> Int raise TempoError {
+  int64_to_int_checked(a.to_int64() - b.to_int64(), context)
+}
+
+///|
+fn checked_int_neg(a : Int, context : String) -> Int raise TempoError {
+  if a == @int.MIN_VALUE {
+    raise TempoError("\{context} overflows Int")
+  }
+  -a
+}
+
+///|
+/// Create a `Period`, storing the year, month, and day fields exactly.
+pub fn Period::of(years : Int, months : Int, days : Int) -> Period {
+  { years, months, days }
+}
+
+///|
+/// Create a `Period` with only a year field.
+pub fn Period::of_years(years : Int) -> Period {
+  { years, months: 0, days: 0 }
+}
+
+///|
+/// Create a `Period` with only a month field.
+pub fn Period::of_months(months : Int) -> Period {
+  { years: 0, months, days: 0 }
+}
+
+///|
+/// Create a `Period` with only a day field.
+pub fn Period::of_days(days : Int) -> Period {
+  { years: 0, months: 0, days }
+}
+
+///|
+/// Create a `Period` from whole weeks, stored as days.
+pub fn Period::of_weeks(weeks : Int) -> Period raise TempoError {
+  let days = int64_to_int_checked(weeks.to_int64() * 7L, "period weeks")
+  { years: 0, months: 0, days }
+}
+
+///|
+/// The zero period.
+pub fn Period::zero() -> Period {
+  { years: 0, months: 0, days: 0 }
+}
+
+///|
+/// Year field accessor.
+pub fn Period::years(self : Period) -> Int {
+  self.years
+}
+
+///|
+/// Month field accessor.
+pub fn Period::months(self : Period) -> Int {
+  self.months
+}
+
+///|
+/// Day field accessor.
+pub fn Period::days(self : Period) -> Int {
+  self.days
+}
+
+///|
+/// Normalize the month field into years. Days are left untouched.
+pub fn Period::normalized(self : Period) -> Period raise TempoError {
+  let total_months = self.to_total_months()
+  {
+    years: int64_to_int_checked(total_months / 12L, "period years"),
+    months: int64_to_int_checked(total_months % 12L, "period months"),
+    days: self.days,
+  }
+}
+
+///|
+/// Total months represented by the year and month fields. Days are ignored.
+pub fn Period::to_total_months(self : Period) -> Int64 {
+  self.years.to_int64() * 12L + self.months.to_int64()
+}
+
+///|
+/// Add two periods field-wise, without normalization.
+pub fn Period::plus(self : Period, other : Period) -> Period raise TempoError {
+  {
+    years: checked_int_add(self.years, other.years, "period years"),
+    months: checked_int_add(self.months, other.months, "period months"),
+    days: checked_int_add(self.days, other.days, "period days"),
+  }
+}
+
+///|
+/// Subtract two periods field-wise, without normalization.
+pub fn Period::minus(self : Period, other : Period) -> Period raise TempoError {
+  {
+    years: checked_int_sub(self.years, other.years, "period years"),
+    months: checked_int_sub(self.months, other.months, "period months"),
+    days: checked_int_sub(self.days, other.days, "period days"),
+  }
+}
+
+///|
+/// Negate each period field, without normalization.
+pub fn Period::negated(self : Period) -> Period raise TempoError {
+  {
+    years: checked_int_neg(self.years, "period years"),
+    months: checked_int_neg(self.months, "period months"),
+    days: checked_int_neg(self.days, "period days"),
+  }
+}
+
+///|
+/// `true` when all three fields are zero.
+pub fn Period::is_zero(self : Period) -> Bool {
+  self.years == 0 && self.months == 0 && self.days == 0
+}
+
+// ─── Additional calendar constructors ────────────────────────────────────────
+
+///|
+/// Create a `Date` from `year` and day-of-year in 1..365, or 1..366 for a
+/// leap year.
+pub fn Date::from_ordinal(
+  year : Int,
+  day_of_year : Int,
+) -> Date raise TempoError {
+  let days_in_year = if is_leap_year(year) { 366 } else { 365 }
+  if day_of_year < 1 || day_of_year > days_in_year {
+    raise TempoError("day_of_year \{day_of_year} out of range for year \{year}")
+  }
+  Date::new(year, 1, 1).add_days(day_of_year - 1)
+}
+
+///|
+/// Create a `YearMonth`, validating that `month` is 1–12.
+pub fn YearMonth::new(year : Int, month : Int) -> YearMonth raise TempoError {
+  if month < 1 || month > 12 {
+    raise TempoError("month \{month} out of range 1–12")
+  }
+  { year, month }
+}
+
 // ─── Date arithmetic ──────────────────────────────────────────────────────────
 
 ///|
@@ -436,6 +638,36 @@ fn Date::add_months64(self : Date, months : Int64) -> Date {
   let max_day = days_in_month(year, month)
   let day = if self.day > max_day { max_day } else { self.day }
   { year, month, day }
+}
+
+///|
+fn checked_shift_year_month(
+  year : Int,
+  month : Int,
+  months : Int64,
+) -> (Int, Int) raise TempoError {
+  let base = year.to_int64() * 12L + (month - 1).to_int64()
+  let total = match checked_i64_add(base, months) {
+    Some(total) => total
+    None => raise TempoError("date month adjustment overflows Int64")
+  }
+  let new_year = int64_to_int_checked(
+    floor_div64(total, 12L),
+    "date month adjustment year",
+  )
+  let new_month = floor_mod64(total, 12L).to_int() + 1
+  (new_year, new_month)
+}
+
+///|
+fn Date::add_months64_checked(
+  self : Date,
+  months : Int64,
+) -> Date raise TempoError {
+  let (year, month) = checked_shift_year_month(self.year, self.month, months)
+  let max_day = days_in_month(year, month)
+  let day = if self.day > max_day { max_day } else { self.day }
+  Date::new(year, month, day)
 }
 
 ///|
@@ -456,6 +688,35 @@ pub fn Date::add_months(self : Date, months : Int) -> Date {
 /// non-leap target years.
 pub fn Date::add_years(self : Date, years : Int) -> Date {
   self.add_months64(years.to_int64() * 12L)
+}
+
+///|
+/// Add a calendar period to this date.
+///
+/// Years and months are combined into one month adjustment first, using the
+/// same end-of-month clamping as `Date::add_months`; days are added afterward.
+pub fn Date::add_period(self : Date, period : Period) -> Date raise TempoError {
+  self
+  .add_months64_checked(period.to_total_months())
+  .add_days_checked(period.days)
+}
+
+///|
+fn YearMonth::plus_months64(self : YearMonth, months : Int64) -> YearMonth {
+  let (year, month) = shift_year_month(self.year, self.month, months)
+  { year, month }
+}
+
+///|
+/// Add a signed number of calendar months to this year-month.
+pub fn YearMonth::plus_months(self : YearMonth, months : Int) -> YearMonth {
+  self.plus_months64(months.to_int64())
+}
+
+///|
+/// Add a signed number of calendar years to this year-month.
+pub fn YearMonth::plus_years(self : YearMonth, years : Int) -> YearMonth {
+  self.plus_months64(years.to_int64() * 12L)
 }
 
 ///|
@@ -507,11 +768,70 @@ pub fn Date::end_of_year(self : Date) -> Date {
 }
 
 ///|
+/// Calendar quarter number in 1..4.
+pub fn Date::quarter(self : Date) -> Int {
+  match self.month {
+    1 | 2 | 3 => 1
+    4 | 5 | 6 => 2
+    7 | 8 | 9 => 3
+    10 | 11 | 12 => 4
+    _ => abort("Date month out of range")
+  }
+}
+
+///|
+/// `true` if this date's year is a leap year.
+pub fn Date::is_leap(self : Date) -> Bool {
+  is_leap_year(self.year)
+}
+
+///|
+/// Number of days in this date's calendar year.
+pub fn Date::days_in_year(self : Date) -> Int {
+  if self.is_leap() {
+    366
+  } else {
+    365
+  }
+}
+
+///|
+/// Return the first day of this date's calendar quarter.
+pub fn Date::start_of_quarter(self : Date) -> Date {
+  let month = match self.quarter() {
+    1 => 1
+    2 => 4
+    3 => 7
+    4 => 10
+    _ => abort("Date::quarter returned out-of-range quarter")
+  }
+  { ..self, month, day: 1 }
+}
+
+///|
+/// Return the last day of this date's calendar quarter.
+pub fn Date::end_of_quarter(self : Date) -> Date {
+  let month = self.start_of_quarter().month + 2
+  { ..self, month, day: days_in_month(self.year, month) }
+}
+
+///|
 /// Add a signed number of calendar days to this date (proleptic Gregorian).
 pub fn Date::add_days(self : Date, days : Int) -> Date {
   let base = days_from_civil(self.year, self.month, self.day)
   let (y, m, d) = civil_from_days(base + days.to_int64())
   { year: y, month: m, day: d }
+}
+
+///|
+fn Date::add_days_checked(self : Date, days : Int) -> Date raise TempoError {
+  let base = days_from_civil(self.year, self.month, self.day)
+  let target = match checked_i64_add(base, days.to_int64()) {
+    Some(target) => target
+    None => raise TempoError("date day adjustment overflows Int64")
+  }
+  let (y, m, d) = civil_from_days_checked(target)
+  Date::new(y, m, d)
 }
 
 ///|
@@ -560,6 +880,10 @@ fn iso_weeks_in_year(week_year : Int) -> Int {
 ///
 /// This can differ from the calendar year near New Year; for example,
 /// 2021-01-01 belongs to ISO week year 2020.
+/// Near the `Int` year extremes the ISO week-year can fall in an
+/// unrepresentable calendar year; like `Date::add_days` / `pad4_year`, this is
+/// a known implementation boundary tracked in tempo-oj8. Ordinary dates are
+/// unaffected.
 pub fn Date::iso_week_year(self : Date) -> Int {
   self.add_days(4 - self.weekday().number_from_monday()).year
 }
@@ -577,6 +901,9 @@ pub fn Date::iso_week(self : Date) -> Int {
 ///
 /// `week_year` is the ISO week-numbering year, `week` is 1..52 or 1..53
 /// depending on that year, and `weekday` is Monday = 1 through Sunday = 7.
+/// Near the `Int` year extremes, the computed date can fall outside the
+/// representable calendar envelope; this is the same known `Date::add_days`
+/// boundary tracked in tempo-oj8. Ordinary dates are unaffected.
 pub fn Date::from_iso_week(
   week_year : Int,
   week : Int,
@@ -597,6 +924,10 @@ pub fn Date::from_iso_week(
 
 ///|
 /// Format this date as an ISO 8601 week date: `YYYY-Www-D`.
+///
+/// Near the `Int` year extremes the ISO week-year or year padding can hit the
+/// known `Date::add_days` / `pad4_year` boundary tracked in tempo-oj8. Ordinary
+/// dates are unaffected.
 pub fn Date::format_iso_week(self : Date) -> String {
   "\{pad4_year(self.iso_week_year())}-W\{pad2(self.iso_week())}-\{self.weekday().number_from_monday()}"
 }
@@ -686,6 +1017,33 @@ pub fn Date::month_enum(self : Date) -> Month {
 }
 
 ///|
+/// Calendar month for this year-month.
+pub fn YearMonth::month_enum(self : YearMonth) -> Month {
+  match Month::from_int(self.month) {
+    Some(month) => month
+    None => abort("YearMonth month out of range")
+  }
+}
+
+///|
+/// Number of days in this year-month.
+pub fn YearMonth::length(self : YearMonth) -> Int {
+  self.month_enum().days_in(self.year)
+}
+
+///|
+/// Return the date in this year-month at `day`, validating the day.
+pub fn YearMonth::at_day(self : YearMonth, day : Int) -> Date raise TempoError {
+  Date::new(self.year, self.month, day)
+}
+
+///|
+/// Return the last date in this year-month.
+pub fn YearMonth::at_end_of_month(self : YearMonth) -> Date {
+  { year: self.year, month: self.month, day: self.length() }
+}
+
+///|
 /// Day of year in 1..366 (1 = January 1).
 pub fn Date::day_of_year(self : Date) -> Int {
   let y = self.year
@@ -695,11 +1053,46 @@ pub fn Date::day_of_year(self : Date) -> Int {
 }
 
 ///|
+fn Date::epoch_day(self : Date) -> Int64 {
+  days_from_civil(self.year, self.month, self.day)
+}
+
+///|
+fn Date::proleptic_month(self : Date) -> Int64 {
+  self.year.to_int64() * 12L + (self.month - 1).to_int64()
+}
+
+///|
 /// Calendar days from `self` to `other` (`other` minus `self`). Negative if `other` is earlier.
 pub fn Date::days_until(self : Date, other : Date) -> Int {
-  let a = days_from_civil(self.year, self.month, self.day)
-  let b = days_from_civil(other.year, other.month, other.day)
+  let a = self.epoch_day()
+  let b = other.epoch_day()
   (b - a).to_int()
+}
+
+///|
+/// Calendar period from this date until `other`.
+///
+/// The result round-trips through `Date::add_period`, including month-end
+/// clamping and the day-borrow behavior used by `java.time.LocalDate.until`.
+pub fn Date::until(self : Date, other : Date) -> Period raise TempoError {
+  let mut total_months = other.proleptic_month() - self.proleptic_month()
+  let provisional_days = other.day - self.day
+  if total_months > 0L && provisional_days < 0 {
+    total_months -= 1L
+  } else if total_months < 0L && provisional_days > 0 {
+    total_months += 1L
+  }
+  let anchor = self.add_months64_checked(total_months)
+  let days = int64_to_int_checked(
+    other.epoch_day() - anchor.epoch_day(),
+    "period days",
+  )
+  {
+    years: int64_to_int_checked(total_months / 12L, "period years"),
+    months: int64_to_int_checked(total_months % 12L, "period months"),
+    days,
+  }
 }
 
 ///|
@@ -807,9 +1200,39 @@ pub fn Date::parse(s : String) -> Date raise TempoError {
 }
 
 ///|
+/// Parse a calendar year-month in 'YYYY-MM' format.
+pub fn YearMonth::parse(s : String) -> YearMonth raise TempoError {
+  let v = s.view()
+  let (year, v) = parse_digits(v, 4)
+  let v = consume(v, '-')
+  let (month, v) = parse_digits(v, 2)
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  YearMonth::new(year, month)
+}
+
+///|
 /// Format this date as 'YYYY-MM-DD'.
 pub fn Date::format(self : Date) -> String {
   "\{pad4(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}"
+}
+
+///|
+/// Format this date as an ordinal date using ISO 8601 expanded-year output
+/// (see `pad4_year`), followed by day-of-year in 001..366.
+pub fn Date::format_ordinal(self : Date) -> String {
+  "\{pad4_year(self.year)}-\{pad3(self.day_of_year())}"
+}
+
+///|
+/// Format this year-month using the same year text as `Date::format`, followed
+/// by `-` and a zero-padded month. Years in 0..9999 produce `YYYY-MM`; negative
+/// years and years >= 10000 produce expanded-year strings that cannot be
+/// round-tripped through `YearMonth::parse`.
+pub fn YearMonth::format(self : YearMonth) -> String {
+  "\{pad4_year(self.year)}-\{pad2(self.month)}"
 }
 
 ///|
@@ -1765,6 +2188,19 @@ fn pad2(n : Int) -> String {
   }
 }
 
+// Zero-pad an integer to 3 digits.
+
+///|
+fn pad3(n : Int) -> String {
+  if n < 10 {
+    "00\{n}"
+  } else if n < 100 {
+    "0\{n}"
+  } else {
+    "\{n}"
+  }
+}
+
 // Zero-pad an integer to 4 digits.
 
 ///|
@@ -1927,6 +2363,27 @@ pub fn Time::format(self : Time) -> String {
 }
 
 ///|
+/// Format this calendar period as ISO 8601 date-period components.
+pub fn Period::format(self : Period) -> String {
+  if self.is_zero() {
+    "P0D"
+  } else {
+    let buf = StringBuilder()
+    buf.write_string("P")
+    if self.years != 0 {
+      buf.write_string("\{self.years}Y")
+    }
+    if self.months != 0 {
+      buf.write_string("\{self.months}M")
+    }
+    if self.days != 0 {
+      buf.write_string("\{self.days}D")
+    }
+    buf.to_string()
+  }
+}
+
+///|
 /// Format this fixed-length duration as a canonical ISO 8601 duration string.
 ///
 /// Calendar units (years and months) are not representable as a fixed
@@ -2053,6 +2510,11 @@ pub impl Show for Date with fn output(self, logger) {
 }
 
 ///|
+pub impl Show for YearMonth with fn output(self, logger) {
+  logger.write_string(self.format())
+}
+
+///|
 pub impl Show for Time with fn output(self, logger) {
   logger.write_string(self.format())
 }
@@ -2064,6 +2526,11 @@ pub impl Show for DateTime with fn output(self, logger) {
 
 ///|
 pub impl Show for FixedOffsetDateTime with fn output(self, logger) {
+  logger.write_string(self.format())
+}
+
+///|
+pub impl Show for Period with fn output(self, logger) {
   logger.write_string(self.format())
 }
 
@@ -2186,6 +2653,111 @@ fn parse_frac_ns(view : StringView) -> (Int, StringView) raise TempoError {
         }
         break (ns, v)
       }
+    }
+  }
+}
+
+///|
+fn parse_period_number(view : StringView) -> (Int, StringView) raise TempoError {
+  let (negative, v) = match view {
+    ['-', .. rest] => (true, rest)
+    ['+', .. rest] => (false, rest)
+    _ => (false, view)
+  }
+  let limit = if negative {
+    @int.MAX_VALUE.to_int64() + 1L
+  } else {
+    @int.MAX_VALUE.to_int64()
+  }
+  for v = v, count = 0, acc = 0L {
+    match v {
+      ['0'..='9' as c, .. rest] => {
+        let digit = (c.to_int() - '0').to_int64()
+        if acc > (limit - digit) / 10L {
+          raise TempoError("period component overflows Int")
+        }
+        continue rest, count + 1, acc * 10L + digit
+      }
+      _ => {
+        if count == 0 {
+          raise TempoError("expected period component digits")
+        }
+        let value = if negative {
+          if acc == limit {
+            @int.MIN_VALUE
+          } else {
+            (0L - acc).to_int()
+          }
+        } else {
+          acc.to_int()
+        }
+        break (value, v)
+      }
+    }
+  }
+}
+
+///|
+fn reject_period_order() -> Unit raise TempoError {
+  raise TempoError("period components are repeated or out of order")
+}
+
+///|
+/// Parse an ISO 8601 date-period string in the `PnYnMnD` subset.
+///
+/// Week notation (`PnW`) is accepted and stored as days. Time components and
+/// any `T` separator are rejected.
+pub fn Period::parse(s : String) -> Period raise TempoError {
+  let v = match s.view() {
+    ['P', .. rest] => rest
+    [c, ..] => raise TempoError("expected 'P', got '\{c}'")
+    [] => raise TempoError("unexpected end of input, expected 'P'")
+  }
+  for v = v, years = 0, months = 0, days = 0, saw_component = false, rank = 0 {
+    match v {
+      [] =>
+        if saw_component {
+          break { years, months, days }
+        } else {
+          raise TempoError("expected period component")
+        }
+      ['T', ..] => raise TempoError("period time components are not supported")
+      ['+' | '-' | '0'..='9', ..] => {
+        let (amount, rest) = parse_period_number(v)
+        match rest {
+          ['Y', .. rest] => {
+            if rank >= 1 {
+              reject_period_order()
+            }
+            continue rest, amount, months, days, true, 1
+          }
+          ['M', .. rest] => {
+            if rank >= 2 {
+              reject_period_order()
+            }
+            continue rest, years, amount, days, true, 2
+          }
+          ['D', .. rest] => {
+            if rank >= 3 {
+              reject_period_order()
+            }
+            continue rest, years, months, amount, true, 3
+          }
+          ['W', .. rest] => {
+            if saw_component {
+              raise TempoError("period week component cannot be combined")
+            }
+            match rest {
+              [] => break Period::of_weeks(amount)
+              _ => raise TempoError("period week component cannot be combined")
+            }
+          }
+          [] =>
+            raise TempoError("unexpected end of input, expected period unit")
+          [c, ..] => raise TempoError("expected period unit, got '\{c}'")
+        }
+      }
+      [c, ..] => raise TempoError("expected period component, got '\{c}'")
     }
   }
 }
