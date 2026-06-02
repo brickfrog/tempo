@@ -764,7 +764,8 @@ pub fn Date::format(self : Date) -> String {
 }
 
 ///|
-/// Format this date as 'YYYY-DDD', where `DDD` is day-of-year in 001..366.
+/// Format this date as an ordinal date using ISO 8601 expanded-year output
+/// (see `pad4_year`), followed by day-of-year in 001..366.
 pub fn Date::format_ordinal(self : Date) -> String {
   "\{pad4_year(self.year)}-\{pad3(self.day_of_year())}"
 }
