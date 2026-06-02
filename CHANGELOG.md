@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-02
+
+### Added
+
+- `Hash` on `Date`, `Time`, `DateTime`, and `Duration`, so they can be used as
+  keys in the stdlib hash `Map`/`Set`. (#31)
+- `Duration::format_iso` / `parse_iso` for ISO 8601 duration strings (the
+  `PnDTnHnMnS` subset with fractional seconds). Years and months are rejected as
+  calendar units. (#32)
+- JSON via `moonbitlang/core/json`: `ToJson` / `FromJson` for `Date`, `Time`,
+  `DateTime`, and `Duration`, encoded as their canonical RFC 3339 / ISO 8601
+  strings rather than field objects. (#33)
+- Int64 overflow safety: `DateTime::min_unix_nanos` / `max_unix_nanos` and
+  `to_unix_nanos_checked` (#29); `DateTime::checked_add` / `checked_sub` /
+  `checked_diff` and `Duration::checked_add` / `checked_sub`, each returning
+  `None` on overflow or an out-of-range operand (#30).
+
+### Changed
+
+- Documented that `to_unix_nanos` and the infallible `add` / `sub` / `diff`
+  operators wrap on Int64 overflow; the `checked_*` variants are the
+  overflow-safe alternative. (#29, #30)
+
 ## [0.5.0] - 2026-06-02
 
 ### Added
