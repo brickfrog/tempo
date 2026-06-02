@@ -947,13 +947,18 @@ pub fn Duration::checked_multiply(self : Duration, n : Int64) -> Duration? {
 ///|
 /// Divide this duration by an `Int64` scalar, truncating toward zero.
 ///
-/// Division by zero raises `TempoError`.
+/// Division by zero raises `TempoError`. The `Int64::min_value / -1` overflow
+/// edge also raises `TempoError` instead of trapping on backends where signed
+/// division overflow is a runtime error.
 pub fn Duration::divide(
   self : Duration,
   n : Int64,
 ) -> Duration raise TempoError {
   if n == 0L {
     raise TempoError("duration division by zero")
+  }
+  if self.nanoseconds == int64_min_value && n == -1L {
+    raise TempoError("duration division overflow")
   }
   { nanoseconds: self.nanoseconds / n }
 }

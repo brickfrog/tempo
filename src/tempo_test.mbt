@@ -949,6 +949,10 @@ test "Duration::divide" {
     @tempo.Duration::nanoseconds(3L),
   )
   assert_true((try? @tempo.Duration::seconds(1L).divide(0L)) is Err(_))
+  assert_true(
+    (try? @tempo.Duration::nanoseconds(-9_223_372_036_854_775_808L).divide(-1L))
+    is Err(_),
+  )
 }
 
 ///|
