@@ -208,6 +208,59 @@ test "Date boundary adjusters for month and year starts" {
 }
 
 ///|
+test "Date quarter boundary accessors" {
+  assert_eq(@tempo.Date::new(2024, 3, 31).quarter(), 1)
+  assert_eq(@tempo.Date::new(2024, 4, 1).quarter(), 2)
+  assert_eq(@tempo.Date::new(2024, 7, 1).quarter(), 3)
+  assert_eq(@tempo.Date::new(2024, 10, 1).quarter(), 4)
+}
+
+///|
+test "Date days_in_year and is_leap accessors" {
+  assert_eq(@tempo.Date::new(2024, 1, 1).days_in_year(), 366)
+  assert_eq(@tempo.Date::new(2023, 1, 1).days_in_year(), 365)
+  assert_eq(@tempo.Date::new(2024, 1, 1).is_leap(), true)
+  assert_eq(@tempo.Date::new(1900, 1, 1).is_leap(), false)
+  assert_eq(@tempo.Date::new(2000, 1, 1).is_leap(), true)
+}
+
+///|
+test "Date quarter boundary adjusters" {
+  assert_eq(
+    @tempo.Date::new(2024, 2, 10).start_of_quarter(),
+    @tempo.Date::new(2024, 1, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 2, 10).end_of_quarter(),
+    @tempo.Date::new(2024, 3, 31),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 5, 15).start_of_quarter(),
+    @tempo.Date::new(2024, 4, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 5, 15).end_of_quarter(),
+    @tempo.Date::new(2024, 6, 30),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 8, 20).start_of_quarter(),
+    @tempo.Date::new(2024, 7, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 8, 20).end_of_quarter(),
+    @tempo.Date::new(2024, 9, 30),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 11, 30).start_of_quarter(),
+    @tempo.Date::new(2024, 10, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 11, 30).end_of_quarter(),
+    @tempo.Date::new(2024, 12, 31),
+  )
+}
+
+///|
 test "DateTime boundary adjusters preserve time of day" {
   let dt = @tempo.DateTime::parse("2024-03-15T14:30:00Z")
   assert_eq(dt.start_of_month().format(), "2024-03-01T14:30:00Z")
