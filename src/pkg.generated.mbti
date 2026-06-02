@@ -76,7 +76,9 @@ pub fn DateTime::from_unix_seconds(Int64) -> Self
 pub fn DateTime::is_after(Self, Self) -> Bool
 pub fn DateTime::is_before(Self, Self) -> Bool
 pub fn DateTime::max(Self, Self) -> Self
+pub fn DateTime::max_unix_nanos() -> Int64
 pub fn DateTime::min(Self, Self) -> Self
+pub fn DateTime::min_unix_nanos() -> Int64
 pub fn DateTime::new(Date, Time) -> Self
 pub fn DateTime::now() -> Self
 pub fn DateTime::parse(String) -> Self raise TempoError
@@ -91,6 +93,7 @@ pub fn DateTime::to_time(Self) -> Time
 pub fn DateTime::to_unix_micros(Self) -> Int64
 pub fn DateTime::to_unix_millis(Self) -> Int64
 pub fn DateTime::to_unix_nanos(Self) -> Int64
+pub fn DateTime::to_unix_nanos_checked(Self) -> Int64?
 pub fn DateTime::to_unix_seconds(Self) -> Int64
 pub fn DateTime::truncate_to(Self, TimeUnit) -> Self
 pub fn DateTime::until(Self, Self) -> Duration
