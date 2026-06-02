@@ -141,11 +141,14 @@ pub struct Duration {
 pub fn Duration::abs(Self) -> Self
 pub fn Duration::as_days(Self) -> Int64
 pub fn Duration::as_hours(Self) -> Int64
+pub fn Duration::as_hours_f64(Self) -> Double
 pub fn Duration::as_microseconds(Self) -> Int64
 pub fn Duration::as_milliseconds(Self) -> Int64
 pub fn Duration::as_minutes(Self) -> Int64
+pub fn Duration::as_minutes_f64(Self) -> Double
 pub fn Duration::as_nanoseconds(Self) -> Int64
 pub fn Duration::as_seconds(Self) -> Int64
+pub fn Duration::as_seconds_f64(Self) -> Double
 pub fn Duration::as_weeks(Self) -> Int64
 pub fn Duration::checked_add(Self, Self) -> Self?
 pub fn Duration::checked_multiply(Self, Int64) -> Self?
