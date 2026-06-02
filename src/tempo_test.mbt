@@ -577,6 +577,15 @@ test "YearMonth::format parse round-trip and Show" {
 }
 
 ///|
+test "YearMonth::parse rejects malformed or out-of-range input" {
+  assert_true((try? @tempo.YearMonth::parse("2024-00")) is Err(_))
+  assert_true((try? @tempo.YearMonth::parse("2024-13")) is Err(_))
+  assert_true((try? @tempo.YearMonth::parse("2024-2")) is Err(_))
+  assert_true((try? @tempo.YearMonth::parse("2024-02x")) is Err(_))
+  assert_true((try? @tempo.YearMonth::parse("abcd-01")) is Err(_))
+}
+
+///|
 test "YearMonth Compare orders chronologically" {
   assert_eq(
     @tempo.YearMonth::new(2024, 1) < @tempo.YearMonth::new(2024, 2),
