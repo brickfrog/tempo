@@ -1577,9 +1577,17 @@ test "DateTime::format_with tokens and literals" {
 }
 
 ///|
-test "DateTime::format_with rejects unknown token" {
+test "DateTime::format_with rejects invalid patterns" {
   let dt = @tempo.DateTime::parse("2024-03-15T12:34:56Z")
   assert_true((try? dt.format_with("{ZZ}")) is Err(_))
+  assert_true((try? dt.format_with("a{YYYY")) is Err(_))
+  assert_true((try? dt.format_with("a{")) is Err(_))
+  assert_true((try? dt.format_with("{YYY}")) is Err(_))
+  assert_true((try? dt.format_with("{}")) is Err(_))
+  assert_true((try? dt.format_with("{nnnnnnnn}")) is Err(_))
+  assert_true((try? dt.format_with("{nnnnnnnnnn}")) is Err(_))
+  assert_true((try? dt.format_with("{Mm}")) is Err(_))
+  assert_true((try? dt.format_with("}")) is Err(_))
   assert_true((try? dt.format_with("{YYYY}}")) is Err(_))
 }
 
@@ -1587,6 +1595,8 @@ test "DateTime::format_with rejects unknown token" {
 test "DateTime::format_with escapes braces" {
   let dt = @tempo.DateTime::parse("2024-03-15T12:34:56Z")
   assert_eq(dt.format_with("{{x}}"), "{x}")
+  assert_eq(dt.format_with("{{{YYYY}}}"), "{2024}")
+  assert_eq(dt.format_with("}}"), "}")
 }
 
 ///|
