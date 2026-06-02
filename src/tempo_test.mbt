@@ -812,6 +812,39 @@ test "Date::from_iso_week raises on residual Int year overflow" {
 }
 
 ///|
+test "Date::parse_iso_week valid and round-trips" {
+  assert_eq(
+    @tempo.Date::parse_iso_week("2020-W53-5"),
+    @tempo.Date::new(2021, 1, 1),
+  )
+  let new_year_monday = @tempo.Date::new(2024, 1, 1)
+  assert_eq(
+    @tempo.Date::parse_iso_week(new_year_monday.format_iso_week()),
+    new_year_monday,
+  )
+  let prior_week_year = @tempo.Date::new(2021, 1, 1)
+  assert_eq(
+    @tempo.Date::parse_iso_week(prior_week_year.format_iso_week()),
+    prior_week_year,
+  )
+  let week_53_end = @tempo.Date::new(2026, 12, 31)
+  assert_eq(
+    @tempo.Date::parse_iso_week(week_53_end.format_iso_week()),
+    week_53_end,
+  )
+}
+
+///|
+test "Date::parse_iso_week rejects malformed and out-of-range input" {
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W54-1")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-01-1")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W1-1")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W01")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W01-8")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W01-1Z")) is Err(_))
+}
+
+///|
 test "Weekday conversion helpers" {
   assert_true(@tempo.Weekday::from_int(1) == Some(@tempo.Monday))
   assert_eq(@tempo.Monday.to_int(), 1)
@@ -1214,6 +1247,35 @@ test "Date::format_ordinal" {
 }
 
 ///|
+test "Date::parse_ordinal valid and round-trips" {
+  assert_eq(
+    @tempo.Date::parse_ordinal("2024-060"),
+    @tempo.Date::new(2024, 2, 29),
+  )
+  let jan1 = @tempo.Date::new(2024, 1, 1)
+  assert_eq(@tempo.Date::parse_ordinal(jan1.format_ordinal()), jan1)
+  let leap_day = @tempo.Date::new(2024, 2, 29)
+  assert_eq(@tempo.Date::parse_ordinal(leap_day.format_ordinal()), leap_day)
+  let leap_dec31 = @tempo.Date::new(2024, 12, 31)
+  assert_eq(@tempo.Date::parse_ordinal(leap_dec31.format_ordinal()), leap_dec31)
+  let common_dec31 = @tempo.Date::new(2023, 12, 31)
+  assert_eq(
+    @tempo.Date::parse_ordinal(common_dec31.format_ordinal()),
+    common_dec31,
+  )
+}
+
+///|
+test "Date::parse_ordinal rejects malformed and out-of-range input" {
+  assert_true((try? @tempo.Date::parse_ordinal("2023-366")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024-000")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024-60")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024-0060")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024/060")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024-060Z")) is Err(_))
+}
+
+///|
 test "Date::parse roundtrip" {
   let s = "2000-02-29"
   let d = @tempo.Date::parse(s)
@@ -1520,6 +1582,45 @@ test "DateTime::format with nanoseconds" {
 test "DateTime::format nanosecond precision" {
   let dt = @tempo.DateTime::from_unix_nanos(1710506096_123_456_789L)
   assert_eq(dt.format(), "2024-03-15T12:34:56.123456789Z")
+}
+
+///|
+test "DateTime::format_fixed whole second keeps nanoseconds" {
+  let dt = @tempo.DateTime::from_unix_seconds(0L)
+  assert_eq(dt.format_fixed(), "1970-01-01T00:00:00.000000000Z")
+}
+
+///|
+test "DateTime::format_fixed pads parsed fractional seconds" {
+  let dt = @tempo.DateTime::parse("2024-07-21T17:11:00.5Z")
+  assert_eq(dt.format_fixed(), "2024-07-21T17:11:00.500000000Z")
+}
+
+///|
+test "DateTime::format_fixed sorts lexicographically for in-range years" {
+  let t1 = @tempo.DateTime::parse("2024-07-21T17:11:00.499999999Z")
+  let t2 = @tempo.DateTime::parse("2024-07-21T17:11:00.5Z")
+  let year_end = @tempo.DateTime::parse("2024-12-31T23:59:59.999999999Z")
+  let next_year = @tempo.DateTime::parse("2025-01-01T00:00:00.000000000Z")
+  assert_eq(t1 < t2, true)
+  assert_eq(t1.format_fixed() < t2.format_fixed(), true)
+  assert_eq(year_end < next_year, true)
+  assert_eq(year_end.format_fixed() < next_year.format_fixed(), true)
+}
+
+///|
+test "DateTime::format_fixed in-range outputs share width" {
+  let first = @tempo.DateTime::new(
+    @tempo.Date::new(0, 1, 1),
+    @tempo.Time::new(0, 0, 0, 0),
+  ).format_fixed()
+  let middle = @tempo.DateTime::parse("2024-07-21T17:11:00.5Z").format_fixed()
+  let last = @tempo.DateTime::new(
+    @tempo.Date::new(9999, 12, 31),
+    @tempo.Time::new(23, 59, 59, 999_999_999),
+  ).format_fixed()
+  assert_eq(first.length(), middle.length())
+  assert_eq(middle.length(), last.length())
 }
 
 ///|
@@ -1935,6 +2036,30 @@ test "Duration::format_iso canonical components" {
 }
 
 ///|
+test "Duration::humanize formats elapsed components" {
+  assert_eq(
+    (@tempo.Duration::hours(2L) + @tempo.Duration::minutes(30L)).humanize(),
+    "2 hours 30 minutes",
+  )
+  assert_eq(@tempo.Duration::seconds(1L).humanize(), "1 second")
+  assert_eq(
+    (@tempo.Duration::days(1L) +
+    @tempo.Duration::hours(1L) +
+    @tempo.Duration::minutes(1L) +
+    @tempo.Duration::seconds(1L)).humanize(),
+    "1 day 1 hour 1 minute 1 second",
+  )
+  assert_eq(@tempo.Duration::seconds(0L).humanize(), "0 seconds")
+  assert_eq(@tempo.Duration::milliseconds(500L).humanize(), "0 seconds")
+  assert_eq(@tempo.Duration::seconds(-5L).humanize(), "-5 seconds")
+  assert_eq(@tempo.Duration::minutes(-90L).humanize(), "-1 hour 30 minutes")
+  assert_eq(
+    @tempo.Duration::nanoseconds(-9_223_372_036_854_775_808L).humanize(),
+    "-106751 days 23 hours 47 minutes 16 seconds",
+  )
+}
+
+///|
 test "Duration::parse_iso fixed-unit components" {
   assert_eq(
     @tempo.Duration::parse_iso("PT2H30M"),
@@ -2099,6 +2224,15 @@ test "Duration::minutes" {
 test "Duration::hours" {
   let d = @tempo.Duration::hours(1L)
   assert_eq(d.as_minutes(), 60L)
+}
+
+///|
+test "Duration fractional total accessors" {
+  assert_eq(@tempo.Duration::milliseconds(1500L).as_seconds_f64(), 1.5)
+  assert_eq(@tempo.Duration::minutes(90L).as_hours_f64(), 1.5)
+  assert_eq(@tempo.Duration::seconds(30L).as_minutes_f64(), 0.5)
+  assert_eq(@tempo.Duration::milliseconds(-1500L).as_seconds_f64(), -1.5)
+  assert_eq(@tempo.Duration::seconds(0L).as_hours_f64(), 0.0)
 }
 
 ///|

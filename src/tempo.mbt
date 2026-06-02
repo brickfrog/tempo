@@ -1264,6 +1264,47 @@ pub fn Date::parse(s : String) -> Date raise TempoError {
 }
 
 ///|
+/// Parse an ISO 8601 ordinal date in 'YYYY-DDD' format.
+///
+/// This parser is strict: it accepts only an unsigned 4-digit year, a hyphen,
+/// exactly 3 digits for the day-of-year, and end-of-input. Expanded-year output
+/// from `Date::format_ordinal` is not accepted.
+pub fn Date::parse_ordinal(s : String) -> Date raise TempoError {
+  let v = s.view()
+  let (year, v) = parse_digits(v, 4)
+  let v = consume(v, '-')
+  let (day_of_year, v) = parse_digits(v, 3)
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  Date::from_ordinal(year, day_of_year)
+}
+
+///|
+/// Parse an ISO 8601 week date in 'YYYY-Www-D' format.
+///
+/// The leading year is the ISO week-numbering year, which can differ from the
+/// resulting calendar year near New Year. This parser is strict: it accepts
+/// only an unsigned 4-digit week-year, a literal `W`, a 2-digit week, a 1-digit
+/// weekday, and end-of-input. Expanded-year output from `Date::format_iso_week`
+/// is not accepted.
+pub fn Date::parse_iso_week(s : String) -> Date raise TempoError {
+  let v = s.view()
+  let (week_year, v) = parse_digits(v, 4)
+  let v = consume(v, '-')
+  let v = consume(v, 'W')
+  let (week, v) = parse_digits(v, 2)
+  let v = consume(v, '-')
+  let (weekday, v) = parse_digits(v, 1)
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  Date::from_iso_week(week_year, week, weekday)
+}
+
+///|
 /// Parse a calendar year-month in 'YYYY-MM' format.
 pub fn YearMonth::parse(s : String) -> YearMonth raise TempoError {
   let v = s.view()
@@ -1917,15 +1958,42 @@ pub fn Duration::as_seconds(self : Duration) -> Int64 {
 }
 
 ///|
+/// Total seconds in this duration as a `Double`.
+///
+/// `Double` has a ~53-bit mantissa, so magnitudes beyond ~2^53 nanoseconds
+/// (~104 days) lose sub-unit precision.
+pub fn Duration::as_seconds_f64(self : Duration) -> Double {
+  self.nanoseconds.to_double() / ns_per_sec.to_double()
+}
+
+///|
 /// Total whole minutes in this duration (truncated toward zero).
 pub fn Duration::as_minutes(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_min
 }
 
 ///|
+/// Total minutes in this duration as a `Double`.
+///
+/// `Double` has a ~53-bit mantissa, so magnitudes beyond ~2^53 nanoseconds
+/// (~104 days) lose sub-unit precision.
+pub fn Duration::as_minutes_f64(self : Duration) -> Double {
+  self.nanoseconds.to_double() / ns_per_min.to_double()
+}
+
+///|
 /// Total whole hours in this duration (truncated toward zero).
 pub fn Duration::as_hours(self : Duration) -> Int64 {
   self.nanoseconds / ns_per_hour
+}
+
+///|
+/// Total hours in this duration as a `Double`.
+///
+/// `Double` has a ~53-bit mantissa, so magnitudes beyond ~2^53 nanoseconds
+/// (~104 days) lose sub-unit precision.
+pub fn Duration::as_hours_f64(self : Duration) -> Double {
+  self.nanoseconds.to_double() / ns_per_hour.to_double()
 }
 
 ///|
@@ -2413,6 +2481,22 @@ fn format_datetime_pattern_token(
 }
 
 ///|
+/// Format this DateTime as a UTC timestamp with a fixed-width fractional
+/// second; for years 0..9999, the whole output is fixed-width and
+/// lexicographically sortable: `YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`.
+///
+/// The fractional-second field is always present with exactly 9 nanosecond
+/// digits. For years 0..9999, byte-for-byte string comparison of two
+/// `format_fixed` outputs matches chronological order. Outside that year range,
+/// expanded or negative year text (especially a leading `-`) does not preserve
+/// that lexicographic ordering guarantee.
+pub fn DateTime::format_fixed(self : DateTime) -> String {
+  let d = self.date
+  let t = self.time
+  "\{pad4_year(d.year)}-\{pad2(d.month)}-\{pad2(d.day)}T\{pad2(t.hour)}:\{pad2(t.minute)}:\{pad2(t.second)}.\{pad9(t.nanosecond)}Z"
+}
+
+///|
 fn format_datetime_without_zone(dt : DateTime) -> String {
   let d = dt.date
   let t = dt.time
@@ -2556,6 +2640,56 @@ pub fn Duration::format_iso(self : Duration) -> String {
       }
     }
     buf.to_string()
+  }
+}
+
+///|
+/// Format this duration as English elapsed time using day/hour/minute/second
+/// units. Sub-second remainder is dropped.
+pub fn Duration::humanize(self : Duration) -> String {
+  let total_seconds = self.abs().as_seconds()
+  if total_seconds == 0L {
+    "0 seconds"
+  } else {
+    let days = total_seconds / 86_400L
+    let rem = total_seconds - days * 86_400L
+    let hours = rem / 3_600L
+    let rem = rem - hours * 3_600L
+    let minutes = rem / 60L
+    let seconds = rem - minutes * 60L
+    let buf = StringBuilder()
+    if self.is_negative() {
+      buf.write_string("-")
+    }
+    let wrote = write_humanized_duration_component(buf, false, days, "day")
+    let wrote = write_humanized_duration_component(buf, wrote, hours, "hour")
+    let wrote = write_humanized_duration_component(
+      buf, wrote, minutes, "minute",
+    )
+    let _ = write_humanized_duration_component(buf, wrote, seconds, "second")
+    buf.to_string()
+  }
+}
+
+///|
+fn write_humanized_duration_component(
+  buf : StringBuilder,
+  wrote : Bool,
+  value : Int64,
+  unit : String,
+) -> Bool {
+  if value == 0L {
+    wrote
+  } else {
+    if wrote {
+      buf.write_string(" ")
+    }
+    buf.write_string("\{value} ")
+    buf.write_string(unit)
+    if value != 1L {
+      buf.write_string("s")
+    }
+    true
   }
 }
 
