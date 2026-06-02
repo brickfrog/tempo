@@ -35,7 +35,7 @@ pub(all) enum Weekday {
   Friday
   Saturday
   Sunday
-} derive(Eq, Compare, Hash, Show)
+} derive(Eq, Compare, Hash)
 
 ///|
 /// ISO 8601 weekday number: Monday = 1 through Sunday = 7.
@@ -115,6 +115,19 @@ pub fn Weekday::previous(self : Weekday) -> Weekday {
 }
 
 ///|
+pub impl Show for Weekday with fn output(self, logger) {
+  match self {
+    Monday => logger.write_string("Monday")
+    Tuesday => logger.write_string("Tuesday")
+    Wednesday => logger.write_string("Wednesday")
+    Thursday => logger.write_string("Thursday")
+    Friday => logger.write_string("Friday")
+    Saturday => logger.write_string("Saturday")
+    Sunday => logger.write_string("Sunday")
+  }
+}
+
+///|
 /// Calendar month, ordered January through December.
 pub(all) enum Month {
   January
@@ -129,7 +142,7 @@ pub(all) enum Month {
   October
   November
   December
-} derive(Eq, Compare, Hash, Show)
+} derive(Eq, Compare, Hash)
 
 ///|
 /// Calendar month number: January = 1 through December = 12.
@@ -212,6 +225,24 @@ pub fn Month::previous(self : Month) -> Month {
 /// Number of days in this month for `year`.
 pub fn Month::days_in(self : Month, year : Int) -> Int {
   days_in_month(year, self.to_int())
+}
+
+///|
+pub impl Show for Month with fn output(self, logger) {
+  match self {
+    January => logger.write_string("January")
+    February => logger.write_string("February")
+    March => logger.write_string("March")
+    April => logger.write_string("April")
+    May => logger.write_string("May")
+    June => logger.write_string("June")
+    July => logger.write_string("July")
+    August => logger.write_string("August")
+    September => logger.write_string("September")
+    October => logger.write_string("October")
+    November => logger.write_string("November")
+    December => logger.write_string("December")
+  }
 }
 
 ///|

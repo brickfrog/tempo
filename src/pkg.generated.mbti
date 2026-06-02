@@ -110,12 +110,13 @@ pub(all) enum Month {
   October
   November
   December
-} derive(Compare, Eq, Hash, Show)
+} derive(Compare, Eq, Hash)
 pub fn Month::days_in(Self, Int) -> Int
 pub fn Month::from_int(Int) -> Self?
 pub fn Month::next(Self) -> Self
 pub fn Month::previous(Self) -> Self
 pub fn Month::to_int(Self) -> Int
+pub impl Show for Month
 
 pub struct Time {
   hour : Int
@@ -140,13 +141,14 @@ pub(all) enum Weekday {
   Friday
   Saturday
   Sunday
-} derive(Compare, Eq, Hash, Show)
+} derive(Compare, Eq, Hash)
 pub fn Weekday::from_int(Int) -> Self?
 pub fn Weekday::next(Self) -> Self
 pub fn Weekday::number_from_monday(Self) -> Int
 pub fn Weekday::number_from_sunday(Self) -> Int
 pub fn Weekday::previous(Self) -> Self
 pub fn Weekday::to_int(Self) -> Int
+pub impl Show for Weekday
 
 // Type aliases
 
