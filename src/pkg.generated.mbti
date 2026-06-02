@@ -44,6 +44,7 @@ pub struct DateTime {
 } derive(Compare, Eq)
 pub fn DateTime::add(Self, Duration) -> Self
 pub fn DateTime::diff(Self, Self) -> Duration
+pub fn DateTime::end_of_day(Self) -> Self
 pub fn DateTime::end_of_month(Self) -> Self
 pub fn DateTime::end_of_year(Self) -> Self
 pub fn DateTime::epoch() -> Self
@@ -55,6 +56,7 @@ pub fn DateTime::from_unix_seconds(Int64) -> Self
 pub fn DateTime::new(Date, Time) -> Self
 pub fn DateTime::now() -> Self
 pub fn DateTime::parse(String) -> Self raise TempoError
+pub fn DateTime::start_of_day(Self) -> Self
 pub fn DateTime::start_of_month(Self) -> Self
 pub fn DateTime::start_of_year(Self) -> Self
 pub fn DateTime::sub(Self, Duration) -> Self
@@ -64,6 +66,7 @@ pub fn DateTime::to_unix_micros(Self) -> Int64
 pub fn DateTime::to_unix_millis(Self) -> Int64
 pub fn DateTime::to_unix_nanos(Self) -> Int64
 pub fn DateTime::to_unix_seconds(Self) -> Int64
+pub fn DateTime::truncate_to(Self, TimeUnit) -> Self
 pub fn DateTime::with_date(Self, Date) -> Self
 pub fn DateTime::with_day(Self, Int) -> Self raise TempoError
 pub fn DateTime::with_hour(Self, Int) -> Self raise TempoError
@@ -142,6 +145,14 @@ pub fn Time::with_minute(Self, Int) -> Self raise TempoError
 pub fn Time::with_nanosecond(Self, Int) -> Self raise TempoError
 pub fn Time::with_second(Self, Int) -> Self raise TempoError
 pub impl Show for Time
+
+pub(all) enum TimeUnit {
+  Second
+  Minute
+  Hour
+  Day
+} derive(Compare, Eq, Hash)
+pub impl Show for TimeUnit
 
 pub(all) enum Weekday {
   Monday

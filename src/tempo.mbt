@@ -255,6 +255,25 @@ pub struct Time {
 } derive(Eq, Compare)
 
 ///|
+/// Units supported by `DateTime::truncate_to`, ordered smallest to largest.
+pub(all) enum TimeUnit {
+  Second
+  Minute
+  Hour
+  Day
+} derive(Eq, Compare, Hash)
+
+///|
+pub impl Show for TimeUnit with fn output(self, logger) {
+  match self {
+    Second => logger.write_string("Second")
+    Minute => logger.write_string("Minute")
+    Hour => logger.write_string("Hour")
+    Day => logger.write_string("Day")
+  }
+}
+
+///|
 /// A combined UTC date and time.
 pub struct DateTime {
   date : Date
@@ -702,6 +721,36 @@ pub fn DateTime::start_of_year(self : DateTime) -> DateTime {
 /// midnight is desired.
 pub fn DateTime::end_of_year(self : DateTime) -> DateTime {
   DateTime::new(self.date.end_of_year(), self.time)
+}
+
+///|
+/// Return this DateTime at the start of its calendar day.
+pub fn DateTime::start_of_day(self : DateTime) -> DateTime {
+  { ..self, time: { hour: 0, minute: 0, second: 0, nanosecond: 0 } }
+}
+
+///|
+/// Return this DateTime at the end of its calendar day.
+pub fn DateTime::end_of_day(self : DateTime) -> DateTime {
+  {
+    ..self,
+    time: { hour: 23, minute: 59, second: 59, nanosecond: 999_999_999 },
+  }
+}
+
+///|
+/// Floor this DateTime to the requested unit boundary.
+///
+/// Day truncation is anchored to the calendar day: it returns midnight UTC on
+/// the same date, rather than truncating a duration since the Unix epoch.
+pub fn DateTime::truncate_to(self : DateTime, unit : TimeUnit) -> DateTime {
+  match unit {
+    Second => { ..self, time: { ..self.time, nanosecond: 0 } }
+    Minute => { ..self, time: { ..self.time, second: 0, nanosecond: 0 } }
+    Hour =>
+      { ..self, time: { ..self.time, minute: 0, second: 0, nanosecond: 0 } }
+    Day => self.start_of_day()
+  }
 }
 
 // ─── Unix timestamp conversion ────────────────────────────────────────────────

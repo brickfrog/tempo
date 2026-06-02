@@ -217,6 +217,32 @@ test "DateTime boundary adjusters preserve time of day" {
 }
 
 ///|
+test "DateTime day boundary adjusters set time of day" {
+  let dt = @tempo.DateTime::parse("2024-03-15T14:31:43.125Z")
+  assert_eq(dt.start_of_day().format(), "2024-03-15T00:00:00Z")
+  assert_eq(dt.end_of_day().format(), "2024-03-15T23:59:59.999999999Z")
+  assert_eq(dt.start_of_day().date, dt.date)
+  assert_eq(dt.end_of_day().date, dt.date)
+}
+
+///|
+test "DateTime truncate_to floors to unit boundary" {
+  let dt = @tempo.DateTime::parse("2024-03-15T14:31:43.125Z")
+  assert_eq(dt.truncate_to(@tempo.Second).format(), "2024-03-15T14:31:43Z")
+  assert_eq(dt.truncate_to(@tempo.Minute).format(), "2024-03-15T14:31:00Z")
+  assert_eq(dt.truncate_to(@tempo.Hour).format(), "2024-03-15T14:00:00Z")
+  assert_eq(dt.truncate_to(@tempo.Day), dt.start_of_day())
+  assert_eq(dt.truncate_to(@tempo.Hour).date, dt.date)
+}
+
+///|
+test "DateTime truncate_to day is calendar anchored for far future dates" {
+  let dt = @tempo.DateTime::parse("3000-01-01T14:31:43.125Z")
+  assert_eq(dt.truncate_to(@tempo.Day).format(), "3000-01-01T00:00:00Z")
+  assert_eq(dt.truncate_to(@tempo.Hour).format(), "3000-01-01T14:00:00Z")
+}
+
+///|
 test "DateTime accessors and component updaters" {
   let date = @tempo.Date::new(2024, 3, 15)
   let time = @tempo.Time::new(12, 34, 56, 789)
