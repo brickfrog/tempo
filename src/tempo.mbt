@@ -527,6 +527,81 @@ pub fn Date::weekday(self : Date) -> Weekday {
 }
 
 ///|
+fn positive_mod7(n : Int) -> Int {
+  (n % 7 + 7) % 7
+}
+
+///|
+/// Nearest date strictly after this date that falls on `wd`.
+pub fn Date::next(self : Date, wd : Weekday) -> Date {
+  let raw = positive_mod7(wd.to_int() - self.weekday().to_int())
+  let delta = if raw == 0 { 7 } else { raw }
+  self.add_days(delta)
+}
+
+///|
+/// Nearest date strictly before this date that falls on `wd`.
+pub fn Date::previous(self : Date, wd : Weekday) -> Date {
+  let raw = positive_mod7(self.weekday().to_int() - wd.to_int())
+  let delta = if raw == 0 { 7 } else { raw }
+  self.add_days(-delta)
+}
+
+///|
+/// This date if it falls on `wd`, otherwise the next such date.
+pub fn Date::next_or_same(self : Date, wd : Weekday) -> Date {
+  let delta = positive_mod7(wd.to_int() - self.weekday().to_int())
+  self.add_days(delta)
+}
+
+///|
+/// This date if it falls on `wd`, otherwise the previous such date.
+pub fn Date::previous_or_same(self : Date, wd : Weekday) -> Date {
+  let delta = positive_mod7(self.weekday().to_int() - wd.to_int())
+  self.add_days(-delta)
+}
+
+///|
+/// The nth occurrence of `wd` in `year`/`month`.
+///
+/// Positive `n` counts from the start of the month; negative `n` counts from
+/// the end, so `n == -1` is the last occurrence.
+pub fn Date::nth_weekday_of_month(
+  year : Int,
+  month : Int,
+  wd : Weekday,
+  n : Int,
+) -> Date raise TempoError {
+  if n == 0 {
+    raise TempoError("weekday occurrence must not be zero")
+  }
+  if n > 0 {
+    let first = Date::new(year, month, 1)
+    let offset = positive_mod7(wd.to_int() - first.weekday().to_int())
+    let first_match_day = 1 + offset
+    let day = first_match_day.to_int64() + 7L * (n.to_int64() - 1L)
+    let max_day = days_in_month(year, month).to_int64()
+    if day < 1L || day > max_day {
+      raise TempoError("weekday occurrence does not exist in month")
+    } else {
+      Date::new(year, month, day.to_int())
+    }
+  } else {
+    let last_day = days_in_month(year, month)
+    let last = Date::new(year, month, last_day)
+    let back = positive_mod7(last.weekday().to_int() - wd.to_int())
+    let last_match_day = last_day - back
+    let day = last_match_day.to_int64() + 7L * (n.to_int64() + 1L)
+    let max_day = last_day.to_int64()
+    if day < 1L || day > max_day {
+      raise TempoError("weekday occurrence does not exist in month")
+    } else {
+      Date::new(year, month, day.to_int())
+    }
+  }
+}
+
+///|
 /// Calendar month for this date.
 pub fn Date::month_enum(self : Date) -> Month {
   match Month::from_int(self.month) {
