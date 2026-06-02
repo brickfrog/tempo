@@ -2414,6 +2414,73 @@ pub fn DateTime::format(self : DateTime) -> String {
 }
 
 ///|
+/// Format this DateTime with a brace-token pattern.
+///
+/// Supported tokens are `{YYYY}`, `{MM}`, `{DD}`, `{HH}`, `{mm}`, `{ss}`,
+/// `{fff}`, and `{nnnnnnnnn}`. Non-brace text outside tokens is copied
+/// literally. Use `{{` and `}}` to emit literal braces. Unknown tokens and
+/// unmatched braces raise `TempoError`.
+pub fn DateTime::format_with(
+  self : DateTime,
+  pattern : String,
+) -> String raise TempoError {
+  let buf = StringBuilder()
+  let len = pattern.length()
+  let mut i = 0
+  while i < len {
+    if pattern[i] == '{' {
+      if i + 1 < len && pattern[i + 1] == '{' {
+        buf.write_string("{")
+        i += 2
+      } else {
+        let start = i + 1
+        let mut end = start
+        while end < len && pattern[end] != '}' {
+          end += 1
+        }
+        if end >= len {
+          raise TempoError("unterminated datetime format token")
+        }
+        let token = pattern[start:end].to_owned()
+        buf.write_string(format_datetime_pattern_token(self, token))
+        i = end + 1
+      }
+    } else if pattern[i] == '}' {
+      if i + 1 < len && pattern[i + 1] == '}' {
+        buf.write_string("}")
+        i += 2
+      } else {
+        raise TempoError("unmatched closing brace in datetime format pattern")
+      }
+    } else {
+      buf.write_string(pattern[i:i + 1].to_owned())
+      i += 1
+    }
+  }
+  buf.to_string()
+}
+
+///|
+fn format_datetime_pattern_token(
+  dt : DateTime,
+  token : String,
+) -> String raise TempoError {
+  let d = dt.date
+  let t = dt.time
+  match token {
+    "YYYY" => pad4_year(d.year)
+    "MM" => pad2(d.month)
+    "DD" => pad2(d.day)
+    "HH" => pad2(t.hour)
+    "mm" => pad2(t.minute)
+    "ss" => pad2(t.second)
+    "fff" => pad3(t.nanosecond / 1_000_000)
+    "nnnnnnnnn" => pad9(t.nanosecond)
+    _ => raise TempoError("unknown datetime format token {\{token}}")
+  }
+}
+
+///|
 /// Format this DateTime as a UTC timestamp with a fixed-width fractional
 /// second; for years 0..9999, the whole output is fixed-width and
 /// lexicographically sortable: `YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`.
