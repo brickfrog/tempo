@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DateTime::with_date`/`with_time` plus `with_year` through `with_nanosecond`.
   The fallible updaters validate through `Date::new`/`Time::new` and raise on an
   invalid result rather than clamping. (#17)
-- `Weekday` (Monday–Sunday) and `Month` (January–December) enums deriving `Eq`,
+- `Weekday` (Monday–Sunday) and `Month` (January–December) enums implementing `Eq`,
   `Compare`, `Hash`, and `Show`, with `to_int`/`from_int`, cyclic
   `next`/`previous`, `Weekday::number_from_monday`/`number_from_sunday`, and
   `Month::days_in`. `Date::weekday` and `Date::month_enum` return them;

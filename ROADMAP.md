@@ -48,6 +48,13 @@ Added to all public functions.
 
 ---
 
+## v0.3 — shipped
+
+Maintenance and toolchain compatibility (JS backend `Int64` FFI, MoonBit
+toolchain updates).
+
+---
+
 ## v0.4 — shipped
 
 **Fixed-offset parsing**
