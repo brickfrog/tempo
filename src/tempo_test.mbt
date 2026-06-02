@@ -157,6 +157,51 @@ test "Date::add_years avoids Int month overflow" {
 }
 
 ///|
+test "Date boundary adjusters for month ends" {
+  assert_eq(
+    @tempo.Date::new(2024, 2, 10).end_of_month(),
+    @tempo.Date::new(2024, 2, 29),
+  )
+  assert_eq(
+    @tempo.Date::new(2023, 2, 10).end_of_month(),
+    @tempo.Date::new(2023, 2, 28),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 4, 15).end_of_month(),
+    @tempo.Date::new(2024, 4, 30),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 7, 9).end_of_month(),
+    @tempo.Date::new(2024, 7, 31),
+  )
+}
+
+///|
+test "Date boundary adjusters for month and year starts" {
+  assert_eq(
+    @tempo.Date::new(2024, 4, 15).start_of_month(),
+    @tempo.Date::new(2024, 4, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 7, 9).start_of_year(),
+    @tempo.Date::new(2024, 1, 1),
+  )
+  assert_eq(
+    @tempo.Date::new(2024, 7, 9).end_of_year(),
+    @tempo.Date::new(2024, 12, 31),
+  )
+}
+
+///|
+test "DateTime boundary adjusters preserve time of day" {
+  let dt = @tempo.DateTime::parse("2024-03-15T14:30:00Z")
+  assert_eq(dt.start_of_month().format(), "2024-03-01T14:30:00Z")
+  assert_eq(dt.end_of_month().format(), "2024-03-31T14:30:00Z")
+  assert_eq(dt.start_of_year().format(), "2024-01-01T14:30:00Z")
+  assert_eq(dt.end_of_year().format(), "2024-12-31T14:30:00Z")
+}
+
+///|
 test "Date::day_of_week ISO" {
   // 1970-01-01 Thursday; 2024-01-01 Monday; 2024-03-15 Friday
   assert_eq(@tempo.Date::new(1970, 1, 1).day_of_week(), 4)
