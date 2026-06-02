@@ -31,6 +31,9 @@ pub fn Date::new(Int, Int, Int) -> Self raise TempoError
 pub fn Date::parse(String) -> Self raise TempoError
 pub fn Date::start_of_month(Self) -> Self
 pub fn Date::start_of_year(Self) -> Self
+pub fn Date::with_day(Self, Int) -> Self raise TempoError
+pub fn Date::with_month(Self, Int) -> Self raise TempoError
+pub fn Date::with_year(Self, Int) -> Self raise TempoError
 pub impl Show for Date
 
 pub struct DateTime {
@@ -51,8 +54,19 @@ pub fn DateTime::parse(String) -> Self raise TempoError
 pub fn DateTime::start_of_month(Self) -> Self
 pub fn DateTime::start_of_year(Self) -> Self
 pub fn DateTime::sub(Self, Duration) -> Self
+pub fn DateTime::to_date(Self) -> Date
+pub fn DateTime::to_time(Self) -> Time
 pub fn DateTime::to_unix_nanos(Self) -> Int64
 pub fn DateTime::to_unix_seconds(Self) -> Int64
+pub fn DateTime::with_date(Self, Date) -> Self
+pub fn DateTime::with_day(Self, Int) -> Self raise TempoError
+pub fn DateTime::with_hour(Self, Int) -> Self raise TempoError
+pub fn DateTime::with_minute(Self, Int) -> Self raise TempoError
+pub fn DateTime::with_month(Self, Int) -> Self raise TempoError
+pub fn DateTime::with_nanosecond(Self, Int) -> Self raise TempoError
+pub fn DateTime::with_second(Self, Int) -> Self raise TempoError
+pub fn DateTime::with_time(Self, Time) -> Self
+pub fn DateTime::with_year(Self, Int) -> Self raise TempoError
 pub impl Show for DateTime
 
 pub struct Duration {
@@ -90,6 +104,10 @@ pub struct Time {
 pub fn Time::format(Self) -> String
 pub fn Time::new(Int, Int, Int, Int) -> Self raise TempoError
 pub fn Time::parse(String) -> Self raise TempoError
+pub fn Time::with_hour(Self, Int) -> Self raise TempoError
+pub fn Time::with_minute(Self, Int) -> Self raise TempoError
+pub fn Time::with_nanosecond(Self, Int) -> Self raise TempoError
+pub fn Time::with_second(Self, Int) -> Self raise TempoError
 pub impl Show for Time
 
 // Type aliases

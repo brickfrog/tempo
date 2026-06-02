@@ -157,6 +157,21 @@ test "Date::add_years avoids Int month overflow" {
 }
 
 ///|
+test "Date::with field updaters" {
+  let d = @tempo.Date::new(2024, 3, 15)
+  assert_eq(d.with_day(1), @tempo.Date::new(2024, 3, 1))
+  assert_eq(d.with_month(12), @tempo.Date::new(2024, 12, 15))
+  assert_eq(d.with_year(2025), @tempo.Date::new(2025, 3, 15))
+}
+
+///|
+test "Date::with field updaters reject invalid dates" {
+  assert_true((try? @tempo.Date::new(2024, 2, 29).with_year(2023)) is Err(_))
+  assert_true((try? @tempo.Date::new(2024, 1, 31).with_month(2)) is Err(_))
+  assert_true((try? @tempo.Date::new(2024, 3, 15).with_day(32)) is Err(_))
+}
+
+///|
 test "Date boundary adjusters for month ends" {
   assert_eq(
     @tempo.Date::new(2024, 2, 10).end_of_month(),
@@ -199,6 +214,41 @@ test "DateTime boundary adjusters preserve time of day" {
   assert_eq(dt.end_of_month().format(), "2024-03-31T14:30:00Z")
   assert_eq(dt.start_of_year().format(), "2024-01-01T14:30:00Z")
   assert_eq(dt.end_of_year().format(), "2024-12-31T14:30:00Z")
+}
+
+///|
+test "DateTime accessors and component updaters" {
+  let date = @tempo.Date::new(2024, 3, 15)
+  let time = @tempo.Time::new(12, 34, 56, 789)
+  let dt = @tempo.DateTime::new(date, time)
+  assert_eq(dt.to_date(), date)
+  assert_eq(dt.to_time(), time)
+  assert_eq(
+    dt.with_date(@tempo.Date::new(2025, 1, 2)),
+    @tempo.DateTime::new(@tempo.Date::new(2025, 1, 2), time),
+  )
+  assert_eq(
+    dt.with_time(@tempo.Time::new(1, 2, 3, 4)),
+    @tempo.DateTime::new(date, @tempo.Time::new(1, 2, 3, 4)),
+  )
+}
+
+///|
+test "DateTime scalar updaters delegate to date and time" {
+  let dt = @tempo.DateTime::parse("2024-03-15T12:34:56.000000789Z")
+  assert_eq(dt.with_day(1).format(), "2024-03-01T12:34:56.000000789Z")
+  assert_eq(dt.with_hour(1).format(), "2024-03-15T01:34:56.000000789Z")
+  assert_eq(dt.with_month(12).date, @tempo.Date::new(2024, 12, 15))
+  assert_eq(dt.with_minute(2).time, @tempo.Time::new(12, 2, 56, 789))
+  assert_eq(dt.with_second(3).time, @tempo.Time::new(12, 34, 3, 789))
+  assert_eq(dt.with_nanosecond(4).time, @tempo.Time::new(12, 34, 56, 4))
+  assert_eq(dt.with_year(2025).date, @tempo.Date::new(2025, 3, 15))
+}
+
+///|
+test "DateTime scalar updaters reject invalid delegated fields" {
+  let dt = @tempo.DateTime::parse("2024-02-15T12:34:56Z")
+  assert_true((try? dt.with_day(31)) is Err(_))
 }
 
 ///|
@@ -265,6 +315,24 @@ test "Time::new valid" {
   assert_eq(t.minute, 59)
   assert_eq(t.second, 59)
   assert_eq(t.nanosecond, 999_999_999)
+}
+
+///|
+test "Time::with field updaters" {
+  let t = @tempo.Time::new(12, 34, 56, 789)
+  assert_eq(t.with_hour(1), @tempo.Time::new(1, 34, 56, 789))
+  assert_eq(t.with_minute(2), @tempo.Time::new(12, 2, 56, 789))
+  assert_eq(t.with_second(3), @tempo.Time::new(12, 34, 3, 789))
+  assert_eq(t.with_nanosecond(4), @tempo.Time::new(12, 34, 56, 4))
+}
+
+///|
+test "Time::with field updaters reject invalid times" {
+  assert_true((try? @tempo.Time::new(12, 34, 56, 789).with_hour(24)) is Err(_))
+  assert_true(
+    (try? @tempo.Time::new(12, 34, 56, 789).with_nanosecond(1_000_000_000))
+    is Err(_),
+  )
 }
 
 ///|

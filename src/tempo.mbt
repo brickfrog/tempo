@@ -165,6 +165,30 @@ pub fn Date::add_years(self : Date, years : Int) -> Date {
 }
 
 ///|
+/// Return a copy of this date with `year` replaced, validating the result.
+pub fn Date::with_year(self : Date, year : Int) -> Date raise TempoError {
+  Date::new(year, self.month, self.day)
+}
+
+///|
+/// Return a copy of this date with `month` replaced, validating the result.
+///
+/// This does not clamp. Chaining with `with_day` can raise on an intermediate
+/// invalid date before a later update would make it valid.
+pub fn Date::with_month(self : Date, month : Int) -> Date raise TempoError {
+  Date::new(self.year, month, self.day)
+}
+
+///|
+/// Return a copy of this date with `day` replaced, validating the result.
+///
+/// This does not clamp. Chaining with `with_month` can raise on an intermediate
+/// invalid date before a later update would make it valid.
+pub fn Date::with_day(self : Date, day : Int) -> Date raise TempoError {
+  Date::new(self.year, self.month, day)
+}
+
+///|
 /// Return the first day of this date's calendar month.
 pub fn Date::start_of_month(self : Date) -> Date {
   { ..self, day: 1 }
@@ -274,11 +298,125 @@ pub fn Time::new(
 }
 
 ///|
+/// Return a copy of this time with `hour` replaced, validating the result.
+pub fn Time::with_hour(self : Time, hour : Int) -> Time raise TempoError {
+  Time::new(hour, self.minute, self.second, self.nanosecond)
+}
+
+///|
+/// Return a copy of this time with `minute` replaced, validating the result.
+pub fn Time::with_minute(self : Time, minute : Int) -> Time raise TempoError {
+  Time::new(self.hour, minute, self.second, self.nanosecond)
+}
+
+///|
+/// Return a copy of this time with `second` replaced, validating the result.
+pub fn Time::with_second(self : Time, second : Int) -> Time raise TempoError {
+  Time::new(self.hour, self.minute, second, self.nanosecond)
+}
+
+///|
+/// Return a copy of this time with `nanosecond` replaced, validating the result.
+pub fn Time::with_nanosecond(
+  self : Time,
+  nanosecond : Int,
+) -> Time raise TempoError {
+  Time::new(self.hour, self.minute, self.second, nanosecond)
+}
+
+///|
 /// Create a `DateTime` from a validated `Date` and `Time`.
 /// Both arguments should be constructed via `Date::new` / `Time::new` (which
 /// validate). This constructor performs no additional checks.
 pub fn DateTime::new(date : Date, time : Time) -> DateTime {
   { date, time }
+}
+
+///|
+/// Return the date component of this `DateTime`.
+pub fn DateTime::to_date(self : DateTime) -> Date {
+  self.date
+}
+
+///|
+/// Return the time component of this `DateTime`.
+pub fn DateTime::to_time(self : DateTime) -> Time {
+  self.time
+}
+
+///|
+/// Return a copy of this `DateTime` with `date` replaced.
+pub fn DateTime::with_date(self : DateTime, date : Date) -> DateTime {
+  { ..self, date, }
+}
+
+///|
+/// Return a copy of this `DateTime` with `time` replaced.
+pub fn DateTime::with_time(self : DateTime, time : Time) -> DateTime {
+  { ..self, time, }
+}
+
+///|
+/// Return a copy of this `DateTime` with its date year replaced.
+pub fn DateTime::with_year(
+  self : DateTime,
+  year : Int,
+) -> DateTime raise TempoError {
+  { ..self, date: self.date.with_year(year) }
+}
+
+///|
+/// Return a copy of this `DateTime` with its date month replaced.
+pub fn DateTime::with_month(
+  self : DateTime,
+  month : Int,
+) -> DateTime raise TempoError {
+  { ..self, date: self.date.with_month(month) }
+}
+
+///|
+/// Return a copy of this `DateTime` with its date day replaced.
+pub fn DateTime::with_day(
+  self : DateTime,
+  day : Int,
+) -> DateTime raise TempoError {
+  { ..self, date: self.date.with_day(day) }
+}
+
+///|
+/// Return a copy of this `DateTime` with its time hour replaced.
+pub fn DateTime::with_hour(
+  self : DateTime,
+  hour : Int,
+) -> DateTime raise TempoError {
+  { ..self, time: self.time.with_hour(hour) }
+}
+
+///|
+/// Return a copy of this `DateTime` with its time minute replaced.
+pub fn DateTime::with_minute(
+  self : DateTime,
+  minute : Int,
+) -> DateTime raise TempoError {
+  { ..self, time: self.time.with_minute(minute) }
+}
+
+///|
+/// Return a copy of this `DateTime` with its time second replaced.
+pub fn DateTime::with_second(
+  self : DateTime,
+  second : Int,
+) -> DateTime raise TempoError {
+  { ..self, time: self.time.with_second(second) }
+}
+
+///|
+/// Return a copy of this `DateTime` with its time nanosecond replaced.
+pub fn DateTime::with_nanosecond(
+  self : DateTime,
+  nanosecond : Int,
+) -> DateTime raise TempoError {
+  { ..self, time: self.time.with_nanosecond(nanosecond) }
 }
 
 ///|
