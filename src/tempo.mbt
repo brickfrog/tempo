@@ -1219,6 +1219,24 @@ let int64_min_value : Int64 = -9_223_372_036_854_775_808L
 let int64_max_value : Int64 = 9_223_372_036_854_775_807L
 
 ///|
+fn checked_i64_add(a : Int64, b : Int64) -> Int64? {
+  if (b > 0L && a > int64_max_value - b) || (b < 0L && a < int64_min_value - b) {
+    None
+  } else {
+    Some(a + b)
+  }
+}
+
+///|
+fn checked_i64_sub(a : Int64, b : Int64) -> Int64? {
+  if (b < 0L && a > int64_max_value + b) || (b > 0L && a < int64_min_value + b) {
+    None
+  } else {
+    Some(a - b)
+  }
+}
+
+///|
 /// Create a Duration from a number of nanoseconds.
 pub fn Duration::nanoseconds(ns : Int64) -> Duration {
   { nanoseconds: ns }
@@ -1408,13 +1426,39 @@ pub fn Duration::divide(
 }
 
 ///|
+/// Add two durations.
+///
+/// This wraps on `Int64` overflow. Use `checked_add` when overflow should
+/// return `None`.
 pub impl Add for Duration with fn add(self, other : Duration) -> Duration {
   { nanoseconds: self.nanoseconds + other.nanoseconds }
 }
 
 ///|
+/// Subtract one duration from another.
+///
+/// This wraps on `Int64` overflow. Use `checked_sub` when overflow should
+/// return `None`.
 pub impl Sub for Duration with fn sub(self, other : Duration) -> Duration {
   { nanoseconds: self.nanoseconds - other.nanoseconds }
+}
+
+///|
+/// Add two durations, returning `None` on `Int64` overflow.
+pub fn Duration::checked_add(self : Duration, other : Duration) -> Duration? {
+  match checked_i64_add(self.nanoseconds, other.nanoseconds) {
+    Some(ns) => Some(Duration::nanoseconds(ns))
+    None => None
+  }
+}
+
+///|
+/// Subtract one duration from another, returning `None` on `Int64` overflow.
+pub fn Duration::checked_sub(self : Duration, other : Duration) -> Duration? {
+  match checked_i64_sub(self.nanoseconds, other.nanoseconds) {
+    Some(ns) => Some(Duration::nanoseconds(ns))
+    None => None
+  }
 }
 
 ///|
@@ -1426,20 +1470,74 @@ pub impl Neg for Duration with fn neg(self) -> Duration {
 
 ///|
 /// Add a Duration to this DateTime.
+///
+/// This wraps on `Int64` overflow. Use `checked_add` when overflow or a
+/// DateTime outside the representable Unix-nanoseconds range should return
+/// `None`.
 pub fn DateTime::add(self : DateTime, d : Duration) -> DateTime {
   DateTime::from_unix_nanos(self.to_unix_nanos() + d.nanoseconds)
 }
 
 ///|
 /// Subtract a Duration from this DateTime.
+///
+/// This wraps on `Int64` overflow. Use `checked_sub` when overflow or a
+/// DateTime outside the representable Unix-nanoseconds range should return
+/// `None`.
 pub fn DateTime::sub(self : DateTime, d : Duration) -> DateTime {
   DateTime::from_unix_nanos(self.to_unix_nanos() - d.nanoseconds)
 }
 
 ///|
 /// Compute `self - other` as a Duration (may be negative).
+///
+/// This wraps on `Int64` overflow. Use `checked_diff` when overflow or a
+/// DateTime outside the representable Unix-nanoseconds range should return
+/// `None`.
 pub fn DateTime::diff(self : DateTime, other : DateTime) -> Duration {
   { nanoseconds: self.to_unix_nanos() - other.to_unix_nanos() }
+}
+
+///|
+/// Add a Duration to this DateTime, returning `None` on `Int64` overflow or
+/// when this DateTime is outside the representable Unix-nanoseconds range.
+pub fn DateTime::checked_add(self : DateTime, d : Duration) -> DateTime? {
+  match self.to_unix_nanos_checked() {
+    Some(ns) =>
+      match checked_i64_add(ns, d.nanoseconds) {
+        Some(result) => Some(DateTime::from_unix_nanos(result))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
+/// Subtract a Duration from this DateTime, returning `None` on `Int64` overflow
+/// or when this DateTime is outside the representable Unix-nanoseconds range.
+pub fn DateTime::checked_sub(self : DateTime, d : Duration) -> DateTime? {
+  match self.to_unix_nanos_checked() {
+    Some(ns) =>
+      match checked_i64_sub(ns, d.nanoseconds) {
+        Some(result) => Some(DateTime::from_unix_nanos(result))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
+/// Compute `self - other` as a Duration, returning `None` on `Int64` overflow
+/// or when either DateTime is outside the representable Unix-nanoseconds range.
+pub fn DateTime::checked_diff(self : DateTime, other : DateTime) -> Duration? {
+  match (self.to_unix_nanos_checked(), other.to_unix_nanos_checked()) {
+    (Some(a), Some(b)) =>
+      match checked_i64_sub(a, b) {
+        Some(ns) => Some(Duration::nanoseconds(ns))
+        None => None
+      }
+    _ => None
+  }
 }
 
 ///|
