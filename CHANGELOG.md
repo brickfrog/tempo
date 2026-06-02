@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The `moon new` scaffold leftovers: the placeholder `cmd/main` package and the
+  stray top-level `moon.pkg` / `pkg.generated.mbti`. These were outside the
+  `src` source root but were still being included in the published package; the
+  published artifact now contains only `src/`, the manifest, and docs.
+
 ## [0.8.0] - 2026-06-02
 
 ### Added
