@@ -28,12 +28,15 @@ pub fn Date::add_years(Self, Int) -> Self
 pub fn Date::clamp(Self, Self, Self) -> Self
 pub fn Date::day_of_week(Self) -> Int
 pub fn Date::day_of_year(Self) -> Int
+pub fn Date::days_in_year(Self) -> Int
 pub fn Date::days_until(Self, Self) -> Int
 pub fn Date::end_of_month(Self) -> Self
+pub fn Date::end_of_quarter(Self) -> Self
 pub fn Date::end_of_year(Self) -> Self
 pub fn Date::format(Self) -> String
 pub fn Date::is_after(Self, Self) -> Bool
 pub fn Date::is_before(Self, Self) -> Bool
+pub fn Date::is_leap(Self) -> Bool
 pub fn Date::max(Self, Self) -> Self
 pub fn Date::min(Self, Self) -> Self
 pub fn Date::month_enum(Self) -> Month
@@ -44,7 +47,9 @@ pub fn Date::nth_weekday_of_month(Int, Int, Weekday, Int) -> Self raise TempoErr
 pub fn Date::parse(String) -> Self raise TempoError
 pub fn Date::previous(Self, Weekday) -> Self
 pub fn Date::previous_or_same(Self, Weekday) -> Self
+pub fn Date::quarter(Self) -> Int
 pub fn Date::start_of_month(Self) -> Self
+pub fn Date::start_of_quarter(Self) -> Self
 pub fn Date::start_of_year(Self) -> Self
 pub fn Date::weekday(Self) -> Weekday
 pub fn Date::with_day(Self, Int) -> Self raise TempoError

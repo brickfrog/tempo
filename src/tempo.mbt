@@ -507,6 +507,54 @@ pub fn Date::end_of_year(self : Date) -> Date {
 }
 
 ///|
+/// Calendar quarter number in 1..4.
+pub fn Date::quarter(self : Date) -> Int {
+  match self.month {
+    1 | 2 | 3 => 1
+    4 | 5 | 6 => 2
+    7 | 8 | 9 => 3
+    10 | 11 | 12 => 4
+    _ => abort("Date month out of range")
+  }
+}
+
+///|
+/// `true` if this date's year is a leap year.
+pub fn Date::is_leap(self : Date) -> Bool {
+  is_leap_year(self.year)
+}
+
+///|
+/// Number of days in this date's calendar year.
+pub fn Date::days_in_year(self : Date) -> Int {
+  if self.is_leap() {
+    366
+  } else {
+    365
+  }
+}
+
+///|
+/// Return the first day of this date's calendar quarter.
+pub fn Date::start_of_quarter(self : Date) -> Date {
+  let month = match self.quarter() {
+    1 => 1
+    2 => 4
+    3 => 7
+    4 => 10
+    _ => abort("Date::quarter returned out-of-range quarter")
+  }
+  { ..self, month, day: 1 }
+}
+
+///|
+/// Return the last day of this date's calendar quarter.
+pub fn Date::end_of_quarter(self : Date) -> Date {
+  let month = self.start_of_quarter().month + 2
+  { ..self, month, day: days_in_month(self.year, month) }
+}
+
+///|
 /// Add a signed number of calendar days to this date (proleptic Gregorian).
 pub fn Date::add_days(self : Date, days : Int) -> Date {
   let base = days_from_civil(self.year, self.month, self.day)
