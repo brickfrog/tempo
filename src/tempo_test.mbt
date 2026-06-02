@@ -1538,8 +1538,12 @@ test "DateTime::format_fixed pads parsed fractional seconds" {
 test "DateTime::format_fixed sorts lexicographically for in-range years" {
   let t1 = @tempo.DateTime::parse("2024-07-21T17:11:00.499999999Z")
   let t2 = @tempo.DateTime::parse("2024-07-21T17:11:00.5Z")
+  let year_end = @tempo.DateTime::parse("2024-12-31T23:59:59.999999999Z")
+  let next_year = @tempo.DateTime::parse("2025-01-01T00:00:00.000000000Z")
   assert_eq(t1 < t2, true)
   assert_eq(t1.format_fixed() < t2.format_fixed(), true)
+  assert_eq(year_end < next_year, true)
+  assert_eq(year_end.format_fixed() < next_year.format_fixed(), true)
 }
 
 ///|
