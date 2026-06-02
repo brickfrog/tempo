@@ -1127,11 +1127,59 @@ pub fn DateTime::to_unix_seconds(self : DateTime) -> Int64 {
 ///|
 /// Convert this `DateTime` to a Unix timestamp in nanoseconds.
 ///
-/// **Note:** Int64 can represent ±292 years of nanoseconds from epoch, so
-/// dates outside ~1678–2262 CE will overflow. For wider ranges use
-/// `to_unix_seconds` instead.
+/// **Overflow note:** this method silently wraps on `Int64` overflow. Use
+/// `to_unix_nanos_checked` when dates outside the representable nanosecond
+/// range should return `None`; use `to_unix_seconds` for wider ranges.
 pub fn DateTime::to_unix_nanos(self : DateTime) -> Int64 {
   self.to_unix_seconds() * 1_000_000_000L + self.time.nanosecond.to_int64()
+}
+
+///|
+/// Minimum Unix timestamp in nanoseconds representable by an `Int64`.
+pub fn DateTime::min_unix_nanos() -> Int64 {
+  int64_min_value
+}
+
+///|
+/// Maximum Unix timestamp in nanoseconds representable by an `Int64`.
+pub fn DateTime::max_unix_nanos() -> Int64 {
+  int64_max_value
+}
+
+///|
+/// Convert this `DateTime` to a Unix timestamp in nanoseconds.
+///
+/// Returns `None` when the instant is outside the representable `Int64`
+/// nanosecond range.
+pub fn DateTime::to_unix_nanos_checked(self : DateTime) -> Int64? {
+  let sec = self.to_unix_seconds()
+  let ns = self.time.nanosecond.to_int64()
+  let min_sec = floor_div64(int64_min_value, ns_per_sec)
+  let min_ns_remainder = int64_min_value % ns_per_sec
+  let min_ns = if min_ns_remainder < 0L {
+    min_ns_remainder + ns_per_sec
+  } else {
+    min_ns_remainder
+  }
+  let max_sec = int64_max_value / ns_per_sec
+  let max_ns = int64_max_value % ns_per_sec
+  if sec < min_sec ||
+    sec > max_sec ||
+    (sec == min_sec && ns < min_ns) ||
+    (sec == max_sec && ns > max_ns) {
+    None
+  } else if sec == min_sec {
+    Some(int64_min_value + (ns - min_ns))
+  } else {
+    let prod = sec * ns_per_sec
+    if sec != 0L && prod / ns_per_sec != sec {
+      None
+    } else if prod > int64_max_value - ns {
+      None
+    } else {
+      Some(prod + ns)
+    }
+  }
 }
 
 ///|

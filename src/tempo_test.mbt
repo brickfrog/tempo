@@ -788,6 +788,48 @@ test "to_unix_nanos roundtrip" {
 }
 
 ///|
+test "to_unix_nanos_checked epoch" {
+  assert_true(@tempo.DateTime::epoch().to_unix_nanos_checked() == Some(0L))
+}
+
+///|
+test "to_unix_nanos_checked in-range matches wrapping conversion" {
+  let dt = @tempo.DateTime::parse("2024-03-15T12:34:56.123456789Z")
+  assert_true(dt.to_unix_nanos_checked() == Some(dt.to_unix_nanos()))
+}
+
+///|
+test "to_unix_nanos_checked rejects far future and far past" {
+  assert_true(
+    @tempo.DateTime::parse("3000-01-01T00:00:00Z").to_unix_nanos_checked()
+    is None,
+  )
+  assert_true(
+    @tempo.DateTime::parse("1000-01-01T00:00:00Z").to_unix_nanos_checked()
+    is None,
+  )
+}
+
+///|
+test "to_unix_nanos_checked accepts max representable instant" {
+  let dt = @tempo.DateTime::parse("2262-04-11T23:47:16.854775807Z")
+  assert_true(dt.to_unix_nanos_checked() == Some(9_223_372_036_854_775_807L))
+}
+
+///|
+test "to_unix_nanos_checked accepts min representable instant" {
+  let min = @tempo.DateTime::min_unix_nanos()
+  let dt = @tempo.DateTime::from_unix_nanos(min)
+  assert_true(dt.to_unix_nanos_checked() == Some(min))
+}
+
+///|
+test "DateTime Unix nanos representable bounds" {
+  assert_eq(@tempo.DateTime::min_unix_nanos(), -9_223_372_036_854_775_808L)
+  assert_eq(@tempo.DateTime::max_unix_nanos(), 9_223_372_036_854_775_807L)
+}
+
+///|
 test "from_unix_millis epoch" {
   assert_eq(@tempo.DateTime::from_unix_millis(0L), @tempo.DateTime::epoch())
   assert_eq(@tempo.DateTime::epoch().to_unix_millis(), 0L)
