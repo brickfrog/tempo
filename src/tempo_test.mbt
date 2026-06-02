@@ -812,6 +812,39 @@ test "Date::from_iso_week raises on residual Int year overflow" {
 }
 
 ///|
+test "Date::parse_iso_week valid and round-trips" {
+  assert_eq(
+    @tempo.Date::parse_iso_week("2020-W53-5"),
+    @tempo.Date::new(2021, 1, 1),
+  )
+  let new_year_monday = @tempo.Date::new(2024, 1, 1)
+  assert_eq(
+    @tempo.Date::parse_iso_week(new_year_monday.format_iso_week()),
+    new_year_monday,
+  )
+  let prior_week_year = @tempo.Date::new(2021, 1, 1)
+  assert_eq(
+    @tempo.Date::parse_iso_week(prior_week_year.format_iso_week()),
+    prior_week_year,
+  )
+  let week_53_end = @tempo.Date::new(2026, 12, 31)
+  assert_eq(
+    @tempo.Date::parse_iso_week(week_53_end.format_iso_week()),
+    week_53_end,
+  )
+}
+
+///|
+test "Date::parse_iso_week rejects malformed and out-of-range input" {
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W54-1")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-01-1")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W1-1")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W01")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W01-8")) is Err(_))
+  assert_true((try? @tempo.Date::parse_iso_week("2024-W01-1Z")) is Err(_))
+}
+
+///|
 test "Weekday conversion helpers" {
   assert_true(@tempo.Weekday::from_int(1) == Some(@tempo.Monday))
   assert_eq(@tempo.Monday.to_int(), 1)
@@ -1211,6 +1244,35 @@ test "Date::format_ordinal" {
     @tempo.Date::from_ordinal(d.year, d.day_of_year()).format_ordinal(),
     d.format_ordinal(),
   )
+}
+
+///|
+test "Date::parse_ordinal valid and round-trips" {
+  assert_eq(
+    @tempo.Date::parse_ordinal("2024-060"),
+    @tempo.Date::new(2024, 2, 29),
+  )
+  let jan1 = @tempo.Date::new(2024, 1, 1)
+  assert_eq(@tempo.Date::parse_ordinal(jan1.format_ordinal()), jan1)
+  let leap_day = @tempo.Date::new(2024, 2, 29)
+  assert_eq(@tempo.Date::parse_ordinal(leap_day.format_ordinal()), leap_day)
+  let leap_dec31 = @tempo.Date::new(2024, 12, 31)
+  assert_eq(@tempo.Date::parse_ordinal(leap_dec31.format_ordinal()), leap_dec31)
+  let common_dec31 = @tempo.Date::new(2023, 12, 31)
+  assert_eq(
+    @tempo.Date::parse_ordinal(common_dec31.format_ordinal()),
+    common_dec31,
+  )
+}
+
+///|
+test "Date::parse_ordinal rejects malformed and out-of-range input" {
+  assert_true((try? @tempo.Date::parse_ordinal("2023-366")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024-000")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024-60")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024-0060")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024/060")) is Err(_))
+  assert_true((try? @tempo.Date::parse_ordinal("2024-060Z")) is Err(_))
 }
 
 ///|
