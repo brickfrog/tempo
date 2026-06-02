@@ -1159,6 +1159,70 @@ test "DateTime::parse roundtrip" {
 }
 
 ///|
+test "Duration::format_iso canonical components" {
+  assert_eq(
+    (@tempo.Duration::hours(2L) + @tempo.Duration::minutes(30L)).format_iso(),
+    "PT2H30M",
+  )
+  assert_eq(
+    (@tempo.Duration::days(1L) + @tempo.Duration::hours(2L)).format_iso(),
+    "P1DT2H",
+  )
+  assert_eq(@tempo.Duration::milliseconds(500L).format_iso(), "PT0.5S")
+  assert_eq(@tempo.Duration::seconds(0L).format_iso(), "PT0S")
+  assert_eq(@tempo.Duration::hours(-1L).format_iso(), "-PT1H")
+}
+
+///|
+test "Duration::parse_iso fixed-unit components" {
+  assert_eq(
+    @tempo.Duration::parse_iso("PT2H30M"),
+    @tempo.Duration::minutes(150L),
+  )
+  assert_eq(
+    @tempo.Duration::parse_iso("P1DT2H30M45.5S"),
+    @tempo.Duration::days(1L) +
+    @tempo.Duration::hours(2L) +
+    @tempo.Duration::minutes(30L) +
+    @tempo.Duration::seconds(45L) +
+    @tempo.Duration::milliseconds(500L),
+  )
+  assert_eq(@tempo.Duration::parse_iso("-PT1H"), @tempo.Duration::hours(-1L))
+  assert_eq(@tempo.Duration::parse_iso("PT0S"), @tempo.Duration::seconds(0L))
+}
+
+///|
+test "Duration::parse_iso round-trips format_iso" {
+  let zero = @tempo.Duration::seconds(0L)
+  assert_eq(@tempo.Duration::parse_iso(zero.format_iso()), zero)
+  let hours_minutes = @tempo.Duration::hours(2L) + @tempo.Duration::minutes(30L)
+  assert_eq(
+    @tempo.Duration::parse_iso(hours_minutes.format_iso()),
+    hours_minutes,
+  )
+  let days_hours = @tempo.Duration::days(1L) + @tempo.Duration::hours(2L)
+  assert_eq(@tempo.Duration::parse_iso(days_hours.format_iso()), days_hours)
+  let fractional = @tempo.Duration::nanoseconds(1_234_567_890L)
+  assert_eq(@tempo.Duration::parse_iso(fractional.format_iso()), fractional)
+  let negative = @tempo.Duration::nanoseconds(-1_234_567_890L)
+  assert_eq(@tempo.Duration::parse_iso(negative.format_iso()), negative)
+}
+
+///|
+test "Duration::parse_iso rejects calendar units but accepts minutes" {
+  assert_true((try? @tempo.Duration::parse_iso("P1Y")) is Err(_))
+  assert_true((try? @tempo.Duration::parse_iso("P3M")) is Err(_))
+  assert_eq(@tempo.Duration::parse_iso("PT3M"), @tempo.Duration::minutes(3L))
+}
+
+///|
+test "Duration::parse_iso raises on component overflow" {
+  assert_true(
+    (try? @tempo.Duration::parse_iso("PT9223372036854775807H")) is Err(_),
+  )
+}
+
+///|
 test "Duration::days" {
   let d = @tempo.Duration::days(1L)
   assert_eq(d.as_seconds(), 86_400L)

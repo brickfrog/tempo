@@ -1213,6 +1213,9 @@ let ns_per_min : Int64 = 60_000_000_000L
 let ns_per_hour : Int64 = 3_600_000_000_000L
 
 ///|
+let ns_per_day : Int64 = 86_400_000_000_000L
+
+///|
 let int64_min_value : Int64 = -9_223_372_036_854_775_808L
 
 ///|
@@ -1747,6 +1750,57 @@ pub fn Time::format(self : Time) -> String {
 }
 
 ///|
+/// Format this fixed-length duration as a canonical ISO 8601 duration string.
+///
+/// Calendar units (years and months) are not representable as a fixed
+/// nanosecond duration and are therefore never emitted.
+pub fn Duration::format_iso(self : Duration) -> String {
+  let ns = self.nanoseconds
+  if ns == 0L {
+    "PT0S"
+  } else {
+    let sign = if ns < 0L { "-" } else { "" }
+    // Divide before taking absolute values so Int64::min_value formats without
+    // negating the whole duration.
+    let days = ns / ns_per_day
+    let rem = ns - days * ns_per_day
+    let hours = rem / ns_per_hour
+    let rem = rem - hours * ns_per_hour
+    let minutes = rem / ns_per_min
+    let rem = rem - minutes * ns_per_min
+    let seconds = rem / ns_per_sec
+    let frac_ns = rem - seconds * ns_per_sec
+    let days = if days < 0L { -days } else { days }
+    let hours = if hours < 0L { -hours } else { hours }
+    let minutes = if minutes < 0L { -minutes } else { minutes }
+    let seconds = if seconds < 0L { -seconds } else { seconds }
+    let frac_ns = (if frac_ns < 0L { -frac_ns } else { frac_ns }).to_int()
+    let has_time = hours > 0L || minutes > 0L || seconds > 0L || frac_ns > 0
+    let buf = StringBuilder()
+    buf.write_string(sign)
+    buf.write_string("P")
+    if days > 0L {
+      buf.write_string("\{days}D")
+    }
+    if has_time {
+      buf.write_string("T")
+      if hours > 0L {
+        buf.write_string("\{hours}H")
+      }
+      if minutes > 0L {
+        buf.write_string("\{minutes}M")
+      }
+      if frac_ns > 0 {
+        buf.write_string("\{seconds}.\{fmt_frac(frac_ns)}S")
+      } else if seconds > 0L {
+        buf.write_string("\{seconds}S")
+      }
+    }
+    buf.to_string()
+  }
+}
+
+///|
 pub impl Show for Date with fn output(self, logger) {
   logger.write_string(
     "\{pad4_year(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}",
@@ -1884,6 +1938,186 @@ fn parse_frac_ns(view : StringView) -> (Int, StringView) raise TempoError {
       }
     }
   }
+}
+
+///|
+let duration_calendar_units_error : String = "calendar units (years/months) are not representable as a fixed Duration; use a calendar-period representation instead"
+
+///|
+fn parse_duration_number(
+  view : StringView,
+) -> (Int64, StringView) raise TempoError {
+  for v = view, count = 0, acc = 0L {
+    match v {
+      ['0'..='9' as c, .. rest] => {
+        let digit = (c.to_int() - '0').to_int64()
+        if acc > (int64_max_value - digit) / 10L {
+          raise TempoError("duration component overflows Int64")
+        }
+        continue rest, count + 1, acc * 10L + digit
+      }
+      _ => {
+        if count == 0 {
+          raise TempoError("expected duration component digits")
+        }
+        break (acc, v)
+      }
+    }
+  }
+}
+
+///|
+fn duration_component_ns(
+  amount : Int64,
+  unit : Int64,
+) -> Int64 raise TempoError {
+  match Duration::nanoseconds(unit).checked_multiply(amount) {
+    Some(d) => d.nanoseconds
+    None => raise TempoError("duration component overflows Int64 nanoseconds")
+  }
+}
+
+///|
+fn duration_accumulate(
+  total : Int64,
+  component : Int64,
+  negative : Bool,
+) -> Int64 raise TempoError {
+  let next = if negative {
+    checked_i64_sub(total, component)
+  } else {
+    checked_i64_add(total, component)
+  }
+  match next {
+    Some(ns) => ns
+    None => raise TempoError("duration overflows Int64 nanoseconds")
+  }
+}
+
+///|
+fn duration_reject_time_component_without_t(
+  unit : Char,
+) -> Unit raise TempoError {
+  raise TempoError("time component '\{unit}' requires 'T'")
+}
+
+///|
+fn duration_reject_time_order() -> Unit raise TempoError {
+  raise TempoError("duration time components are repeated or out of order")
+}
+
+///|
+/// Parse an ISO 8601 duration string in the fixed-nanosecond subset:
+/// `PnDTnHnMnS`, with optional fractional seconds and leading sign.
+///
+/// Calendar units (`Y` years or date-part `M` months) raise `TempoError`; use a
+/// calendar-period representation for those units.
+pub fn Duration::parse_iso(s : String) -> Duration raise TempoError {
+  let (negative, v) = match s.view() {
+    ['-', .. rest] => (true, rest)
+    ['+', .. rest] => (false, rest)
+    v => (false, v)
+  }
+  let v = match v {
+    ['P', .. rest] => rest
+    [c, ..] => raise TempoError("expected 'P', got '\{c}'")
+    [] => raise TempoError("unexpected end of input, expected 'P'")
+  }
+  let total = for v = v, total = 0L, saw_component = false, in_time = false, saw_day = false, time_rank = 0 {
+    match v {
+      [] =>
+        if saw_component {
+          break total
+        } else {
+          raise TempoError("expected duration component")
+        }
+      ['T', .. rest] => {
+        if in_time {
+          raise TempoError("duration contains repeated 'T'")
+        }
+        match rest {
+          [] => raise TempoError("expected time component after 'T'")
+          _ => continue rest, total, saw_component, true, saw_day, time_rank
+        }
+      }
+      ['0'..='9', ..] => {
+        let (amount, rest) = parse_duration_number(v)
+        match rest {
+          ['Y', ..] => raise TempoError(duration_calendar_units_error)
+          ['D', .. rest] => {
+            if in_time {
+              raise TempoError("date component 'D' is not allowed after 'T'")
+            }
+            if saw_day {
+              raise TempoError("duration day component is repeated")
+            }
+            let component = duration_component_ns(amount, ns_per_day)
+            let total = duration_accumulate(total, component, negative)
+            continue rest, total, true, in_time, true, time_rank
+          }
+          ['H', .. rest] => {
+            if !in_time {
+              duration_reject_time_component_without_t('H')
+            }
+            if time_rank >= 1 {
+              duration_reject_time_order()
+            }
+            let component = duration_component_ns(amount, ns_per_hour)
+            let total = duration_accumulate(total, component, negative)
+            continue rest, total, true, in_time, saw_day, 1
+          }
+          ['M', .. rest] =>
+            if in_time {
+              if time_rank >= 2 {
+                duration_reject_time_order()
+              }
+              let component = duration_component_ns(amount, ns_per_min)
+              let total = duration_accumulate(total, component, negative)
+              continue rest, total, true, in_time, saw_day, 2
+            } else {
+              raise TempoError(duration_calendar_units_error)
+            }
+          ['S', .. rest] => {
+            if !in_time {
+              duration_reject_time_component_without_t('S')
+            }
+            if time_rank >= 3 {
+              duration_reject_time_order()
+            }
+            let component = duration_component_ns(amount, ns_per_sec)
+            let total = duration_accumulate(total, component, negative)
+            continue rest, total, true, in_time, saw_day, 3
+          }
+          ['.', .. frac_view] => {
+            if !in_time {
+              raise TempoError(
+                "fractional components are only supported for seconds in the time part after 'T'",
+              )
+            }
+            if time_rank >= 3 {
+              duration_reject_time_order()
+            }
+            let seconds = duration_component_ns(amount, ns_per_sec)
+            let total = duration_accumulate(total, seconds, negative)
+            let (frac_ns, rest) = parse_frac_ns(frac_view)
+            let rest = match rest {
+              ['S', .. rest] => rest
+              [c, ..] => raise TempoError("expected 'S', got '\{c}'")
+              [] => raise TempoError("unexpected end of input, expected 'S'")
+            }
+            let total = duration_accumulate(total, frac_ns.to_int64(), negative)
+            continue rest, total, true, in_time, saw_day, 3
+          }
+          [] =>
+            raise TempoError("unexpected end of input, expected duration unit")
+          [c, ..] => raise TempoError("expected duration unit, got '\{c}'")
+        }
+      }
+      ['Y', ..] => raise TempoError(duration_calendar_units_error)
+      [c, ..] => raise TempoError("expected duration component, got '\{c}'")
+    }
+  }
+  Duration::nanoseconds(total)
 }
 
 ///|
