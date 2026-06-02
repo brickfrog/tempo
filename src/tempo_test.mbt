@@ -190,6 +190,18 @@ test "Period normalization rolls months only" {
 }
 
 ///|
+test "Period normalization raises on Int overflow" {
+  assert_true(
+    (try? @tempo.Period::of(@int.MAX_VALUE, @int.MAX_VALUE, 0).normalized())
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Period::of(@int.MIN_VALUE, @int.MIN_VALUE, 0).normalized())
+    is Err(_),
+  )
+}
+
+///|
 test "Period field arithmetic is checked and non-normalizing" {
   assert_eq(
     @tempo.Period::of(1, 15, 3).plus(@tempo.Period::of(2, -5, 7)),
@@ -240,6 +252,28 @@ test "Date::add_period applies months before days" {
 }
 
 ///|
+test "Date::add_period raises on date overflow" {
+  assert_true(
+    (try? @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_period(
+      @tempo.Period::of_months(1),
+    ))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Date::new(@int.MIN_VALUE, 1, 1).add_period(
+      @tempo.Period::of_months(-1),
+    ))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_period(
+      @tempo.Period::of_days(1),
+    ))
+    is Err(_),
+  )
+}
+
+///|
 test "Date::until returns round-tripping Periods" {
   let forward = @tempo.Date::new(2024, 1, 31)
   let forward_end = @tempo.Date::new(2024, 3, 30)
@@ -251,6 +285,22 @@ test "Date::until returns round-tripping Periods" {
   let negative_period = negative.until(negative_end)
   assert_eq(negative.add_period(negative_period), negative_end)
   assert_eq(negative_period, @tempo.Period::of(0, -1, -29))
+}
+
+///|
+test "Date::until raises when Period fields cannot represent distance" {
+  assert_true(
+    (try? @tempo.Date::new(@int.MIN_VALUE, 1, 1).until(
+      @tempo.Date::new(@int.MAX_VALUE, 12, 31),
+    ))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Date::new(@int.MAX_VALUE, 12, 31).until(
+      @tempo.Date::new(@int.MIN_VALUE, 1, 1),
+    ))
+    is Err(_),
+  )
 }
 
 ///|

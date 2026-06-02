@@ -47,7 +47,7 @@ pub fn Date::previous(Self, Weekday) -> Self
 pub fn Date::previous_or_same(Self, Weekday) -> Self
 pub fn Date::start_of_month(Self) -> Self
 pub fn Date::start_of_year(Self) -> Self
-pub fn Date::until(Self, Self) -> Period
+pub fn Date::until(Self, Self) -> Period raise TempoError
 pub fn Date::weekday(Self) -> Weekday
 pub fn Date::with_day(Self, Int) -> Self raise TempoError
 pub fn Date::with_month(Self, Int) -> Self raise TempoError
@@ -210,7 +210,7 @@ pub fn Period::is_zero(Self) -> Bool
 pub fn Period::minus(Self, Self) -> Self raise TempoError
 pub fn Period::months(Self) -> Int
 pub fn Period::negated(Self) -> Self raise TempoError
-pub fn Period::normalized(Self) -> Self
+pub fn Period::normalized(Self) -> Self raise TempoError
 pub fn Period::of(Int, Int, Int) -> Self
 pub fn Period::of_days(Int) -> Self
 pub fn Period::of_months(Int) -> Self

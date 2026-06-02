@@ -402,6 +402,25 @@ fn civil_from_days(z : Int64) -> (Int, Int, Int) {
   (y, m, d)
 }
 
+///|
+fn civil_from_days_checked(z : Int64) -> (Int, Int, Int) raise TempoError {
+  let z = match checked_i64_add(z, 719468L) {
+    Some(z) => z
+    None => raise TempoError("date epoch day overflows Int64")
+  }
+  let era = floor_div64(z, 146097L)
+  let doe = (z - era * 146097L).to_int() // 0..146096
+  let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365 // 0..399
+  let y64 = yoe.to_int64() + era * 400L
+  let doy = doe - (365 * yoe + yoe / 4 - yoe / 100) // 0..365
+  let mp = (5 * doy + 2) / 153 // 0..11
+  let d = doy - (153 * mp + 2) / 5 + 1 // 1..31
+  let m = if mp < 10 { mp + 3 } else { mp - 9 } // 1..12
+  let y64 = if m <= 2 { y64 + 1L } else { y64 }
+  let y = int64_to_int_checked(y64, "date year")
+  (y, m, d)
+}
+
 // Howard Hinnant's days_from_civil: (year, month, day) → days-since-epoch
 
 ///|
@@ -520,11 +539,11 @@ pub fn Period::days(self : Period) -> Int {
 
 ///|
 /// Normalize the month field into years. Days are left untouched.
-pub fn Period::normalized(self : Period) -> Period {
+pub fn Period::normalized(self : Period) -> Period raise TempoError {
   let total_months = self.to_total_months()
   {
-    years: (total_months / 12L).to_int(),
-    months: (total_months % 12L).to_int(),
+    years: int64_to_int_checked(total_months / 12L, "period years"),
+    months: int64_to_int_checked(total_months % 12L, "period months"),
     days: self.days,
   }
 }
@@ -590,6 +609,36 @@ fn Date::add_months64(self : Date, months : Int64) -> Date {
 }
 
 ///|
+fn checked_shift_year_month(
+  year : Int,
+  month : Int,
+  months : Int64,
+) -> (Int, Int) raise TempoError {
+  let base = year.to_int64() * 12L + (month - 1).to_int64()
+  let total = match checked_i64_add(base, months) {
+    Some(total) => total
+    None => raise TempoError("date month adjustment overflows Int64")
+  }
+  let new_year = int64_to_int_checked(
+    floor_div64(total, 12L),
+    "date month adjustment year",
+  )
+  let new_month = floor_mod64(total, 12L).to_int() + 1
+  (new_year, new_month)
+}
+
+///|
+fn Date::add_months64_checked(
+  self : Date,
+  months : Int64,
+) -> Date raise TempoError {
+  let (year, month) = checked_shift_year_month(self.year, self.month, months)
+  let max_day = days_in_month(year, month)
+  let day = if self.day > max_day { max_day } else { self.day }
+  Date::new(year, month, day)
+}
+
+///|
 /// Add a signed number of calendar months to this date.
 ///
 /// If the original day does not exist in the target month, the result is
@@ -615,8 +664,9 @@ pub fn Date::add_years(self : Date, years : Int) -> Date {
 /// Years and months are combined into one month adjustment first, using the
 /// same end-of-month clamping as `Date::add_months`; days are added afterward.
 pub fn Date::add_period(self : Date, period : Period) -> Date raise TempoError {
-  let result = self.add_months64(period.to_total_months()).add_days(period.days)
-  Date::new(result.year, result.month, result.day)
+  self
+  .add_months64_checked(period.to_total_months())
+  .add_days_checked(period.days)
 }
 
 ///|
@@ -673,6 +723,17 @@ pub fn Date::add_days(self : Date, days : Int) -> Date {
   let base = days_from_civil(self.year, self.month, self.day)
   let (y, m, d) = civil_from_days(base + days.to_int64())
   { year: y, month: m, day: d }
+}
+
+///|
+fn Date::add_days_checked(self : Date, days : Int) -> Date raise TempoError {
+  let base = days_from_civil(self.year, self.month, self.day)
+  let target = match checked_i64_add(base, days.to_int64()) {
+    Some(target) => target
+    None => raise TempoError("date day adjustment overflows Int64")
+  }
+  let (y, m, d) = civil_from_days_checked(target)
+  Date::new(y, m, d)
 }
 
 ///|
@@ -815,21 +876,27 @@ pub fn Date::days_until(self : Date, other : Date) -> Int {
 ///
 /// The result round-trips through `Date::add_period`, including month-end
 /// clamping and the day-borrow behavior used by `java.time.LocalDate.until`.
-pub fn Date::until(self : Date, other : Date) -> Period {
+pub fn Date::until(self : Date, other : Date) -> Period raise TempoError {
   let mut total_months = other.proleptic_month() - self.proleptic_month()
   let mut days = other.day - self.day
   if total_months > 0L && days < 0 {
     total_months -= 1L
-    let adjusted = self.add_months64(total_months)
-    days = (other.epoch_day() - adjusted.epoch_day()).to_int()
+    let adjusted = self.add_months64_checked(total_months)
+    days = int64_to_int_checked(
+      other.epoch_day() - adjusted.epoch_day(),
+      "period days",
+    )
   } else if total_months < 0L && days > 0 {
     total_months += 1L
-    let adjusted = self.add_months64(total_months)
-    days = (other.epoch_day() - adjusted.epoch_day()).to_int()
+    let adjusted = self.add_months64_checked(total_months)
+    days = int64_to_int_checked(
+      other.epoch_day() - adjusted.epoch_day(),
+      "period days",
+    )
   }
   {
-    years: (total_months / 12L).to_int(),
-    months: (total_months % 12L).to_int(),
+    years: int64_to_int_checked(total_months / 12L, "period years"),
+    months: int64_to_int_checked(total_months % 12L, "period months"),
     days,
   }
 }
