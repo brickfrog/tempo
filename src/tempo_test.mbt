@@ -1561,6 +1561,34 @@ test "DateTime::format supports full Int year range" {
 }
 
 ///|
+test "DateTime::format_with tokens and literals" {
+  let dt = @tempo.DateTime::parse("2024-03-15T12:34:56.123456789Z")
+  assert_eq(dt.format_with("{YYYY}-{MM}-{DD}"), "2024-03-15")
+  assert_eq(dt.format_with("{HH}:{mm}:{ss}"), "12:34:56")
+  assert_eq(dt.format_with("{YYYY}/{MM}/{DD} {HH}h{mm}"), "2024/03/15 12h34")
+  assert_eq(dt.format_with("{fff} {nnnnnnnnn}"), "123 123456789")
+  let padded = @tempo.DateTime::parse("2024-03-15T12:34:56.007000009Z")
+  assert_eq(padded.format_with("{fff}/{nnnnnnnnn}"), "007/007000009")
+  let expanded = @tempo.DateTime::new(
+    @tempo.Date::new(-44, 3, 15),
+    @tempo.Time::new(0, 0, 0, 0),
+  )
+  assert_eq(expanded.format_with("{YYYY}-{MM}-{DD}"), "-0044-03-15")
+}
+
+///|
+test "DateTime::format_with rejects unknown token" {
+  let dt = @tempo.DateTime::parse("2024-03-15T12:34:56Z")
+  assert_true((try? dt.format_with("{ZZ}")) is Err(_))
+}
+
+///|
+test "DateTime::format_with escapes braces" {
+  let dt = @tempo.DateTime::parse("2024-03-15T12:34:56Z")
+  assert_eq(dt.format_with("{{x}}"), "{x}")
+}
+
+///|
 test "Time::format no sub-second" {
   let t = @tempo.Time::new(0, 0, 0, 0)
   assert_eq(t.format(), "00:00:00")
