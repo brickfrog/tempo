@@ -1264,6 +1264,47 @@ pub fn Date::parse(s : String) -> Date raise TempoError {
 }
 
 ///|
+/// Parse an ISO 8601 ordinal date in 'YYYY-DDD' format.
+///
+/// This parser is strict: it accepts only an unsigned 4-digit year, a hyphen,
+/// exactly 3 digits for the day-of-year, and end-of-input. Expanded-year output
+/// from `Date::format_ordinal` is not accepted.
+pub fn Date::parse_ordinal(s : String) -> Date raise TempoError {
+  let v = s.view()
+  let (year, v) = parse_digits(v, 4)
+  let v = consume(v, '-')
+  let (day_of_year, v) = parse_digits(v, 3)
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  Date::from_ordinal(year, day_of_year)
+}
+
+///|
+/// Parse an ISO 8601 week date in 'YYYY-Www-D' format.
+///
+/// The leading year is the ISO week-numbering year, which can differ from the
+/// resulting calendar year near New Year. This parser is strict: it accepts
+/// only an unsigned 4-digit week-year, a literal `W`, a 2-digit week, a 1-digit
+/// weekday, and end-of-input. Expanded-year output from `Date::format_iso_week`
+/// is not accepted.
+pub fn Date::parse_iso_week(s : String) -> Date raise TempoError {
+  let v = s.view()
+  let (week_year, v) = parse_digits(v, 4)
+  let v = consume(v, '-')
+  let v = consume(v, 'W')
+  let (week, v) = parse_digits(v, 2)
+  let v = consume(v, '-')
+  let (weekday, v) = parse_digits(v, 1)
+  match v {
+    [] => ()
+    _ => raise TempoError("unexpected trailing characters")
+  }
+  Date::from_iso_week(week_year, week, weekday)
+}
+
+///|
 /// Parse a calendar year-month in 'YYYY-MM' format.
 pub fn YearMonth::parse(s : String) -> YearMonth raise TempoError {
   let v = s.view()

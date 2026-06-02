@@ -55,6 +55,8 @@ pub fn Date::next(Self, Weekday) -> Self
 pub fn Date::next_or_same(Self, Weekday) -> Self
 pub fn Date::nth_weekday_of_month(Int, Int, Weekday, Int) -> Self raise TempoError
 pub fn Date::parse(String) -> Self raise TempoError
+pub fn Date::parse_iso_week(String) -> Self raise TempoError
+pub fn Date::parse_ordinal(String) -> Self raise TempoError
 pub fn Date::previous(Self, Weekday) -> Self
 pub fn Date::previous_or_same(Self, Weekday) -> Self
 pub fn Date::quarter(Self) -> Int
