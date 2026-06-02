@@ -736,14 +736,20 @@ pub fn DateTime::from_unix_nanos(ns : Int64) -> DateTime {
 /// Convert a Unix timestamp in milliseconds to a `DateTime`.
 /// Negative values represent dates before the Unix epoch.
 pub fn DateTime::from_unix_millis(ms : Int64) -> DateTime {
-  DateTime::from_unix_nanos(ms * 1_000_000L)
+  let ts_sec = floor_div64(ms, 1000L)
+  let nanosecond = ((ms - ts_sec * 1000L) * ns_per_ms).to_int()
+  let dt = DateTime::from_unix_seconds(ts_sec)
+  { ..dt, time: { ..dt.time, nanosecond, } }
 }
 
 ///|
 /// Convert a Unix timestamp in microseconds to a `DateTime`.
 /// Negative values represent dates before the Unix epoch.
 pub fn DateTime::from_unix_micros(us : Int64) -> DateTime {
-  DateTime::from_unix_nanos(us * 1_000L)
+  let ts_sec = floor_div64(us, 1_000_000L)
+  let nanosecond = ((us - ts_sec * 1_000_000L) * ns_per_us).to_int()
+  let dt = DateTime::from_unix_seconds(ts_sec)
+  { ..dt, time: { ..dt.time, nanosecond, } }
 }
 
 ///|

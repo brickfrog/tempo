@@ -604,8 +604,12 @@ test "to_unix_millis uses floor seconds plus subsecond millis" {
 ///|
 test "to_unix_millis and micros support wide range" {
   let dt = @tempo.DateTime::parse("3000-01-01T00:00:00Z")
-  assert_eq(dt.to_unix_millis(), 32_503_680_000_000L)
-  assert_eq(dt.to_unix_micros(), 32_503_680_000_000_000L)
+  let ms = 32_503_680_000_000L
+  let us = 32_503_680_000_000_000L
+  assert_eq(dt.to_unix_millis(), ms)
+  assert_eq(dt.to_unix_micros(), us)
+  assert_eq(@tempo.DateTime::from_unix_millis(ms), dt)
+  assert_eq(@tempo.DateTime::from_unix_micros(us), dt)
 }
 
 ///|
