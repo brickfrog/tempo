@@ -392,15 +392,14 @@ fn floor_div64(a : Int64, b : Int64) -> Int64 {
   }
 }
 
-// Howard Hinnant's civil_from_days: days-since-epoch → (year, month, day)
+// Howard Hinnant's civil_from_days: days-since-epoch -> (year, month, day)
 
 ///|
-fn civil_from_days(z : Int64) -> (Int, Int, Int) {
-  let z = z + 719468L
+fn civil_from_shifted_days(z : Int64) -> (Int64, Int, Int) {
   let era = floor_div64(z, 146097L)
   let doe = (z - era * 146097L).to_int() // 0..146096
   let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365 // 0..399
-  let y = yoe + (era * 400L).to_int()
+  let y = yoe.to_int64() + era * 400L
   let doy = doe - (365 * yoe + yoe / 4 - yoe / 100) // 0..365
   let mp = (5 * doy + 2) / 153 // 0..11
   let d = doy - (153 * mp + 2) / 5 + 1 // 1..31
@@ -410,36 +409,43 @@ fn civil_from_days(z : Int64) -> (Int, Int, Int) {
 }
 
 ///|
+fn civil_from_days64(z : Int64) -> (Int64, Int, Int) {
+  civil_from_shifted_days(z + 719468L)
+}
+
+///|
+fn civil_from_days(z : Int64) -> (Int, Int, Int) {
+  let (y64, m, d) = civil_from_days64(z)
+  (y64.to_int(), m, d)
+}
+
+///|
 fn civil_from_days_checked(z : Int64) -> (Int, Int, Int) raise TempoError {
-  let z = match checked_i64_add(z, 719468L) {
-    Some(z) => z
+  let shifted = match checked_i64_add(z, 719468L) {
+    Some(shifted) => shifted
     None => raise TempoError("date epoch day overflows Int64")
   }
-  let era = floor_div64(z, 146097L)
-  let doe = (z - era * 146097L).to_int() // 0..146096
-  let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365 // 0..399
-  let y64 = yoe.to_int64() + era * 400L
-  let doy = doe - (365 * yoe + yoe / 4 - yoe / 100) // 0..365
-  let mp = (5 * doy + 2) / 153 // 0..11
-  let d = doy - (153 * mp + 2) / 5 + 1 // 1..31
-  let m = if mp < 10 { mp + 3 } else { mp - 9 } // 1..12
-  let y64 = if m <= 2 { y64 + 1L } else { y64 }
+  let (y64, m, d) = civil_from_shifted_days(shifted)
   let y = int64_to_int_checked(y64, "date year")
   (y, m, d)
 }
 
-// Howard Hinnant's days_from_civil: (year, month, day) → days-since-epoch
+// Howard Hinnant's days_from_civil: (year, month, day) -> days-since-epoch
 
 ///|
-fn days_from_civil(year : Int, month : Int, day : Int) -> Int64 {
-  let y = if month <= 2 { year - 1 } else { year }
-  let y64 = y.to_int64()
-  let era = floor_div64(y64, 400L)
-  let yoe = y64 - era * 400L // 0..399
+fn days_from_civil64(year : Int64, month : Int, day : Int) -> Int64 {
+  let y = if month <= 2 { year - 1L } else { year }
+  let era = floor_div64(y, 400L)
+  let yoe = y - era * 400L // 0..399
   let m_adj = if month > 2 { month - 3 } else { month + 9 }
   let doy = (153 * m_adj + 2) / 5 + day - 1 // 0..365
   let doe = yoe * 365L + yoe / 4L - yoe / 100L + doy.to_int64() // 0..146096
   era * 146097L + doe - 719468L
+}
+
+///|
+fn days_from_civil(year : Int, month : Int, day : Int) -> Int64 {
+  days_from_civil64(year.to_int64(), month, day)
 }
 
 // ─── Constructors ─────────────────────────────────────────────────────────────
@@ -676,8 +682,20 @@ fn Date::add_months64_checked(
 /// If the original day does not exist in the target month, the result is
 /// clamped to that month's last day. Clamping is non-sticky: 2024-02-28 plus
 /// one month is 2024-03-28, not 2024-03-31.
+///
+/// This infallible operation wraps if the resulting year falls outside the
+/// `Int` year envelope. Use `Date::add_months_checked` to get `None` instead.
 pub fn Date::add_months(self : Date, months : Int) -> Date {
   self.add_months64(months.to_int64())
+}
+
+///|
+/// Add a signed number of calendar months, returning `None` if the resulting
+/// year cannot be represented by `Date`'s `Int` year field.
+pub fn Date::add_months_checked(self : Date, months : Int) -> Date? {
+  Some(self.add_months64_checked(months.to_int64())) catch {
+    TempoError(_) => None
+  }
 }
 
 ///|
@@ -686,8 +704,20 @@ pub fn Date::add_months(self : Date, months : Int) -> Date {
 /// If the original day does not exist in the target year/month, the result is
 /// clamped to that month's last day, so leap day moves to February 28 in
 /// non-leap target years.
+///
+/// This infallible operation wraps if the resulting year falls outside the
+/// `Int` year envelope. Use `Date::add_years_checked` to get `None` instead.
 pub fn Date::add_years(self : Date, years : Int) -> Date {
   self.add_months64(years.to_int64() * 12L)
+}
+
+///|
+/// Add a signed number of calendar years, returning `None` if the resulting
+/// year cannot be represented by `Date`'s `Int` year field.
+pub fn Date::add_years_checked(self : Date, years : Int) -> Date? {
+  Some(self.add_months64_checked(years.to_int64() * 12L)) catch {
+    TempoError(_) => None
+  }
 }
 
 ///|
@@ -698,7 +728,7 @@ pub fn Date::add_years(self : Date, years : Int) -> Date {
 pub fn Date::add_period(self : Date, period : Period) -> Date raise TempoError {
   self
   .add_months64_checked(period.to_total_months())
-  .add_days_checked(period.days)
+  .add_days_checked_or_raise(period.days)
 }
 
 ///|
@@ -817,6 +847,9 @@ pub fn Date::end_of_quarter(self : Date) -> Date {
 
 ///|
 /// Add a signed number of calendar days to this date (proleptic Gregorian).
+///
+/// This infallible operation wraps if the resulting year falls outside the
+/// `Int` year envelope. Use `Date::add_days_checked` to get `None` instead.
 pub fn Date::add_days(self : Date, days : Int) -> Date {
   let base = days_from_civil(self.year, self.month, self.day)
   let (y, m, d) = civil_from_days(base + days.to_int64())
@@ -824,7 +857,10 @@ pub fn Date::add_days(self : Date, days : Int) -> Date {
 }
 
 ///|
-fn Date::add_days_checked(self : Date, days : Int) -> Date raise TempoError {
+fn Date::add_days_checked_or_raise(
+  self : Date,
+  days : Int,
+) -> Date raise TempoError {
   let base = days_from_civil(self.year, self.month, self.day)
   let target = match checked_i64_add(base, days.to_int64()) {
     Some(target) => target
@@ -835,12 +871,25 @@ fn Date::add_days_checked(self : Date, days : Int) -> Date raise TempoError {
 }
 
 ///|
+/// Add a signed number of calendar days, returning `None` if the resulting year
+/// cannot be represented by `Date`'s `Int` year field.
+pub fn Date::add_days_checked(self : Date, days : Int) -> Date? {
+  Some(self.add_days_checked_or_raise(days)) catch {
+    TempoError(_) => None
+  }
+}
+
+///|
+fn day_of_week_from_epoch_day(d : Int64) -> Int {
+  // Align so Monday (1970-01-05, etc.) is remainder 0.
+  floor_mod64(d - 4L, 7L).to_int() + 1
+}
+
+///|
 /// ISO 8601 weekday: Monday = 1 through Sunday = 7.
 pub fn Date::day_of_week(self : Date) -> Int {
   let d = days_from_civil(self.year, self.month, self.day)
-  // Align so Monday (1970-01-05, etc.) is remainder 0.
-  let idx = floor_mod64(d - 4L, 7L)
-  idx.to_int() + 1
+  day_of_week_from_epoch_day(d)
 }
 
 ///|
@@ -859,15 +908,15 @@ pub fn Date::weekday(self : Date) -> Weekday {
 }
 
 ///|
-fn iso_week1_monday(week_year : Int) -> Date {
-  let jan4 = { year: week_year, month: 1, day: 4 }
-  jan4.add_days(1 - jan4.weekday().number_from_monday())
+fn iso_week1_monday_days64(week_year : Int64) -> Int64 {
+  let jan4 = days_from_civil64(week_year, 1, 4)
+  jan4 + (1 - day_of_week_from_epoch_day(jan4)).to_int64()
 }
 
 ///|
 fn iso_weeks_in_year(week_year : Int) -> Int {
-  let jan1 = { year: week_year, month: 1, day: 1 }
-  let jan1_weekday = jan1.weekday().number_from_monday()
+  let jan1 = days_from_civil(week_year, 1, 1)
+  let jan1_weekday = day_of_week_from_epoch_day(jan1)
   if jan1_weekday == 4 || (jan1_weekday == 3 && is_leap_year(week_year)) {
     53
   } else {
@@ -876,24 +925,34 @@ fn iso_weeks_in_year(week_year : Int) -> Int {
 }
 
 ///|
+fn Date::iso_week_year64(self : Date) -> Int64 {
+  let epoch_day = self.epoch_day()
+  let target = epoch_day +
+    (4 - day_of_week_from_epoch_day(epoch_day)).to_int64()
+  let (year, _, _) = civil_from_days64(target)
+  year
+}
+
+///|
 /// ISO 8601 week-numbering year for this date.
 ///
 /// This can differ from the calendar year near New Year; for example,
 /// 2021-01-01 belongs to ISO week year 2020.
-/// Near the `Int` year extremes the ISO week-year can fall in an
-/// unrepresentable calendar year; like `Date::add_days` / `pad4_year`, this is
-/// a known implementation boundary tracked in tempo-oj8. Ordinary dates are
-/// unaffected.
+///
+/// At the absolute `Int` year boundary, the true ISO week-year may be one year
+/// outside the representable `Int` range. This infallible accessor wraps in that
+/// residual case; `Date::format_iso_week` still formats the true expanded ISO
+/// week-year text.
 pub fn Date::iso_week_year(self : Date) -> Int {
-  self.add_days(4 - self.weekday().number_from_monday()).year
+  self.iso_week_year64().to_int()
 }
 
 ///|
 /// ISO 8601 week number in 1..53 for this date.
 pub fn Date::iso_week(self : Date) -> Int {
-  let week_year = self.iso_week_year()
-  let week1 = iso_week1_monday(week_year)
-  week1.days_until(self) / 7 + 1
+  let week_year = self.iso_week_year64()
+  let week1 = iso_week1_monday_days64(week_year)
+  ((self.epoch_day() - week1) / 7L).to_int() + 1
 }
 
 ///|
@@ -901,9 +960,8 @@ pub fn Date::iso_week(self : Date) -> Int {
 ///
 /// `week_year` is the ISO week-numbering year, `week` is 1..52 or 1..53
 /// depending on that year, and `weekday` is Monday = 1 through Sunday = 7.
-/// Near the `Int` year extremes, the computed date can fall outside the
-/// representable calendar envelope; this is the same known `Date::add_days`
-/// boundary tracked in tempo-oj8. Ordinary dates are unaffected.
+/// Raises `TempoError` if the ISO week fields are invalid or if the computed
+/// calendar date falls outside `Date`'s representable `Int` year envelope.
 pub fn Date::from_iso_week(
   week_year : Int,
   week : Int,
@@ -919,17 +977,23 @@ pub fn Date::from_iso_week(
   }
   let days = (week - 1).to_int64() * 7L +
     (wd.number_from_monday() - 1).to_int64()
-  iso_week1_monday(week_year).add_days(days.to_int())
+  let target = match
+    checked_i64_add(iso_week1_monday_days64(week_year.to_int64()), days) {
+    Some(target) => target
+    None => raise TempoError("ISO week date overflows Int64")
+  }
+  let (year, month, day) = civil_from_days_checked(target)
+  Date::new(year, month, day)
 }
 
 ///|
 /// Format this date as an ISO 8601 week date: `YYYY-Www-D`.
 ///
-/// Near the `Int` year extremes the ISO week-year or year padding can hit the
-/// known `Date::add_days` / `pad4_year` boundary tracked in tempo-oj8. Ordinary
-/// dates are unaffected.
+/// The ISO week-year is computed with `Int64` intermediates, so at the absolute
+/// `Int` year boundary the formatted week-year may be the expanded year just
+/// outside `Date`'s representable calendar envelope.
 pub fn Date::format_iso_week(self : Date) -> String {
-  "\{pad4_year(self.iso_week_year())}-W\{pad2(self.iso_week())}-\{self.weekday().number_from_monday()}"
+  "\{pad4_year64(self.iso_week_year64())}-W\{pad2(self.iso_week())}-\{self.weekday().number_from_monday()}"
 }
 
 ///|
@@ -1216,7 +1280,7 @@ pub fn YearMonth::parse(s : String) -> YearMonth raise TempoError {
 ///|
 /// Format this date as 'YYYY-MM-DD'.
 pub fn Date::format(self : Date) -> String {
-  "\{pad4(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}"
+  "\{pad4_year(self.year)}-\{pad2(self.month)}-\{pad2(self.day)}"
 }
 
 ///|
@@ -2201,39 +2265,38 @@ fn pad3(n : Int) -> String {
   }
 }
 
-// Zero-pad an integer to 4 digits.
+// Proleptic Gregorian year for text output: optional leading `-` for years
+// before 1 CE, then the absolute year number zero-padded to at least four
+// decimal digits. Years with |year| >= 10000 use more
+// than four digits. RFC 3339 `date-time` only allows four-digit positive years;
+// this formatting follows ISO 8601-style expanded years for arbitrary `Date`
+// values.
 
 ///|
-fn pad4(n : Int) -> String {
-  if n < 10 {
+fn pad4_i64(n : Int64) -> String {
+  if n < 10L {
     "000\{n}"
-  } else if n < 100 {
+  } else if n < 100L {
     "00\{n}"
-  } else if n < 1000 {
+  } else if n < 1000L {
     "0\{n}"
   } else {
     "\{n}"
   }
 }
 
-// Proleptic Gregorian year for text output: optional leading `-` for years
-// before 1 CE, then the absolute year number zero-padded to at least four
-// decimal digits (same rules as `pad4`). Years with |year| ≥ 10000 use more
-// than four digits. RFC 3339 `date-time` only allows four-digit positive years;
-// this formatting follows ISO 8601-style expanded years for arbitrary `Date`
-// values. `Int::min_value` cannot be negated to a positive `Int`; that case is
-// rejected here.
+///|
+fn pad4_year64(year : Int64) -> String {
+  if year < 0L {
+    "-" + pad4_i64(-year)
+  } else {
+    pad4_i64(year)
+  }
+}
 
 ///|
 fn pad4_year(year : Int) -> String {
-  if year < 0 {
-    if year == @int.MIN_VALUE {
-      abort("pad4_year: year is Int::min_value, cannot format magnitude")
-    }
-    "-" + pad4(-year)
-  } else {
-    pad4(year)
-  }
+  pad4_year64(year.to_int64())
 }
 
 ///|
@@ -2335,15 +2398,10 @@ fn format_offset_suffix(offset_seconds : Int) -> String {
 /// `-HH:MM` otherwise. This is for RFC 3339-style interop only; `DateTime`
 /// remains the primary UTC timestamp type.
 ///
-/// Note: formatting can abort when the local-time projection carries the year
-/// near the `Int` extremes — it uses the same bounded-`Int` date arithmetic
-/// (`Date::add_days`) and year padding (`pad4_year`) as `Date`/`DateTime`.
-/// This is a known implementation boundary shared with those primitives, not a
-/// property unique to `FixedOffsetDateTime`; it lies outside the current
-/// arithmetic envelope (year ≈ ±2.1e9, far past where `Date::add_days` already
-/// overflows). Ordinary timestamps and calendar dates are unaffected. The real
-/// fix is a core-arithmetic hardening pass (checked / Int64 epoch-day
-/// intermediates), tracked in tempo-oj8.
+/// Note: formatting uses the same infallible day arithmetic as `Date`; if the
+/// local-time projection carries past the absolute `Int` year envelope, the
+/// year wraps. `pad4_year` itself handles the full `Int` range and does not
+/// abort.
 pub fn FixedOffsetDateTime::format(self : FixedOffsetDateTime) -> String {
   let wall_clock = shift_datetime_by_seconds(self.utc, self.offset_seconds)
   format_datetime_without_zone(wall_clock) +

@@ -274,6 +274,40 @@ test "Date::add_period raises on date overflow" {
 }
 
 ///|
+test "Date checked arithmetic returns None on year overflow" {
+  assert_true(
+    @tempo.Date::new(2024, 1, 31).add_months_checked(1) ==
+    Some(@tempo.Date::new(2024, 2, 29)),
+  )
+  assert_true(
+    @tempo.Date::new(2024, 2, 29).add_years_checked(1) ==
+    Some(@tempo.Date::new(2025, 2, 28)),
+  )
+  assert_true(
+    @tempo.Date::new(2024, 1, 31).add_days_checked(1) ==
+    Some(@tempo.Date::new(2024, 2, 1)),
+  )
+  assert_true(
+    @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_days_checked(1) is None,
+  )
+  assert_true(
+    @tempo.Date::new(@int.MIN_VALUE, 1, 1).add_days_checked(-1) is None,
+  )
+  assert_true(
+    @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_months_checked(1) is None,
+  )
+  assert_true(
+    @tempo.Date::new(@int.MIN_VALUE, 1, 1).add_months_checked(-1) is None,
+  )
+  assert_true(
+    @tempo.Date::new(@int.MAX_VALUE, 1, 1).add_years_checked(1) is None,
+  )
+  assert_true(
+    @tempo.Date::new(@int.MIN_VALUE, 1, 1).add_years_checked(-1) is None,
+  )
+}
+
+///|
 test "Date::until returns round-tripping Periods" {
   let forward = @tempo.Date::new(2024, 1, 31)
   let forward_end = @tempo.Date::new(2024, 3, 30)
@@ -679,6 +713,14 @@ test "Date ISO week-date accessors and format boundary cases" {
   assert_eq(week_53_end.iso_week(), 53)
   assert_eq(week_53_end.format_iso_week(), "2026-W53-4")
   assert_eq(@tempo.Date::new(2027, 1, 1).format_iso_week(), "2026-W53-5")
+  let large_next_week_year = @tempo.Date::new(5_999_990, 12, 31)
+  assert_eq(large_next_week_year.iso_week_year(), 5_999_991)
+  assert_eq(large_next_week_year.iso_week(), 1)
+  assert_eq(large_next_week_year.format_iso_week(), "5999991-W01-1")
+  assert_eq(
+    @tempo.Date::new(@int.MAX_VALUE, 12, 31).format_iso_week(),
+    "2147483648-W01-2",
+  )
 }
 
 ///|
@@ -762,6 +804,11 @@ test "Date::from_iso_week rejects invalid week and weekday" {
   assert_true((try? @tempo.Date::from_iso_week(2024, 54, 1)) is Err(_))
   assert_true((try? @tempo.Date::from_iso_week(2024, 1, 0)) is Err(_))
   assert_true((try? @tempo.Date::from_iso_week(2024, 1, 8)) is Err(_))
+}
+
+///|
+test "Date::from_iso_week raises on residual Int year overflow" {
+  assert_true((try? @tempo.Date::from_iso_week(@int.MIN_VALUE, 1, 1)) is Err(_))
 }
 
 ///|
@@ -1138,6 +1185,24 @@ test "Date::format" {
 }
 
 ///|
+test "Date::format uses expanded BCE years" {
+  assert_eq(@tempo.Date::new(-1, 1, 1).format(), "-0001-01-01")
+  assert_eq(@tempo.Date::new(-44, 3, 15).format(), "-0044-03-15")
+}
+
+///|
+test "Date::format supports full Int year range" {
+  assert_eq(
+    @tempo.Date::new(@int.MIN_VALUE, 1, 1).format(),
+    "-2147483648-01-01",
+  )
+  assert_eq(
+    @tempo.Date::new(@int.MAX_VALUE, 12, 31).format(),
+    "2147483647-12-31",
+  )
+}
+
+///|
 test "Date::format_ordinal" {
   assert_eq(@tempo.Date::new(2024, 1, 1).format_ordinal(), "2024-001")
   assert_eq(@tempo.Date::new(2024, 7, 20).format_ordinal(), "2024-202")
@@ -1474,6 +1539,28 @@ test "DateTime::format negative year -0001" {
 }
 
 ///|
+test "Date and DateTime negative year formats agree on date portion" {
+  let d = @tempo.Date::new(-44, 3, 15)
+  let t = @tempo.Time::new(0, 0, 0, 0)
+  let formatted = @tempo.DateTime::new(d, t).format()
+  assert_eq(formatted[:d.format().length()].to_owned(), d.format())
+  assert_eq(formatted, "-0044-03-15T00:00:00Z")
+}
+
+///|
+test "DateTime::format supports full Int year range" {
+  let t = @tempo.Time::new(0, 0, 0, 0)
+  assert_eq(
+    @tempo.DateTime::new(@tempo.Date::new(@int.MIN_VALUE, 1, 1), t).format(),
+    "-2147483648-01-01T00:00:00Z",
+  )
+  assert_eq(
+    @tempo.DateTime::new(@tempo.Date::new(@int.MAX_VALUE, 12, 31), t).format(),
+    "2147483647-12-31T00:00:00Z",
+  )
+}
+
+///|
 test "Time::format no sub-second" {
   let t = @tempo.Time::new(0, 0, 0, 0)
   assert_eq(t.format(), "00:00:00")
@@ -1728,13 +1815,15 @@ test "FixedOffsetDateTime::format supports max positive offset" {
 }
 
 ///|
-test "panic format_extreme_year_boundary" {
+test "FixedOffsetDateTime::format wraps absolute year boundary" {
   let dt = @tempo.DateTime::new(
     @tempo.Date::new(@int.MAX_VALUE, 12, 31),
     @tempo.Time::new(23, 59, 0, 0),
   )
-  @tempo.FixedOffsetDateTime::from_datetime_and_offset(dt, 60).format()
-  |> ignore
+  assert_eq(
+    @tempo.FixedOffsetDateTime::from_datetime_and_offset(dt, 60).format(),
+    "-2147483648-01-01T00:00:00+00:01",
+  )
 }
 
 ///|
@@ -1867,6 +1956,8 @@ fn assert_json_string(json : Json, expected : String) -> Unit raise {
 test "JSON serializes tempo values as canonical strings" {
   let date = @tempo.Date::parse("2024-03-15")
   assert_json_string(date.to_json(), "2024-03-15")
+  let bce_date = @tempo.Date::new(-44, 3, 15)
+  assert_json_string(bce_date.to_json(), "-0044-03-15")
   let time = @tempo.Time::parse("14:31:43.5")
   assert_json_string(time.to_json(), "14:31:43.5")
   let datetime = @tempo.DateTime::parse("2024-07-21T17:11:00Z")
@@ -2668,6 +2759,37 @@ test "Date::add_days large negative" {
   assert_eq(d2.year, 1996)
   assert_eq(d2.month, 8)
   assert_eq(d2.day, 15)
+}
+
+///|
+test "Date::add_days round-trips beyond old Int overflow boundary" {
+  let d = @tempo.Date::new(6_000_000, 2, 28)
+  let d2 = d.add_days(367)
+  assert_eq(d2, @tempo.Date::new(6_000_001, 3, 1))
+  assert_eq(d2.add_days(-367), d)
+  let bce = @tempo.Date::new(-6_000_000, 3, 1)
+  let bce2 = bce.add_days(-10_000)
+  assert_eq(bce2, @tempo.Date::new(-6_000_028, 10, 14))
+  assert_eq(bce2.add_days(10_000), bce)
+}
+
+///|
+test "Date epoch-day round-trips beyond old Int overflow boundary" {
+  let t = @tempo.Time::new(0, 0, 0, 0)
+  let future = @tempo.Date::new(6_000_000, 2, 29)
+  assert_eq(
+    @tempo.DateTime::from_unix_seconds(
+      @tempo.DateTime::new(future, t).to_unix_seconds(),
+    ).date,
+    future,
+  )
+  let past = @tempo.Date::new(-6_000_000, 3, 1)
+  assert_eq(
+    @tempo.DateTime::from_unix_seconds(
+      @tempo.DateTime::new(past, t).to_unix_seconds(),
+    ).date,
+    past,
+  )
 }
 
 ///|
