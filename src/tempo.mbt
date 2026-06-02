@@ -769,6 +769,12 @@ let ns_per_min : Int64 = 60_000_000_000L
 let ns_per_hour : Int64 = 3_600_000_000_000L
 
 ///|
+let int64_min_value : Int64 = -9_223_372_036_854_775_808L
+
+///|
+let int64_max_value : Int64 = 9_223_372_036_854_775_807L
+
+///|
 /// Create a Duration from a number of nanoseconds.
 pub fn Duration::nanoseconds(ns : Int64) -> Duration {
   { nanoseconds: ns }
@@ -877,7 +883,80 @@ pub fn Duration::is_negative(self : Duration) -> Bool {
   self.nanoseconds < 0L
 }
 
+///|
+/// Absolute value of this duration.
+///
+/// `Int64::min_value` cannot be negated as an `Int64`, so that edge saturates
+/// to `Int64::max_value` instead of raising or wrapping.
+pub fn Duration::abs(self : Duration) -> Duration {
+  if self.nanoseconds == int64_min_value {
+    { nanoseconds: int64_max_value }
+  } else if self.nanoseconds < 0L {
+    { nanoseconds: -self.nanoseconds }
+  } else {
+    self
+  }
+}
+
+///|
+/// `true` when this duration is greater than zero.
+pub fn Duration::is_positive(self : Duration) -> Bool {
+  self.nanoseconds > 0L
+}
+
+///|
+/// Sign of this duration: `-1` for negative, `0` for zero, `1` for positive.
+pub fn Duration::signum(self : Duration) -> Int {
+  if self.nanoseconds < 0L {
+    -1
+  } else if self.nanoseconds > 0L {
+    1
+  } else {
+    0
+  }
+}
+
 // ─── Duration arithmetic ──────────────────────────────────────────────────────
+
+///|
+/// Multiply this duration by an `Int64` scalar.
+///
+/// This wraps on `Int64` overflow. Use `checked_multiply` when overflow should
+/// return `None`.
+pub fn Duration::multiply(self : Duration, n : Int64) -> Duration {
+  { nanoseconds: self.nanoseconds * n }
+}
+
+///|
+/// Multiply this duration by an `Int64` scalar, returning `None` on overflow.
+pub fn Duration::checked_multiply(self : Duration, n : Int64) -> Duration? {
+  if n == 0L {
+    Some({ nanoseconds: 0L })
+  } else {
+    let product = self.nanoseconds * n
+    if product == int64_min_value && n == -1L {
+      None
+    } else if product / n == self.nanoseconds {
+      Some({ nanoseconds: product })
+    } else {
+      None
+    }
+  }
+}
+
+///|
+/// Divide this duration by an `Int64` scalar, truncating toward zero.
+///
+/// Division by zero raises `TempoError`.
+pub fn Duration::divide(
+  self : Duration,
+  n : Int64,
+) -> Duration raise TempoError {
+  if n == 0L {
+    raise TempoError("duration division by zero")
+  }
+  { nanoseconds: self.nanoseconds / n }
+}
 
 ///|
 pub impl Add for Duration with fn add(self, other : Duration) -> Duration {

@@ -878,6 +878,80 @@ test "Duration op_neg" {
 }
 
 ///|
+test "Duration::abs" {
+  assert_eq(@tempo.Duration::seconds(-5L).abs(), @tempo.Duration::seconds(5L))
+  assert_eq(@tempo.Duration::seconds(5L).abs(), @tempo.Duration::seconds(5L))
+  assert_eq(@tempo.Duration::seconds(0L).abs(), @tempo.Duration::seconds(0L))
+  assert_eq(
+    @tempo.Duration::nanoseconds(-9_223_372_036_854_775_808L).abs(),
+    @tempo.Duration::nanoseconds(9_223_372_036_854_775_807L),
+  )
+}
+
+///|
+test "Duration::is_positive" {
+  assert_eq(@tempo.Duration::seconds(1L).is_positive(), true)
+  assert_eq(@tempo.Duration::seconds(0L).is_positive(), false)
+  assert_eq(@tempo.Duration::seconds(-1L).is_positive(), false)
+}
+
+///|
+test "Duration::signum" {
+  assert_eq(@tempo.Duration::seconds(-1L).signum(), -1)
+  assert_eq(@tempo.Duration::seconds(0L).signum(), 0)
+  assert_eq(@tempo.Duration::seconds(1L).signum(), 1)
+}
+
+///|
+test "Duration::multiply" {
+  assert_eq(
+    @tempo.Duration::seconds(2L).multiply(3L),
+    @tempo.Duration::seconds(6L),
+  )
+  assert_eq(
+    @tempo.Duration::seconds(2L).multiply(-1L),
+    @tempo.Duration::seconds(-2L),
+  )
+  assert_eq(
+    @tempo.Duration::seconds(2L).multiply(0L),
+    @tempo.Duration::seconds(0L),
+  )
+}
+
+///|
+test "Duration::checked_multiply" {
+  assert_true(
+    @tempo.Duration::seconds(2L).checked_multiply(3L) ==
+    Some(@tempo.Duration::seconds(6L)),
+  )
+  assert_true(
+    @tempo.Duration::nanoseconds(9_223_372_036_854_775_807L).checked_multiply(
+      2L,
+    )
+    is None,
+  )
+  assert_true(
+    @tempo.Duration::nanoseconds(-9_223_372_036_854_775_808L).checked_multiply(
+      -1L,
+    )
+    is None,
+  )
+}
+
+///|
+test "Duration::divide" {
+  assert_eq(
+    @tempo.Duration::seconds(6L).divide(2L),
+    @tempo.Duration::seconds(3L),
+  )
+  assert_eq(
+    @tempo.Duration::nanoseconds(7L).divide(2L),
+    @tempo.Duration::nanoseconds(3L),
+  )
+  assert_true((try? @tempo.Duration::seconds(1L).divide(0L)) is Err(_))
+}
+
+///|
 test "Duration compare" {
   let a = @tempo.Duration::seconds(1L)
   let b = @tempo.Duration::seconds(2L)
