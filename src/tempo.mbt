@@ -871,11 +871,26 @@ pub fn DateTime::to_time(self : DateTime) -> Time {
 /// remains tempo's primary timestamp type; this wrapper is for wire-format
 /// interop when a timestamp carries an explicit numeric offset but no IANA
 /// time zone.
+///
+/// Raises `TempoError` when `offset_seconds` is not whole-minute granularity or
+/// is outside the RFC 3339 fixed-offset range ±23:59.
 pub fn FixedOffsetDateTime::from_datetime_and_offset(
   utc : DateTime,
   offset_seconds : Int,
-) -> FixedOffsetDateTime {
+) -> FixedOffsetDateTime raise TempoError {
+  validate_fixed_offset_seconds(offset_seconds)
   { utc, offset_seconds }
+}
+
+///|
+fn validate_fixed_offset_seconds(offset_seconds : Int) -> Unit raise TempoError {
+  if offset_seconds % 60 != 0 {
+    raise TempoError("fixed offset must be whole-minute granularity")
+  }
+  let max_offset_seconds = 23 * 3600 + 59 * 60
+  if offset_seconds < -max_offset_seconds || offset_seconds > max_offset_seconds {
+    raise TempoError("fixed offset out of RFC 3339 range ±23:59")
+  }
 }
 
 ///|
@@ -2299,7 +2314,7 @@ pub fn FixedOffsetDateTime::parse(
   s : String,
 ) -> FixedOffsetDateTime raise TempoError {
   let (utc, offset_seconds) = parse_rfc3339_parts(s)
-  { utc, offset_seconds }
+  FixedOffsetDateTime::from_datetime_and_offset(utc, offset_seconds)
 }
 
 ///|

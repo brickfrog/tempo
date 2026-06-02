@@ -1178,6 +1178,23 @@ test "FixedOffsetDateTime::from_datetime_and_offset bundles instant and offset" 
 }
 
 ///|
+test "FixedOffsetDateTime::from_datetime_and_offset rejects invalid offsets" {
+  let utc = @tempo.DateTime::parse("2024-07-21T21:11:00Z")
+  assert_true(
+    (try? @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 61))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 86400))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, -86400))
+    is Err(_),
+  )
+}
+
+///|
 test "FixedOffsetDateTime Eq and Compare include offset" {
   let utc = @tempo.DateTime::parse("2024-07-21T21:11:00Z")
   let a = @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, -14400)

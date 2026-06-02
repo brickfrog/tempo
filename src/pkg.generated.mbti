@@ -161,7 +161,7 @@ pub struct FixedOffsetDateTime {
   // private fields
 } derive(Compare, Eq)
 pub fn FixedOffsetDateTime::format(Self) -> String
-pub fn FixedOffsetDateTime::from_datetime_and_offset(DateTime, Int) -> Self
+pub fn FixedOffsetDateTime::from_datetime_and_offset(DateTime, Int) -> Self raise TempoError
 pub fn FixedOffsetDateTime::offset_seconds(Self) -> Int
 pub fn FixedOffsetDateTime::parse(String) -> Self raise TempoError
 pub fn FixedOffsetDateTime::to_utc(Self) -> DateTime
