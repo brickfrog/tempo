@@ -261,6 +261,61 @@ test "Date::day_of_week ISO" {
 }
 
 ///|
+test "Weekday conversion helpers" {
+  assert_eq(@tempo.Weekday::from_int(3), Some(@tempo.Wednesday))
+  assert_eq(@tempo.Wednesday.to_int(), 3)
+  assert_eq(@tempo.Wednesday.number_from_monday(), 3)
+  assert_eq(@tempo.Wednesday.number_from_sunday(), 4)
+  assert_true(@tempo.Weekday::from_int(0) is None)
+  assert_true(@tempo.Weekday::from_int(8) is None)
+}
+
+///|
+test "Weekday cyclic navigation and ordering" {
+  assert_eq(@tempo.Sunday.next(), @tempo.Monday)
+  assert_eq(@tempo.Monday.previous(), @tempo.Sunday)
+  assert_eq(@tempo.Monday.next(), @tempo.Tuesday)
+  assert_eq(@tempo.Tuesday.previous(), @tempo.Monday)
+  assert_eq(@tempo.Monday < @tempo.Sunday, true)
+}
+
+///|
+test "Weekday Show output" {
+  inspect(@tempo.Wednesday, content="Wednesday")
+}
+
+///|
+test "Month conversion helpers" {
+  assert_eq(@tempo.Month::from_int(2), Some(@tempo.February))
+  assert_eq(@tempo.March.to_int(), 3)
+  assert_true(@tempo.Month::from_int(0) is None)
+  assert_true(@tempo.Month::from_int(13) is None)
+}
+
+///|
+test "Month cyclic navigation ordering and days" {
+  assert_eq(@tempo.December.next(), @tempo.January)
+  assert_eq(@tempo.January.previous(), @tempo.December)
+  assert_eq(@tempo.January.next(), @tempo.February)
+  assert_eq(@tempo.February.previous(), @tempo.January)
+  assert_eq(@tempo.January < @tempo.December, true)
+  assert_eq(@tempo.February.days_in(2024), 29)
+  assert_eq(@tempo.February.days_in(2023), 28)
+}
+
+///|
+test "Month Show output" {
+  inspect(@tempo.March, content="March")
+}
+
+///|
+test "Date typed weekday and month accessors" {
+  let d = @tempo.Date::new(2024, 3, 15)
+  assert_eq(d.weekday().to_int(), d.day_of_week())
+  assert_eq(d.month_enum(), @tempo.March)
+}
+
+///|
 test "Date::day_of_year" {
   assert_eq(@tempo.Date::new(2024, 1, 1).day_of_year(), 1)
   assert_eq(@tempo.Date::new(2024, 3, 15).day_of_year(), 75)
