@@ -34,7 +34,12 @@ pub fn Date::max(Self, Self) -> Self
 pub fn Date::min(Self, Self) -> Self
 pub fn Date::month_enum(Self) -> Month
 pub fn Date::new(Int, Int, Int) -> Self raise TempoError
+pub fn Date::next(Self, Weekday) -> Self
+pub fn Date::next_or_same(Self, Weekday) -> Self
+pub fn Date::nth_weekday_of_month(Int, Int, Weekday, Int) -> Self raise TempoError
 pub fn Date::parse(String) -> Self raise TempoError
+pub fn Date::previous(Self, Weekday) -> Self
+pub fn Date::previous_or_same(Self, Weekday) -> Self
 pub fn Date::start_of_month(Self) -> Self
 pub fn Date::start_of_year(Self) -> Self
 pub fn Date::weekday(Self) -> Weekday

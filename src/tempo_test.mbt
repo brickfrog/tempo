@@ -522,6 +522,56 @@ test "Date typed weekday and month accessors" {
 }
 
 ///|
+test "Date weekday navigation is strictly next and previous" {
+  let d = @tempo.Date::new(2024, 3, 15)
+  assert_eq(d.next(@tempo.Monday), @tempo.Date::new(2024, 3, 18))
+  assert_eq(d.next(@tempo.Friday), @tempo.Date::new(2024, 3, 22))
+  assert_eq(d.previous(@tempo.Monday), @tempo.Date::new(2024, 3, 11))
+  assert_eq(d.previous(@tempo.Friday), @tempo.Date::new(2024, 3, 8))
+}
+
+///|
+test "Date weekday navigation or_same variants allow identity" {
+  let d = @tempo.Date::new(2024, 3, 15)
+  assert_eq(d.next_or_same(@tempo.Friday), d)
+  assert_eq(d.next_or_same(@tempo.Monday), @tempo.Date::new(2024, 3, 18))
+  assert_eq(d.previous_or_same(@tempo.Friday), d)
+  assert_eq(d.previous_or_same(@tempo.Monday), @tempo.Date::new(2024, 3, 11))
+}
+
+///|
+test "Date weekday navigation crosses year boundary" {
+  assert_eq(
+    @tempo.Date::new(2024, 12, 30).next(@tempo.Monday),
+    @tempo.Date::new(2025, 1, 6),
+  )
+}
+
+///|
+test "Date::nth_weekday_of_month finds weekdays from either end" {
+  assert_eq(
+    @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Tuesday, 3),
+    @tempo.Date::new(2024, 3, 19),
+  )
+  assert_eq(
+    @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Friday, -1),
+    @tempo.Date::new(2024, 3, 29),
+  )
+}
+
+///|
+test "Date::nth_weekday_of_month rejects missing or zero occurrences" {
+  assert_true(
+    (try? @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Monday, 5))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Tuesday, 0))
+    is Err(_),
+  )
+}
+
+///|
 test "Date::day_of_year" {
   assert_eq(@tempo.Date::new(2024, 1, 1).day_of_year(), 1)
   assert_eq(@tempo.Date::new(2024, 3, 15).day_of_year(), 75)
