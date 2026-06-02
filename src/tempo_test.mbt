@@ -1195,6 +1195,32 @@ test "FixedOffsetDateTime::from_datetime_and_offset rejects invalid offsets" {
 }
 
 ///|
+test "FixedOffsetDateTime::format supports max positive offset" {
+  let s = "2024-07-21T00:00:00+23:59"
+  let dt = @tempo.FixedOffsetDateTime::parse(s)
+  assert_eq(dt.offset_seconds(), 23 * 3600 + 59 * 60)
+  assert_eq(dt.to_utc().format(), "2024-07-20T00:01:00Z")
+  assert_eq(dt.format(), s)
+  assert_eq(
+    @tempo.FixedOffsetDateTime::from_datetime_and_offset(
+      @tempo.DateTime::parse("2024-07-20T00:01:00Z"),
+      23 * 3600 + 59 * 60,
+    ).format(),
+    s,
+  )
+}
+
+///|
+test "panic format_extreme_year_boundary" {
+  let dt = @tempo.DateTime::new(
+    @tempo.Date::new(@int.MAX_VALUE, 12, 31),
+    @tempo.Time::new(23, 59, 0, 0),
+  )
+  @tempo.FixedOffsetDateTime::from_datetime_and_offset(dt, 60).format()
+  |> ignore
+}
+
+///|
 test "FixedOffsetDateTime Eq and Compare include offset" {
   let utc = @tempo.DateTime::parse("2024-07-21T21:11:00Z")
   let a = @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, -14400)
@@ -1203,6 +1229,14 @@ test "FixedOffsetDateTime Eq and Compare include offset" {
   assert_eq(a == b, true)
   assert_eq(a == c, false)
   assert_eq(a < c, true)
+}
+
+///|
+test "FixedOffsetDateTime is a hash collection key" {
+  let dt = @tempo.FixedOffsetDateTime::parse("2024-07-21T17:11:00-04:00")
+  let values : Map[@tempo.FixedOffsetDateTime, String] = {}
+  values.set(dt, "offset")
+  assert_true(values.get(dt) == Some("offset"))
 }
 
 ///|

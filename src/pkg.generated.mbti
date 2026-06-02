@@ -159,7 +159,7 @@ pub impl @json.FromJson for Duration
 
 pub struct FixedOffsetDateTime {
   // private fields
-} derive(Compare, Eq)
+} derive(Compare, Eq, Hash)
 pub fn FixedOffsetDateTime::format(Self) -> String
 pub fn FixedOffsetDateTime::from_datetime_and_offset(DateTime, Int) -> Self raise TempoError
 pub fn FixedOffsetDateTime::offset_seconds(Self) -> Int

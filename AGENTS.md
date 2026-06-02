@@ -57,9 +57,11 @@ You can browse and install extra skills here:
   `pad(n, width)` unless profiling shows formatting is a bottleneck.
 
 - **pad4_year abort on Int::min_value:** Intentional programmer-error trap.
-  `Int::min_value` cannot be negated to a positive `Int`. This year is not
-  constructable via `Date::new` — only via raw struct literal (caller bug).
-  Future option: handle via `Int64` arithmetic to eliminate the abort.
+  `Int::min_value` cannot be negated to a positive `Int`. This year can be
+  reached at the arithmetic envelope via `Date::add_days` carry from a
+  `Date::new`-constructable extreme year; ordinary calendar dates are
+  unaffected. Future option: handle via `Int64` arithmetic to eliminate the
+  abort.
 
 - **floor_div64 / floor_mod64:** Required. MoonBit stdlib does not provide floor
   division for `Int64`. MoonBit's `/` truncates toward zero; these round toward
@@ -78,3 +80,13 @@ You can browse and install extra skills here:
   seconds are always shown when hours and minutes are both zero.
 
 - **fmt_frac while loop:** Intentional. `StringView` lacks `trim_end(Char)`.
+
+- **FixedOffsetDateTime::format extreme-year abort:** Does NOT introduce a
+  distinct fallible-formatting contract. The abort arises from the same
+  bounded-`Int` date arithmetic (`Date::add_days`, `pad4_year`) used by
+  `Date`/`DateTime`; the local-time projection can carry into an
+  unrepresentable year only at year ≈ `Int` extremes. A
+  FixedOffsetDateTime-only constructor bound would make its domain inconsistent
+  with `DateTime` without solving the root cause, so this is documented and
+  tested as the current boundary. The real fix (checked / wider epoch-day
+  arithmetic) is tempo-oj8.

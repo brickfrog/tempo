@@ -321,7 +321,7 @@ pub struct DateTime {
 pub struct FixedOffsetDateTime {
   priv utc : DateTime
   priv offset_seconds : Int
-} derive(Eq, Compare)
+} derive(Eq, Compare, Hash)
 
 ///|
 /// A DateTime interval with a half-open end instant: `[start, end)`.
@@ -1835,6 +1835,16 @@ fn format_offset_suffix(offset_seconds : Int) -> String {
 /// `offset_seconds`; the fixed offset suffix is `Z` for zero and `+HH:MM` /
 /// `-HH:MM` otherwise. This is for RFC 3339-style interop only; `DateTime`
 /// remains the primary UTC timestamp type.
+///
+/// Note: formatting can abort when the local-time projection carries the year
+/// near the `Int` extremes — it uses the same bounded-`Int` date arithmetic
+/// (`Date::add_days`) and year padding (`pad4_year`) as `Date`/`DateTime`.
+/// This is a known implementation boundary shared with those primitives, not a
+/// property unique to `FixedOffsetDateTime`; it lies outside the current
+/// arithmetic envelope (year ≈ ±2.1e9, far past where `Date::add_days` already
+/// overflows). Ordinary timestamps and calendar dates are unaffected. The real
+/// fix is a core-arithmetic hardening pass (checked / Int64 epoch-day
+/// intermediates), tracked in tempo-oj8.
 pub fn FixedOffsetDateTime::format(self : FixedOffsetDateTime) -> String {
   let wall_clock = shift_datetime_by_seconds(self.utc, self.offset_seconds)
   format_datetime_without_zone(wall_clock) +
