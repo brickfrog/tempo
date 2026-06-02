@@ -578,21 +578,25 @@ pub fn Date::nth_weekday_of_month(
   if n > 0 {
     let first = Date::new(year, month, 1)
     let offset = positive_mod7(wd.to_int() - first.weekday().to_int())
-    let day = 1 + offset + 7 * (n - 1)
-    if day > days_in_month(year, month) {
+    let first_match_day = 1 + offset
+    let day = first_match_day.to_int64() + 7L * (n.to_int64() - 1L)
+    let max_day = days_in_month(year, month).to_int64()
+    if day < 1L || day > max_day {
       raise TempoError("weekday occurrence does not exist in month")
     } else {
-      Date::new(year, month, day)
+      Date::new(year, month, day.to_int())
     }
   } else {
     let last_day = days_in_month(year, month)
     let last = Date::new(year, month, last_day)
     let back = positive_mod7(last.weekday().to_int() - wd.to_int())
-    let day = last_day - back + 7 * (n + 1)
-    if day < 1 {
+    let last_match_day = last_day - back
+    let day = last_match_day.to_int64() + 7L * (n.to_int64() + 1L)
+    let max_day = last_day.to_int64()
+    if day < 1L || day > max_day {
       raise TempoError("weekday occurrence does not exist in month")
     } else {
-      Date::new(year, month, day)
+      Date::new(year, month, day.to_int())
     }
   }
 }

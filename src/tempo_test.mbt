@@ -569,6 +569,19 @@ test "Date::nth_weekday_of_month rejects missing or zero occurrences" {
     (try? @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Tuesday, 0))
     is Err(_),
   )
+  assert_true(
+    (try? @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Monday, 613_566_758))
+    is Err(_),
+  )
+  assert_true(
+    (try? @tempo.Date::nth_weekday_of_month(
+      2024,
+      3,
+      @tempo.Monday,
+      -613_566_757,
+    ))
+    is Err(_),
+  )
 }
 
 ///|
