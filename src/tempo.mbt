@@ -2520,6 +2520,56 @@ pub fn Duration::format_iso(self : Duration) -> String {
 }
 
 ///|
+/// Format this duration as English elapsed time using day/hour/minute/second
+/// units. Sub-second remainder is dropped.
+pub fn Duration::humanize(self : Duration) -> String {
+  let total_seconds = self.abs().as_seconds()
+  if total_seconds == 0L {
+    "0 seconds"
+  } else {
+    let days = total_seconds / 86_400L
+    let rem = total_seconds - days * 86_400L
+    let hours = rem / 3_600L
+    let rem = rem - hours * 3_600L
+    let minutes = rem / 60L
+    let seconds = rem - minutes * 60L
+    let buf = StringBuilder()
+    if self.is_negative() {
+      buf.write_string("-")
+    }
+    let wrote = write_humanized_duration_component(buf, false, days, "day")
+    let wrote = write_humanized_duration_component(buf, wrote, hours, "hour")
+    let wrote = write_humanized_duration_component(
+      buf, wrote, minutes, "minute",
+    )
+    let _ = write_humanized_duration_component(buf, wrote, seconds, "second")
+    buf.to_string()
+  }
+}
+
+///|
+fn write_humanized_duration_component(
+  buf : StringBuilder,
+  wrote : Bool,
+  value : Int64,
+  unit : String,
+) -> Bool {
+  if value == 0L {
+    wrote
+  } else {
+    if wrote {
+      buf.write_string(" ")
+    }
+    buf.write_string("\{value} ")
+    buf.write_string(unit)
+    if value != 1L {
+      buf.write_string("s")
+    }
+    true
+  }
+}
+
+///|
 fn[T] json_decode_error(
   path : @json.JsonPath,
   msg : String,

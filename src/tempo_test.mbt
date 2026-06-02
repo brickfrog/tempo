@@ -1896,6 +1896,30 @@ test "Duration::format_iso canonical components" {
 }
 
 ///|
+test "Duration::humanize formats elapsed components" {
+  assert_eq(
+    (@tempo.Duration::hours(2L) + @tempo.Duration::minutes(30L)).humanize(),
+    "2 hours 30 minutes",
+  )
+  assert_eq(@tempo.Duration::seconds(1L).humanize(), "1 second")
+  assert_eq(
+    (@tempo.Duration::days(1L) +
+    @tempo.Duration::hours(1L) +
+    @tempo.Duration::minutes(1L) +
+    @tempo.Duration::seconds(1L)).humanize(),
+    "1 day 1 hour 1 minute 1 second",
+  )
+  assert_eq(@tempo.Duration::seconds(0L).humanize(), "0 seconds")
+  assert_eq(@tempo.Duration::milliseconds(500L).humanize(), "0 seconds")
+  assert_eq(@tempo.Duration::seconds(-5L).humanize(), "-5 seconds")
+  assert_eq(@tempo.Duration::minutes(-90L).humanize(), "-1 hour 30 minutes")
+  assert_eq(
+    @tempo.Duration::nanoseconds(-9_223_372_036_854_775_808L).humanize(),
+    "-106751 days 23 hours 47 minutes 16 seconds",
+  )
+}
+
+///|
 test "Duration::parse_iso fixed-unit components" {
   assert_eq(
     @tempo.Duration::parse_iso("PT2H30M"),
