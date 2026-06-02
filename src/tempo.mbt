@@ -261,7 +261,17 @@ pub(all) enum TimeUnit {
   Minute
   Hour
   Day
-} derive(Eq, Compare, Hash, Show)
+} derive(Eq, Compare, Hash)
+
+///|
+pub impl Show for TimeUnit with fn output(self, logger) {
+  match self {
+    Second => logger.write_string("Second")
+    Minute => logger.write_string("Minute")
+    Hour => logger.write_string("Hour")
+    Day => logger.write_string("Day")
+  }
+}
 
 ///|
 /// A combined UTC date and time.

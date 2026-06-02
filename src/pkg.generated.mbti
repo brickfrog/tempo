@@ -151,7 +151,8 @@ pub(all) enum TimeUnit {
   Minute
   Hour
   Day
-} derive(Compare, Eq, Hash, Show)
+} derive(Compare, Eq, Hash)
+pub impl Show for TimeUnit
 
 pub(all) enum Weekday {
   Monday
