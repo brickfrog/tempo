@@ -1185,6 +1185,12 @@ test "Date::format" {
 }
 
 ///|
+test "Date::format uses expanded BCE years" {
+  assert_eq(@tempo.Date::new(-1, 1, 1).format(), "-0001-01-01")
+  assert_eq(@tempo.Date::new(-44, 3, 15).format(), "-0044-03-15")
+}
+
+///|
 test "Date::format supports full Int year range" {
   assert_eq(
     @tempo.Date::new(@int.MIN_VALUE, 1, 1).format(),
@@ -1530,6 +1536,15 @@ test "DateTime::format negative year -0001" {
   let t = @tempo.Time::new(0, 0, 0, 0)
   let dt = @tempo.DateTime::new(d, t)
   assert_eq(dt.format(), "-0001-01-01T00:00:00Z")
+}
+
+///|
+test "Date and DateTime negative year formats agree on date portion" {
+  let d = @tempo.Date::new(-44, 3, 15)
+  let t = @tempo.Time::new(0, 0, 0, 0)
+  let formatted = @tempo.DateTime::new(d, t).format()
+  assert_eq(formatted[:d.format().length()].to_owned(), d.format())
+  assert_eq(formatted, "-0044-03-15T00:00:00Z")
 }
 
 ///|
@@ -1941,6 +1956,8 @@ fn assert_json_string(json : Json, expected : String) -> Unit raise {
 test "JSON serializes tempo values as canonical strings" {
   let date = @tempo.Date::parse("2024-03-15")
   assert_json_string(date.to_json(), "2024-03-15")
+  let bce_date = @tempo.Date::new(-44, 3, 15)
+  assert_json_string(bce_date.to_json(), "-0044-03-15")
   let time = @tempo.Time::parse("14:31:43.5")
   assert_json_string(time.to_json(), "14:31:43.5")
   let datetime = @tempo.DateTime::parse("2024-07-21T17:11:00Z")
