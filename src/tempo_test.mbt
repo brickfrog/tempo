@@ -657,6 +657,114 @@ test "Date::day_of_week ISO" {
 }
 
 ///|
+test "Date ISO week-date accessors and format boundary cases" {
+  let new_year_monday = @tempo.Date::new(2024, 1, 1)
+  assert_eq(new_year_monday.iso_week_year(), 2024)
+  assert_eq(new_year_monday.iso_week(), 1)
+  assert_eq(new_year_monday.format_iso_week(), "2024-W01-1")
+  let prior_week_year = @tempo.Date::new(2021, 1, 1)
+  assert_eq(prior_week_year.iso_week_year(), 2020)
+  assert_eq(prior_week_year.iso_week(), 53)
+  assert_eq(prior_week_year.format_iso_week(), "2020-W53-5")
+  let prior_week_year_sunday = @tempo.Date::new(2023, 1, 1)
+  assert_eq(prior_week_year_sunday.iso_week_year(), 2022)
+  assert_eq(prior_week_year_sunday.iso_week(), 52)
+  assert_eq(prior_week_year_sunday.format_iso_week(), "2022-W52-7")
+  let next_week_year = @tempo.Date::new(2024, 12, 30)
+  assert_eq(next_week_year.iso_week_year(), 2025)
+  assert_eq(next_week_year.iso_week(), 1)
+  assert_eq(next_week_year.format_iso_week(), "2025-W01-1")
+  let week_53_end = @tempo.Date::new(2026, 12, 31)
+  assert_eq(week_53_end.iso_week_year(), 2026)
+  assert_eq(week_53_end.iso_week(), 53)
+  assert_eq(week_53_end.format_iso_week(), "2026-W53-4")
+  assert_eq(@tempo.Date::new(2027, 1, 1).format_iso_week(), "2026-W53-5")
+}
+
+///|
+test "Date::from_iso_week known ISO week dates" {
+  assert_eq(
+    @tempo.Date::from_iso_week(2024, 1, 1),
+    @tempo.Date::new(2024, 1, 1),
+  )
+  assert_eq(
+    @tempo.Date::from_iso_week(2020, 53, 5),
+    @tempo.Date::new(2021, 1, 1),
+  )
+  assert_eq(
+    @tempo.Date::from_iso_week(2025, 1, 1),
+    @tempo.Date::new(2024, 12, 30),
+  )
+  assert_eq(
+    @tempo.Date::from_iso_week(2026, 53, 4),
+    @tempo.Date::new(2026, 12, 31),
+  )
+  assert_eq(
+    @tempo.Date::from_iso_week(2024, 21, 3),
+    @tempo.Date::new(2024, 5, 22),
+  )
+}
+
+///|
+test "Date::from_iso_week round-trips boundary dates" {
+  let d = @tempo.Date::new(2015, 12, 31)
+  assert_eq(
+    @tempo.Date::from_iso_week(
+      d.iso_week_year(),
+      d.iso_week(),
+      d.weekday().number_from_monday(),
+    ),
+    d,
+  )
+  let d = @tempo.Date::new(2016, 1, 1)
+  assert_eq(
+    @tempo.Date::from_iso_week(
+      d.iso_week_year(),
+      d.iso_week(),
+      d.weekday().number_from_monday(),
+    ),
+    d,
+  )
+  let d = @tempo.Date::new(2024, 1, 1)
+  assert_eq(
+    @tempo.Date::from_iso_week(
+      d.iso_week_year(),
+      d.iso_week(),
+      d.weekday().number_from_monday(),
+    ),
+    d,
+  )
+  let d = @tempo.Date::new(2024, 12, 30)
+  assert_eq(
+    @tempo.Date::from_iso_week(
+      d.iso_week_year(),
+      d.iso_week(),
+      d.weekday().number_from_monday(),
+    ),
+    d,
+  )
+  let d = @tempo.Date::new(2026, 12, 31)
+  assert_eq(
+    @tempo.Date::from_iso_week(
+      d.iso_week_year(),
+      d.iso_week(),
+      d.weekday().number_from_monday(),
+    ),
+    d,
+  )
+}
+
+///|
+test "Date::from_iso_week rejects invalid week and weekday" {
+  assert_true((try? @tempo.Date::from_iso_week(2021, 53, 1)) is Err(_))
+  assert_true((try? @tempo.Date::from_iso_week(2024, 53, 1)) is Err(_))
+  assert_true((try? @tempo.Date::from_iso_week(2024, 0, 1)) is Err(_))
+  assert_true((try? @tempo.Date::from_iso_week(2024, 54, 1)) is Err(_))
+  assert_true((try? @tempo.Date::from_iso_week(2024, 1, 0)) is Err(_))
+  assert_true((try? @tempo.Date::from_iso_week(2024, 1, 8)) is Err(_))
+}
+
+///|
 test "Weekday conversion helpers" {
   assert_true(@tempo.Weekday::from_int(1) == Some(@tempo.Monday))
   assert_eq(@tempo.Monday.to_int(), 1)
