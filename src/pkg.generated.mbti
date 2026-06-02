@@ -75,6 +75,7 @@ pub fn DateTime::min(Self, Self) -> Self
 pub fn DateTime::new(Date, Time) -> Self
 pub fn DateTime::now() -> Self
 pub fn DateTime::parse(String) -> Self raise TempoError
+pub fn DateTime::round_to(Self, TimeUnit, RoundMode) -> Self
 pub fn DateTime::since(Self, Self) -> Duration
 pub fn DateTime::start_of_day(Self) -> Self
 pub fn DateTime::start_of_month(Self) -> Self
@@ -160,6 +161,13 @@ pub fn Month::next(Self) -> Self
 pub fn Month::previous(Self) -> Self
 pub fn Month::to_int(Self) -> Int
 pub impl Show for Month
+
+pub(all) enum RoundMode {
+  Floor
+  Ceil
+  HalfExpand
+} derive(Compare, Eq, Hash)
+pub impl Show for RoundMode
 
 pub struct Time {
   hour : Int
