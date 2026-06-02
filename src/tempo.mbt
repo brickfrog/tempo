@@ -165,6 +165,30 @@ pub fn Date::add_years(self : Date, years : Int) -> Date {
 }
 
 ///|
+/// Return the first day of this date's calendar month.
+pub fn Date::start_of_month(self : Date) -> Date {
+  { ..self, day: 1 }
+}
+
+///|
+/// Return the last day of this date's calendar month.
+pub fn Date::end_of_month(self : Date) -> Date {
+  { ..self, day: days_in_month(self.year, self.month) }
+}
+
+///|
+/// Return the first day of this date's calendar year.
+pub fn Date::start_of_year(self : Date) -> Date {
+  { ..self, month: 1, day: 1 }
+}
+
+///|
+/// Return the last day of this date's calendar year.
+pub fn Date::end_of_year(self : Date) -> Date {
+  { ..self, month: 12, day: 31 }
+}
+
+///|
 /// Add a signed number of calendar days to this date (proleptic Gregorian).
 pub fn Date::add_days(self : Date, days : Int) -> Date {
   let base = days_from_civil(self.year, self.month, self.day)
@@ -264,6 +288,38 @@ pub fn DateTime::epoch() -> DateTime {
     date: { year: 1970, month: 1, day: 1 },
     time: { hour: 0, minute: 0, second: 0, nanosecond: 0 },
   }
+}
+
+///|
+/// Return this DateTime at the start of its calendar month.
+/// Preserves the time-of-day; compose with a future `start_of_day` if midnight
+/// is desired.
+pub fn DateTime::start_of_month(self : DateTime) -> DateTime {
+  DateTime::new(self.date.start_of_month(), self.time)
+}
+
+///|
+/// Return this DateTime at the end of its calendar month.
+/// Preserves the time-of-day; compose with a future `start_of_day` if midnight
+/// is desired.
+pub fn DateTime::end_of_month(self : DateTime) -> DateTime {
+  DateTime::new(self.date.end_of_month(), self.time)
+}
+
+///|
+/// Return this DateTime at the start of its calendar year.
+/// Preserves the time-of-day; compose with a future `start_of_day` if midnight
+/// is desired.
+pub fn DateTime::start_of_year(self : DateTime) -> DateTime {
+  DateTime::new(self.date.start_of_year(), self.time)
+}
+
+///|
+/// Return this DateTime at the end of its calendar year.
+/// Preserves the time-of-day; compose with a future `start_of_day` if midnight
+/// is desired.
+pub fn DateTime::end_of_year(self : DateTime) -> DateTime {
+  DateTime::new(self.date.end_of_year(), self.time)
 }
 
 // ─── Unix timestamp conversion ────────────────────────────────────────────────

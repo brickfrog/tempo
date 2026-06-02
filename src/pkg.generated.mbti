@@ -24,9 +24,13 @@ pub fn Date::add_years(Self, Int) -> Self
 pub fn Date::day_of_week(Self) -> Int
 pub fn Date::day_of_year(Self) -> Int
 pub fn Date::days_until(Self, Self) -> Int
+pub fn Date::end_of_month(Self) -> Self
+pub fn Date::end_of_year(Self) -> Self
 pub fn Date::format(Self) -> String
 pub fn Date::new(Int, Int, Int) -> Self raise TempoError
 pub fn Date::parse(String) -> Self raise TempoError
+pub fn Date::start_of_month(Self) -> Self
+pub fn Date::start_of_year(Self) -> Self
 pub impl Show for Date
 
 pub struct DateTime {
@@ -35,6 +39,8 @@ pub struct DateTime {
 } derive(Compare, Eq)
 pub fn DateTime::add(Self, Duration) -> Self
 pub fn DateTime::diff(Self, Self) -> Duration
+pub fn DateTime::end_of_month(Self) -> Self
+pub fn DateTime::end_of_year(Self) -> Self
 pub fn DateTime::epoch() -> Self
 pub fn DateTime::format(Self) -> String
 pub fn DateTime::from_unix_nanos(Int64) -> Self
@@ -42,6 +48,8 @@ pub fn DateTime::from_unix_seconds(Int64) -> Self
 pub fn DateTime::new(Date, Time) -> Self
 pub fn DateTime::now() -> Self
 pub fn DateTime::parse(String) -> Self raise TempoError
+pub fn DateTime::start_of_month(Self) -> Self
+pub fn DateTime::start_of_year(Self) -> Self
 pub fn DateTime::sub(Self, Duration) -> Self
 pub fn DateTime::to_unix_nanos(Self) -> Int64
 pub fn DateTime::to_unix_seconds(Self) -> Int64
