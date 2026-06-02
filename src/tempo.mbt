@@ -2346,6 +2346,21 @@ pub fn DateTime::format(self : DateTime) -> String {
 }
 
 ///|
+/// Format this DateTime as a fixed-width UTC timestamp:
+/// `YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`.
+///
+/// The fractional-second field is always present with exactly 9 nanosecond
+/// digits. For years 0..9999, byte-for-byte string comparison of two
+/// `format_fixed` outputs matches chronological order. Outside that year range,
+/// expanded or negative year text (especially a leading `-`) does not preserve
+/// that lexicographic ordering guarantee.
+pub fn DateTime::format_fixed(self : DateTime) -> String {
+  let d = self.date
+  let t = self.time
+  "\{pad4_year(d.year)}-\{pad2(d.month)}-\{pad2(d.day)}T\{pad2(t.hour)}:\{pad2(t.minute)}:\{pad2(t.second)}.\{pad9(t.nanosecond)}Z"
+}
+
+///|
 fn format_datetime_without_zone(dt : DateTime) -> String {
   let d = dt.date
   let t = dt.time
