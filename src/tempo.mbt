@@ -23,7 +23,7 @@ pub struct Date {
   year : Int
   month : Int // 1–12
   day : Int // 1–31
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 ///|
 /// A calendar-aware date period stored as exact year, month, and day fields.
@@ -35,14 +35,14 @@ pub(all) struct Period {
   years : Int
   months : Int
   days : Int
-} derive(Eq, Hash)
+} derive(Eq, Hash, Debug)
 
 ///|
 /// A calendar year and month in the proleptic Gregorian calendar.
 pub(all) struct YearMonth {
   year : Int
   month : Int // 1–12
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 ///|
 /// A calendar date interval with an inclusive end date: `[start, end]`.
@@ -54,7 +54,7 @@ pub(all) struct YearMonth {
 pub(all) struct DateInterval {
   start : Date
   end : Date
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// ISO 8601 weekday, ordered Monday through Sunday.
@@ -66,7 +66,7 @@ pub(all) enum Weekday {
   Friday
   Saturday
   Sunday
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 ///|
 /// ISO 8601 weekday number: Monday = 1 through Sunday = 7.
@@ -173,7 +173,7 @@ pub(all) enum Month {
   October
   November
   December
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 ///|
 /// Calendar month number: January = 1 through December = 12.
@@ -283,7 +283,7 @@ pub struct Time {
   minute : Int // 0–59
   second : Int // 0–59
   nanosecond : Int // 0–999_999_999
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 ///|
 /// Units supported by `DateTime::truncate_to` and `DateTime::round_to`, ordered
@@ -293,7 +293,7 @@ pub(all) enum TimeUnit {
   Minute
   Hour
   Day
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 ///|
 pub impl Show for TimeUnit with fn output(self, logger) {
@@ -312,7 +312,7 @@ pub(all) enum RoundMode {
   Floor
   Ceil
   HalfExpand
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 ///|
 pub impl Show for RoundMode with fn output(self, logger) {
@@ -328,7 +328,7 @@ pub impl Show for RoundMode with fn output(self, logger) {
 pub struct DateTime {
   date : Date
   time : Time
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 ///|
 /// A UTC instant paired with a fixed numeric display offset.
@@ -340,7 +340,7 @@ pub struct DateTime {
 pub struct FixedOffsetDateTime {
   priv utc : DateTime
   priv offset_seconds : Int
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 ///|
 /// A DateTime interval with a half-open end instant: `[start, end)`.
@@ -352,13 +352,13 @@ pub struct FixedOffsetDateTime {
 pub(all) struct Interval {
   start : DateTime
   end : DateTime
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// A signed duration stored as total nanoseconds.
 pub struct Duration {
   nanoseconds : Int64
-} derive(Eq, Compare, Hash)
+} derive(Eq, Compare, Hash, Debug)
 
 // ─── Calendar helpers ─────────────────────────────────────────────────────────
 

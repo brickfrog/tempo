@@ -7,12 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Debug` is now derived for every public type: `Date`, `Time`, `DateTime`,
+  `Duration`, `Period`, `YearMonth`, `Weekday`, `Month`, `TimeUnit`,
+  `RoundMode`, `DateInterval`, `Interval`, and `FixedOffsetDateTime`. This makes
+  them usable with `assert_eq`, `debug`, and `Repr`.
+
 ### Removed
 
 - The `moon new` scaffold leftovers: the placeholder `cmd/main` package and the
   stray top-level `moon.pkg` / `pkg.generated.mbti`. These were outside the
   `src` source root but were still being included in the published package; the
   published artifact now contains only `src/`, the manifest, and docs.
+
+### Fixed
+
+- Compatibility with MoonBit v0.10.6. `assert_eq` requires `Debug`, and core has
+  no blanket `Debug` implementation for types that only implement `Show`, so any
+  downstream `assert_eq` on a tempo type failed to compile with E4018.
 
 ## [0.8.0] - 2026-06-02
 
