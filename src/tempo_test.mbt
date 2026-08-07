@@ -1,6 +1,18 @@
 // Blackbox tests for brickfrog/tempo public API.
 
 ///|
+/// Assert that `thunk` raises. Checks error occurrence only, never message
+/// content, so tests stay stable when error text changes.
+#callsite(autofill(loc))
+fn[T] assert_raises(thunk : () -> T raise, loc~ : SourceLoc) -> Unit raise {
+  try thunk() |> ignore catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected the expression to raise", loc~)
+  }
+}
+
+///|
 test "Date::new valid" {
   let d = @tempo.Date::new(2024, 3, 15)
   assert_eq(d.year, 2024)
@@ -22,17 +34,17 @@ test "Date::new non-leap day 28 ok" {
 
 ///|
 test "Date::new invalid month" {
-  assert_true((try? @tempo.Date::new(2024, 13, 1)) is Err(_))
+  assert_raises(() => @tempo.Date::new(2024, 13, 1))
 }
 
 ///|
 test "Date::new invalid day" {
-  assert_true((try? @tempo.Date::new(2024, 2, 30)) is Err(_))
+  assert_raises(() => @tempo.Date::new(2024, 2, 30))
 }
 
 ///|
 test "Date::new non-leap Feb 29 invalid" {
-  assert_true((try? @tempo.Date::new(2001, 2, 29)) is Err(_))
+  assert_raises(() => @tempo.Date::new(2001, 2, 29))
 }
 
 ///|
@@ -191,14 +203,12 @@ test "Period normalization rolls months only" {
 
 ///|
 test "Period normalization raises on Int overflow" {
-  assert_true(
-    (try? @tempo.Period::of(@int.MAX_VALUE, @int.MAX_VALUE, 0).normalized())
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.Period::of(@int.MIN_VALUE, @int.MIN_VALUE, 0).normalized())
-    is Err(_),
-  )
+  assert_raises(() => {
+    @tempo.Period::of(@int.MAX_VALUE, @int.MAX_VALUE, 0).normalized()
+  })
+  assert_raises(() => {
+    @tempo.Period::of(@int.MIN_VALUE, @int.MIN_VALUE, 0).normalized()
+  })
 }
 
 ///|
@@ -214,21 +224,16 @@ test "Period field arithmetic is checked and non-normalizing" {
   assert_eq(@tempo.Period::of(1, -2, 3).negated(), @tempo.Period::of(-1, 2, -3))
   assert_eq(@tempo.Period::zero().is_zero(), true)
   assert_eq(@tempo.Period::of(0, 0, 1).is_zero(), false)
-  assert_true(
-    (try? @tempo.Period::of(@int.MAX_VALUE, 0, 0).plus(
-      @tempo.Period::of(1, 0, 0),
-    ))
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.Period::of(@int.MIN_VALUE, 0, 0).negated()) is Err(_),
-  )
+  assert_raises(() => {
+    @tempo.Period::of(@int.MAX_VALUE, 0, 0).plus(@tempo.Period::of(1, 0, 0))
+  })
+  assert_raises(() => @tempo.Period::of(@int.MIN_VALUE, 0, 0).negated())
 }
 
 ///|
 test "Period of_weeks stores checked days" {
   assert_eq(@tempo.Period::of_weeks(2), @tempo.Period::of(0, 0, 14))
-  assert_true((try? @tempo.Period::of_weeks(@int.MAX_VALUE)) is Err(_))
+  assert_raises(() => @tempo.Period::of_weeks(@int.MAX_VALUE))
 }
 
 ///|
@@ -253,24 +258,21 @@ test "Date::add_period applies months before days" {
 
 ///|
 test "Date::add_period raises on date overflow" {
-  assert_true(
-    (try? @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_period(
+  assert_raises(() => {
+    @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_period(
       @tempo.Period::of_months(1),
-    ))
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.Date::new(@int.MIN_VALUE, 1, 1).add_period(
+    )
+  })
+  assert_raises(() => {
+    @tempo.Date::new(@int.MIN_VALUE, 1, 1).add_period(
       @tempo.Period::of_months(-1),
-    ))
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_period(
+    )
+  })
+  assert_raises(() => {
+    @tempo.Date::new(@int.MAX_VALUE, 12, 31).add_period(
       @tempo.Period::of_days(1),
-    ))
-    is Err(_),
-  )
+    )
+  })
 }
 
 ///|
@@ -351,18 +353,16 @@ test "Date::until returns round-tripping Periods" {
 
 ///|
 test "Date::until raises when Period fields cannot represent distance" {
-  assert_true(
-    (try? @tempo.Date::new(@int.MIN_VALUE, 1, 1).until(
+  assert_raises(() => {
+    @tempo.Date::new(@int.MIN_VALUE, 1, 1).until(
       @tempo.Date::new(@int.MAX_VALUE, 12, 31),
-    ))
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.Date::new(@int.MAX_VALUE, 12, 31).until(
+    )
+  })
+  assert_raises(() => {
+    @tempo.Date::new(@int.MAX_VALUE, 12, 31).until(
       @tempo.Date::new(@int.MIN_VALUE, 1, 1),
-    ))
-    is Err(_),
-  )
+    )
+  })
 }
 
 ///|
@@ -382,14 +382,14 @@ test "Period format parse round-trips date components" {
   }
   assert_eq(@tempo.Period::parse("P2W"), @tempo.Period::of(0, 0, 14))
   assert_eq(@tempo.Period::parse("P-2W"), @tempo.Period::of(0, 0, -14))
-  assert_true((try? @tempo.Period::parse("P1YT2H")) is Err(_))
-  assert_true((try? @tempo.Period::parse("PT2H")) is Err(_))
+  assert_raises(() => @tempo.Period::parse("P1YT2H"))
+  assert_raises(() => @tempo.Period::parse("PT2H"))
   inspect(@tempo.Period::of(1, 2, 3), content="P1Y2M3D")
 }
 
 ///|
 test "Period is a hash collection key" {
-  let values : Map[@tempo.Period, String] = {}
+  let values : Map[@tempo.Period, String] = Map([])
   values.set(@tempo.Period::of(0, 15, 0), "fifteen months")
   values.set(@tempo.Period::of(1, 3, 0), "one year three months")
   assert_true(values.get(@tempo.Period::of(0, 15, 0)) == Some("fifteen months"))
@@ -408,9 +408,9 @@ test "Date::with field updaters" {
 
 ///|
 test "Date::with field updaters reject invalid dates" {
-  assert_true((try? @tempo.Date::new(2024, 2, 29).with_year(2023)) is Err(_))
-  assert_true((try? @tempo.Date::new(2024, 1, 31).with_month(2)) is Err(_))
-  assert_true((try? @tempo.Date::new(2024, 3, 15).with_day(32)) is Err(_))
+  assert_raises(() => @tempo.Date::new(2024, 2, 29).with_year(2023))
+  assert_raises(() => @tempo.Date::new(2024, 1, 31).with_month(2))
+  assert_raises(() => @tempo.Date::new(2024, 3, 15).with_day(32))
 }
 
 ///|
@@ -678,7 +678,7 @@ test "DateTime scalar updaters delegate to date and time" {
 ///|
 test "DateTime scalar updaters reject invalid delegated fields" {
   let dt = @tempo.DateTime::parse("2024-02-15T12:34:56Z")
-  assert_true((try? dt.with_day(31)) is Err(_))
+  assert_raises(() => dt.with_day(31))
 }
 
 ///|
@@ -798,17 +798,17 @@ test "Date::from_iso_week round-trips boundary dates" {
 
 ///|
 test "Date::from_iso_week rejects invalid week and weekday" {
-  assert_true((try? @tempo.Date::from_iso_week(2021, 53, 1)) is Err(_))
-  assert_true((try? @tempo.Date::from_iso_week(2024, 53, 1)) is Err(_))
-  assert_true((try? @tempo.Date::from_iso_week(2024, 0, 1)) is Err(_))
-  assert_true((try? @tempo.Date::from_iso_week(2024, 54, 1)) is Err(_))
-  assert_true((try? @tempo.Date::from_iso_week(2024, 1, 0)) is Err(_))
-  assert_true((try? @tempo.Date::from_iso_week(2024, 1, 8)) is Err(_))
+  assert_raises(() => @tempo.Date::from_iso_week(2021, 53, 1))
+  assert_raises(() => @tempo.Date::from_iso_week(2024, 53, 1))
+  assert_raises(() => @tempo.Date::from_iso_week(2024, 0, 1))
+  assert_raises(() => @tempo.Date::from_iso_week(2024, 54, 1))
+  assert_raises(() => @tempo.Date::from_iso_week(2024, 1, 0))
+  assert_raises(() => @tempo.Date::from_iso_week(2024, 1, 8))
 }
 
 ///|
 test "Date::from_iso_week raises on residual Int year overflow" {
-  assert_true((try? @tempo.Date::from_iso_week(@int.MIN_VALUE, 1, 1)) is Err(_))
+  assert_raises(() => @tempo.Date::from_iso_week(@int.MIN_VALUE, 1, 1))
 }
 
 ///|
@@ -836,12 +836,12 @@ test "Date::parse_iso_week valid and round-trips" {
 
 ///|
 test "Date::parse_iso_week rejects malformed and out-of-range input" {
-  assert_true((try? @tempo.Date::parse_iso_week("2024-W54-1")) is Err(_))
-  assert_true((try? @tempo.Date::parse_iso_week("2024-01-1")) is Err(_))
-  assert_true((try? @tempo.Date::parse_iso_week("2024-W1-1")) is Err(_))
-  assert_true((try? @tempo.Date::parse_iso_week("2024-W01")) is Err(_))
-  assert_true((try? @tempo.Date::parse_iso_week("2024-W01-8")) is Err(_))
-  assert_true((try? @tempo.Date::parse_iso_week("2024-W01-1Z")) is Err(_))
+  assert_raises(() => @tempo.Date::parse_iso_week("2024-W54-1"))
+  assert_raises(() => @tempo.Date::parse_iso_week("2024-01-1"))
+  assert_raises(() => @tempo.Date::parse_iso_week("2024-W1-1"))
+  assert_raises(() => @tempo.Date::parse_iso_week("2024-W01"))
+  assert_raises(() => @tempo.Date::parse_iso_week("2024-W01-8"))
+  assert_raises(() => @tempo.Date::parse_iso_week("2024-W01-1Z"))
 }
 
 ///|
@@ -966,8 +966,8 @@ test "YearMonth::new valid exposes fields and month enum" {
 
 ///|
 test "YearMonth::new rejects invalid months" {
-  assert_true((try? @tempo.YearMonth::new(2024, 0)) is Err(_))
-  assert_true((try? @tempo.YearMonth::new(2024, 13)) is Err(_))
+  assert_raises(() => @tempo.YearMonth::new(2024, 0))
+  assert_raises(() => @tempo.YearMonth::new(2024, 13))
 }
 
 ///|
@@ -980,7 +980,7 @@ test "YearMonth::length is leap-aware" {
 test "YearMonth::at_day and at_end_of_month" {
   let feb = @tempo.YearMonth::new(2024, 2)
   assert_eq(feb.at_day(29), @tempo.Date::new(2024, 2, 29))
-  assert_true((try? @tempo.YearMonth::new(2023, 2).at_day(29)) is Err(_))
+  assert_raises(() => @tempo.YearMonth::new(2023, 2).at_day(29))
   assert_eq(feb.at_end_of_month(), @tempo.Date::new(2024, 2, 29))
   assert_eq(
     @tempo.YearMonth::new(2023, 4).at_end_of_month(),
@@ -1027,11 +1027,11 @@ test "YearMonth::format parse round-trip and Show" {
 
 ///|
 test "YearMonth::parse rejects malformed or out-of-range input" {
-  assert_true((try? @tempo.YearMonth::parse("2024-00")) is Err(_))
-  assert_true((try? @tempo.YearMonth::parse("2024-13")) is Err(_))
-  assert_true((try? @tempo.YearMonth::parse("2024-2")) is Err(_))
-  assert_true((try? @tempo.YearMonth::parse("2024-02x")) is Err(_))
-  assert_true((try? @tempo.YearMonth::parse("abcd-01")) is Err(_))
+  assert_raises(() => @tempo.YearMonth::parse("2024-00"))
+  assert_raises(() => @tempo.YearMonth::parse("2024-13"))
+  assert_raises(() => @tempo.YearMonth::parse("2024-2"))
+  assert_raises(() => @tempo.YearMonth::parse("2024-02x"))
+  assert_raises(() => @tempo.YearMonth::parse("abcd-01"))
 }
 
 ///|
@@ -1048,7 +1048,7 @@ test "YearMonth Compare orders chronologically" {
 
 ///|
 test "YearMonth is a hash collection key" {
-  let values : Map[@tempo.YearMonth, String] = {}
+  let values : Map[@tempo.YearMonth, String] = Map([])
   let feb = @tempo.YearMonth::new(2024, 2)
   values.set(feb, "leap-february")
   assert_true(
@@ -1110,27 +1110,18 @@ test "Date::nth_weekday_of_month finds weekdays from either end" {
 
 ///|
 test "Date::nth_weekday_of_month rejects missing or zero occurrences" {
-  assert_true(
-    (try? @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Monday, 5))
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Tuesday, 0))
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Monday, 613_566_758))
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.Date::nth_weekday_of_month(
-      2024,
-      3,
-      @tempo.Monday,
-      -613_566_757,
-    ))
-    is Err(_),
-  )
+  assert_raises(() => {
+    @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Monday, 5)
+  })
+  assert_raises(() => {
+    @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Tuesday, 0)
+  })
+  assert_raises(() => {
+    @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Monday, 613_566_758)
+  })
+  assert_raises(() => {
+    @tempo.Date::nth_weekday_of_month(2024, 3, @tempo.Monday, -613_566_757)
+  })
 }
 
 ///|
@@ -1153,8 +1144,8 @@ test "Date::from_ordinal valid days" {
 
 ///|
 test "Date::from_ordinal invalid days" {
-  assert_true((try? @tempo.Date::from_ordinal(2023, 366)) is Err(_))
-  assert_true((try? @tempo.Date::from_ordinal(2024, 0)) is Err(_))
+  assert_raises(() => @tempo.Date::from_ordinal(2023, 366))
+  assert_raises(() => @tempo.Date::from_ordinal(2024, 0))
 }
 
 ///|
@@ -1267,12 +1258,12 @@ test "Date::parse_ordinal valid and round-trips" {
 
 ///|
 test "Date::parse_ordinal rejects malformed and out-of-range input" {
-  assert_true((try? @tempo.Date::parse_ordinal("2023-366")) is Err(_))
-  assert_true((try? @tempo.Date::parse_ordinal("2024-000")) is Err(_))
-  assert_true((try? @tempo.Date::parse_ordinal("2024-60")) is Err(_))
-  assert_true((try? @tempo.Date::parse_ordinal("2024-0060")) is Err(_))
-  assert_true((try? @tempo.Date::parse_ordinal("2024/060")) is Err(_))
-  assert_true((try? @tempo.Date::parse_ordinal("2024-060Z")) is Err(_))
+  assert_raises(() => @tempo.Date::parse_ordinal("2023-366"))
+  assert_raises(() => @tempo.Date::parse_ordinal("2024-000"))
+  assert_raises(() => @tempo.Date::parse_ordinal("2024-60"))
+  assert_raises(() => @tempo.Date::parse_ordinal("2024-0060"))
+  assert_raises(() => @tempo.Date::parse_ordinal("2024/060"))
+  assert_raises(() => @tempo.Date::parse_ordinal("2024-060Z"))
 }
 
 ///|
@@ -1284,12 +1275,12 @@ test "Date::parse roundtrip" {
 
 ///|
 test "Date::parse invalid month" {
-  assert_true((try? @tempo.Date::parse("2024-13-01")) is Err(_))
+  assert_raises(() => @tempo.Date::parse("2024-13-01"))
 }
 
 ///|
 test "Date::parse trailing junk" {
-  assert_true((try? @tempo.Date::parse("2024-01-01Z")) is Err(_))
+  assert_raises(() => @tempo.Date::parse("2024-01-01Z"))
 }
 
 ///|
@@ -1312,11 +1303,10 @@ test "Time::with field updaters" {
 
 ///|
 test "Time::with field updaters reject invalid times" {
-  assert_true((try? @tempo.Time::new(12, 34, 56, 789).with_hour(24)) is Err(_))
-  assert_true(
-    (try? @tempo.Time::new(12, 34, 56, 789).with_nanosecond(1_000_000_000))
-    is Err(_),
-  )
+  assert_raises(() => @tempo.Time::new(12, 34, 56, 789).with_hour(24))
+  assert_raises(() => {
+    @tempo.Time::new(12, 34, 56, 789).with_nanosecond(1_000_000_000)
+  })
 }
 
 ///|
@@ -1337,7 +1327,7 @@ test "Time comparison helpers" {
 
 ///|
 test "Time::new invalid hour" {
-  assert_true((try? @tempo.Time::new(24, 0, 0, 0)) is Err(_))
+  assert_raises(() => @tempo.Time::new(24, 0, 0, 0))
 }
 
 ///|
@@ -1680,16 +1670,16 @@ test "DateTime::format_with tokens and literals" {
 ///|
 test "DateTime::format_with rejects invalid patterns" {
   let dt = @tempo.DateTime::parse("2024-03-15T12:34:56Z")
-  assert_true((try? dt.format_with("{ZZ}")) is Err(_))
-  assert_true((try? dt.format_with("a{YYYY")) is Err(_))
-  assert_true((try? dt.format_with("a{")) is Err(_))
-  assert_true((try? dt.format_with("{YYY}")) is Err(_))
-  assert_true((try? dt.format_with("{}")) is Err(_))
-  assert_true((try? dt.format_with("{nnnnnnnn}")) is Err(_))
-  assert_true((try? dt.format_with("{nnnnnnnnnn}")) is Err(_))
-  assert_true((try? dt.format_with("{Mm}")) is Err(_))
-  assert_true((try? dt.format_with("}")) is Err(_))
-  assert_true((try? dt.format_with("{YYYY}}")) is Err(_))
+  assert_raises(() => dt.format_with("{ZZ}"))
+  assert_raises(() => dt.format_with("a{YYYY"))
+  assert_raises(() => dt.format_with("a{"))
+  assert_raises(() => dt.format_with("{YYY}"))
+  assert_raises(() => dt.format_with("{}"))
+  assert_raises(() => dt.format_with("{nnnnnnnn}"))
+  assert_raises(() => dt.format_with("{nnnnnnnnnn}"))
+  assert_raises(() => dt.format_with("{Mm}"))
+  assert_raises(() => dt.format_with("}"))
+  assert_raises(() => dt.format_with("{YYYY}}"))
 }
 
 ///|
@@ -1754,17 +1744,17 @@ test "Time::parse fractional seconds >9 digits truncated" {
 
 ///|
 test "Time::parse invalid hour" {
-  assert_true((try? @tempo.Time::parse("24:00:00")) is Err(_))
+  assert_raises(() => @tempo.Time::parse("24:00:00"))
 }
 
 ///|
 test "Time::parse invalid format" {
-  assert_true((try? @tempo.Time::parse("not-a-time")) is Err(_))
+  assert_raises(() => @tempo.Time::parse("not-a-time"))
 }
 
 ///|
 test "Time::parse unexpected trailing" {
-  assert_true((try? @tempo.Time::parse("12:34:56Z")) is Err(_))
+  assert_raises(() => @tempo.Time::parse("12:34:56Z"))
 }
 
 ///|
@@ -1924,18 +1914,15 @@ test "FixedOffsetDateTime::from_datetime_and_offset bundles instant and offset" 
 ///|
 test "FixedOffsetDateTime::from_datetime_and_offset rejects invalid offsets" {
   let utc = @tempo.DateTime::parse("2024-07-21T21:11:00Z")
-  assert_true(
-    (try? @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 61))
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 86400))
-    is Err(_),
-  )
-  assert_true(
-    (try? @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, -86400))
-    is Err(_),
-  )
+  assert_raises(() => {
+    @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 61)
+  })
+  assert_raises(() => {
+    @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, 86400)
+  })
+  assert_raises(() => {
+    @tempo.FixedOffsetDateTime::from_datetime_and_offset(utc, -86400)
+  })
 }
 
 ///|
@@ -1980,7 +1967,7 @@ test "FixedOffsetDateTime Eq and Compare include offset" {
 ///|
 test "FixedOffsetDateTime is a hash collection key" {
   let dt = @tempo.FixedOffsetDateTime::parse("2024-07-21T17:11:00-04:00")
-  let values : Map[@tempo.FixedOffsetDateTime, String] = {}
+  let values : Map[@tempo.FixedOffsetDateTime, String] = Map([])
   values.set(dt, "offset")
   assert_true(values.get(dt) == Some("offset"))
 }
@@ -2000,17 +1987,13 @@ test "Show FixedOffsetDateTime writes formatted value" {
 
 ///|
 test "DateTime::parse rejects out-of-range offset" {
-  assert_true(
-    (try? @tempo.DateTime::parse("2024-03-15T12:34:56+24:00")) is Err(_),
-  )
-  assert_true(
-    (try? @tempo.DateTime::parse("2024-03-15T12:34:56+05:60")) is Err(_),
-  )
+  assert_raises(() => @tempo.DateTime::parse("2024-03-15T12:34:56+24:00"))
+  assert_raises(() => @tempo.DateTime::parse("2024-03-15T12:34:56+05:60"))
 }
 
 ///|
 test "DateTime::parse invalid format" {
-  assert_true((try? @tempo.DateTime::parse("not-a-date")) is Err(_))
+  assert_raises(() => @tempo.DateTime::parse("not-a-date"))
 }
 
 ///|
@@ -2096,16 +2079,14 @@ test "Duration::parse_iso round-trips format_iso" {
 
 ///|
 test "Duration::parse_iso rejects calendar units but accepts minutes" {
-  assert_true((try? @tempo.Duration::parse_iso("P1Y")) is Err(_))
-  assert_true((try? @tempo.Duration::parse_iso("P3M")) is Err(_))
+  assert_raises(() => @tempo.Duration::parse_iso("P1Y"))
+  assert_raises(() => @tempo.Duration::parse_iso("P3M"))
   assert_eq(@tempo.Duration::parse_iso("PT3M"), @tempo.Duration::minutes(3L))
 }
 
 ///|
 test "Duration::parse_iso raises on component overflow" {
-  assert_true(
-    (try? @tempo.Duration::parse_iso("PT9223372036854775807H")) is Err(_),
-  )
+  assert_raises(() => @tempo.Duration::parse_iso("PT9223372036854775807H"))
 }
 
 ///|
@@ -2147,28 +2128,22 @@ test "JSON deserializes tempo canonical strings" {
 
 ///|
 test "JSON deserialization rejects non-strings and invalid strings" {
-  assert_true((try? (@json.from_json(Json::number(1)) : @tempo.Date)) is Err(_))
-  assert_true((try? (@json.from_json(Json::number(1)) : @tempo.Time)) is Err(_))
-  assert_true(
-    (try? (@json.from_json(Json::number(1)) : @tempo.DateTime)) is Err(_),
-  )
-  assert_true(
-    (try? (@json.from_json(Json::number(1)) : @tempo.Duration)) is Err(_),
-  )
-  assert_true(
-    (try? (@json.from_json(Json::string("not-a-date")) : @tempo.Date)) is Err(_),
-  )
-  assert_true(
-    (try? (@json.from_json(Json::string("not-a-time")) : @tempo.Time)) is Err(_),
-  )
-  assert_true(
-    (try? (@json.from_json(Json::string("not-a-datetime")) : @tempo.DateTime))
-    is Err(_),
-  )
-  assert_true(
-    (try? (@json.from_json(Json::string("not-a-duration")) : @tempo.Duration))
-    is Err(_),
-  )
+  assert_raises(() => (@json.from_json(Json::number(1)) : @tempo.Date))
+  assert_raises(() => (@json.from_json(Json::number(1)) : @tempo.Time))
+  assert_raises(() => (@json.from_json(Json::number(1)) : @tempo.DateTime))
+  assert_raises(() => (@json.from_json(Json::number(1)) : @tempo.Duration))
+  assert_raises(() => {
+    (@json.from_json(Json::string("not-a-date")) : @tempo.Date)
+  })
+  assert_raises(() => {
+    (@json.from_json(Json::string("not-a-time")) : @tempo.Time)
+  })
+  assert_raises(() => {
+    (@json.from_json(Json::string("not-a-datetime")) : @tempo.DateTime)
+  })
+  assert_raises(() => {
+    (@json.from_json(Json::string("not-a-duration")) : @tempo.Duration)
+  })
 }
 
 ///|
@@ -2375,11 +2350,10 @@ test "Duration::divide" {
     @tempo.Duration::nanoseconds(-7L).divide(-2L),
     @tempo.Duration::nanoseconds(3L),
   )
-  assert_true((try? @tempo.Duration::seconds(1L).divide(0L)) is Err(_))
-  assert_true(
-    (try? @tempo.Duration::nanoseconds(-9_223_372_036_854_775_808L).divide(-1L))
-    is Err(_),
-  )
+  assert_raises(() => @tempo.Duration::seconds(1L).divide(0L))
+  assert_raises(() => {
+    @tempo.Duration::nanoseconds(-9_223_372_036_854_775_808L).divide(-1L)
+  })
 }
 
 ///|
@@ -2482,7 +2456,7 @@ test "DateTime compare" {
 
 ///|
 test "core types are hash collection keys" {
-  let dates : Map[@tempo.Date, String] = {}
+  let dates : Map[@tempo.Date, String] = Map([])
   dates.set(@tempo.Date::new(2024, 1, 1), "new-year")
   dates.set(@tempo.Date::new(2024, 2, 29), "leap")
   assert_true(dates.get(@tempo.Date::new(2024, 1, 1)) == Some("new-year"))
@@ -2492,7 +2466,7 @@ test "core types are hash collection keys" {
     @tempo.Date::new(2024, 2, 29),
   ])
   assert_eq(date_set.contains(@tempo.Date::new(2024, 2, 29)), true)
-  let times : Map[@tempo.Time, Int] = {}
+  let times : Map[@tempo.Time, Int] = Map([])
   times.set(@tempo.Time::new(9, 30, 0, 0), 1)
   times.set(@tempo.Time::new(17, 45, 30, 123), 2)
   assert_true(times.get(@tempo.Time::new(9, 30, 0, 0)) == Some(1))
@@ -2502,7 +2476,7 @@ test "core types are hash collection keys" {
     @tempo.Time::new(17, 45, 30, 123),
   ])
   assert_eq(time_set.contains(@tempo.Time::new(17, 45, 30, 123)), true)
-  let date_times : Map[@tempo.DateTime, Int] = {}
+  let date_times : Map[@tempo.DateTime, Int] = Map([])
   date_times.set(@tempo.DateTime::parse("2024-01-01T00:00:00Z"), 1)
   date_times.set(@tempo.DateTime::parse("2024-02-29T12:30:00Z"), 2)
   assert_true(
@@ -2519,7 +2493,7 @@ test "core types are hash collection keys" {
     date_time_set.contains(@tempo.DateTime::parse("2024-02-29T12:30:00Z")),
     true,
   )
-  let durations : Map[@tempo.Duration, String] = {}
+  let durations : Map[@tempo.Duration, String] = Map([])
   durations.set(@tempo.Duration::seconds(5L), "short")
   durations.set(@tempo.Duration::hours(2L), "long")
   assert_true(durations.get(@tempo.Duration::seconds(5L)) == Some("short"))
@@ -2638,22 +2612,22 @@ test "Duration::milliseconds" {
 
 ///|
 test "Time::new invalid minute" {
-  assert_true((try? @tempo.Time::new(0, 60, 0, 0)) is Err(_))
+  assert_raises(() => @tempo.Time::new(0, 60, 0, 0))
 }
 
 ///|
 test "Time::new invalid second" {
-  assert_true((try? @tempo.Time::new(0, 0, 60, 0)) is Err(_))
+  assert_raises(() => @tempo.Time::new(0, 0, 60, 0))
 }
 
 ///|
 test "Time::new invalid nanosecond negative" {
-  assert_true((try? @tempo.Time::new(0, 0, 0, -1)) is Err(_))
+  assert_raises(() => @tempo.Time::new(0, 0, 0, -1))
 }
 
 ///|
 test "Time::new invalid nanosecond upper" {
-  assert_true((try? @tempo.Time::new(0, 0, 0, 1_000_000_000)) is Err(_))
+  assert_raises(() => @tempo.Time::new(0, 0, 0, 1_000_000_000))
 }
 
 // ─── Duration Show branches (audit 3.3) ──────────────────────────────────────
@@ -2702,29 +2676,27 @@ test "Show Duration Int64::max_value" {
 
 ///|
 test "DateTime::parse unexpected EOF in digits" {
-  assert_true((try? @tempo.DateTime::parse("2024-03-1")) is Err(_))
+  assert_raises(() => @tempo.DateTime::parse("2024-03-1"))
 }
 
 ///|
 test "DateTime::parse bad separator" {
-  assert_true((try? @tempo.DateTime::parse("2024-03-15X12:00:00Z")) is Err(_))
+  assert_raises(() => @tempo.DateTime::parse("2024-03-15X12:00:00Z"))
 }
 
 ///|
 test "DateTime::parse dot without fraction" {
-  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:00:00.Z")) is Err(_))
+  assert_raises(() => @tempo.DateTime::parse("2024-03-15T12:00:00.Z"))
 }
 
 ///|
 test "DateTime::parse bad timezone char" {
-  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:00:00Q")) is Err(_))
+  assert_raises(() => @tempo.DateTime::parse("2024-03-15T12:00:00Q"))
 }
 
 ///|
 test "DateTime::parse trailing after Z" {
-  assert_true(
-    (try? @tempo.DateTime::parse("2024-03-15T12:00:00Zextra")) is Err(_),
-  )
+  assert_raises(() => @tempo.DateTime::parse("2024-03-15T12:00:00Zextra"))
 }
 
 // ─── Edge cases (audit 3.5) ──────────────────────────────────────────────────
@@ -2846,19 +2818,19 @@ test "Date::format 2-digit year" {
 ///|
 test "DateTime::parse wrong separator in date" {
   // '/' instead of '-' triggers consume's wrong-char branch
-  assert_true((try? @tempo.DateTime::parse("2024/03-15T12:00:00Z")) is Err(_))
+  assert_raises(() => @tempo.DateTime::parse("2024/03-15T12:00:00Z"))
 }
 
 // ─── Coverage: EOF-in-parse branches ─────────────────────────────────────────
 
 ///|
 test "DateTime::parse EOF before T" {
-  assert_true((try? @tempo.DateTime::parse("2024-03-15")) is Err(_))
+  assert_raises(() => @tempo.DateTime::parse("2024-03-15"))
 }
 
 ///|
 test "DateTime::parse EOF before timezone" {
-  assert_true((try? @tempo.DateTime::parse("2024-03-15T12:00:00")) is Err(_))
+  assert_raises(() => @tempo.DateTime::parse("2024-03-15T12:00:00"))
 }
 
 // ─── New API: Duration::as_days, is_zero, is_negative ────────────────────────
@@ -2890,7 +2862,7 @@ test "Duration::is_negative" {
 ///|
 test "DateTime::parse truncated mid-date separator" {
   // Only year-month, no day separator — consume('-', ...) hits EOF
-  assert_true((try? @tempo.DateTime::parse("2024-03")) is Err(_))
+  assert_raises(() => @tempo.DateTime::parse("2024-03"))
 }
 
 // ─── Edge-case tests ─────────────────────────────────────────────────────────

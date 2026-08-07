@@ -2,6 +2,7 @@
 package "brickfrog/tempo"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }
 
@@ -21,7 +22,7 @@ pub struct Date {
   year : Int
   month : Int
   day : Int
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub fn Date::add_days(Self, Int) -> Self
 pub fn Date::add_days_checked(Self, Int) -> Self?
 pub fn Date::add_months(Self, Int) -> Self
@@ -75,7 +76,7 @@ pub impl @json.FromJson for Date
 pub(all) struct DateInterval {
   start : Date
   end : Date
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 pub fn DateInterval::contains(Self, Date) -> Bool
 pub fn DateInterval::intersection(Self, Self) -> Self?
 pub fn DateInterval::length_in_days(Self) -> Int
@@ -84,7 +85,7 @@ pub fn DateInterval::overlaps(Self, Self) -> Bool
 pub struct DateTime {
   date : Date
   time : Time
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub fn DateTime::add(Self, Duration) -> Self
 pub fn DateTime::checked_add(Self, Duration) -> Self?
 pub fn DateTime::checked_diff(Self, Self) -> Duration?
@@ -141,7 +142,7 @@ pub impl @json.FromJson for DateTime
 
 pub struct Duration {
   nanoseconds : Int64
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub fn Duration::abs(Self) -> Self
 pub fn Duration::as_days(Self) -> Int64
 pub fn Duration::as_hours(Self) -> Int64
@@ -183,7 +184,7 @@ pub impl @json.FromJson for Duration
 
 pub struct FixedOffsetDateTime {
   // private fields
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub fn FixedOffsetDateTime::format(Self) -> String
 pub fn FixedOffsetDateTime::from_datetime_and_offset(DateTime, Int) -> Self raise TempoError
 pub fn FixedOffsetDateTime::offset_seconds(Self) -> Int
@@ -194,7 +195,7 @@ pub impl Show for FixedOffsetDateTime
 pub(all) struct Interval {
   start : DateTime
   end : DateTime
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 pub fn Interval::contains(Self, DateTime) -> Bool
 pub fn Interval::intersection(Self, Self) -> Self?
 pub fn Interval::overlaps(Self, Self) -> Bool
@@ -213,7 +214,7 @@ pub(all) enum Month {
   October
   November
   December
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub fn Month::days_in(Self, Int) -> Int
 pub fn Month::from_int(Int) -> Self?
 pub fn Month::next(Self) -> Self
@@ -225,7 +226,7 @@ pub(all) struct Period {
   years : Int
   months : Int
   days : Int
-} derive(Eq, Hash)
+} derive(Eq, Hash, @debug.Debug)
 pub fn Period::days(Self) -> Int
 pub fn Period::format(Self) -> String
 pub fn Period::is_zero(Self) -> Bool
@@ -249,7 +250,7 @@ pub(all) enum RoundMode {
   Floor
   Ceil
   HalfExpand
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub impl Show for RoundMode
 
 pub struct Time {
@@ -257,7 +258,7 @@ pub struct Time {
   minute : Int
   second : Int
   nanosecond : Int
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub fn Time::clamp(Self, Self, Self) -> Self
 pub fn Time::format(Self) -> String
 pub fn Time::is_after(Self, Self) -> Bool
@@ -279,7 +280,7 @@ pub(all) enum TimeUnit {
   Minute
   Hour
   Day
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub impl Show for TimeUnit
 
 pub(all) enum Weekday {
@@ -290,7 +291,7 @@ pub(all) enum Weekday {
   Friday
   Saturday
   Sunday
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub fn Weekday::from_int(Int) -> Self?
 pub fn Weekday::next(Self) -> Self
 pub fn Weekday::number_from_monday(Self) -> Int
@@ -302,7 +303,7 @@ pub impl Show for Weekday
 pub(all) struct YearMonth {
   year : Int
   month : Int
-} derive(Compare, Eq, Hash)
+} derive(Compare, Eq, Hash, @debug.Debug)
 pub fn YearMonth::at_day(Self, Int) -> Date raise TempoError
 pub fn YearMonth::at_end_of_month(Self) -> Date
 pub fn YearMonth::format(Self) -> String
@@ -317,4 +318,3 @@ pub impl Show for YearMonth
 // Type aliases
 
 // Traits
-

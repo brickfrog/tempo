@@ -71,8 +71,12 @@ You can browse and install extra skills here:
   years (RFC 3339). Expanded-year parsing is deferred.
 
 - **Error test pattern:** Tests check error occurrence via
-  `assert_true((try? expr) is Err(_))`, not message content, to avoid brittle
-  string assertions.
+  `assert_raises(() => expr)`, not message content, to avoid brittle string
+  assertions. `assert_raises` is a private helper at the top of
+  `src/tempo_test.mbt` wrapping `try ... catch ... noraise`; it autofills the
+  call-site location, so a non-raising expression reports the failing
+  assertion's own line. The older `assert_true((try? expr) is Err(_))` form is
+  gone: `try?` is deprecated as of MoonBit v0.10.6.
 
 - **Duration::to_string_repr sequential decomposition:** Readable at ~35 lines.
   A loop over `(value, suffix)` pairs would obscure the special-case logic where

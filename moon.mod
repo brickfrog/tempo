@@ -12,6 +12,4 @@ keywords = [ "datetime", "time", "date", "rfc3339", "iso8601", "duration" ]
 
 description = "UTC date/time library — RFC 3339 parsing, Unix timestamps, arithmetic"
 
-options(
-  source: "src",
-)
+source = "src"
