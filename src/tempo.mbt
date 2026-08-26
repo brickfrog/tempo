@@ -1162,19 +1162,19 @@ pub fn Date::until(self : Date, other : Date) -> Period raise TempoError {
 ///|
 /// `true` if this date is earlier than `other`.
 pub fn Date::is_before(self : Date, other : Date) -> Bool {
-  self.compare(other) < 0
+  self < other
 }
 
 ///|
 /// `true` if this date is later than `other`.
 pub fn Date::is_after(self : Date, other : Date) -> Bool {
-  self.compare(other) > 0
+  self > other
 }
 
 ///|
 /// Return the earlier of this date and `other`.
 pub fn Date::min(self : Date, other : Date) -> Date {
-  if self.compare(other) <= 0 {
+  if self <= other {
     self
   } else {
     other
@@ -1184,7 +1184,7 @@ pub fn Date::min(self : Date, other : Date) -> Date {
 ///|
 /// Return the later of this date and `other`.
 pub fn Date::max(self : Date, other : Date) -> Date {
-  if self.compare(other) >= 0 {
+  if self >= other {
     self
   } else {
     other
@@ -1194,9 +1194,9 @@ pub fn Date::max(self : Date, other : Date) -> Date {
 ///|
 /// Clamp this date to the inclusive range `[lo, hi]`. Assumes `lo <= hi`.
 pub fn Date::clamp(self : Date, lo : Date, hi : Date) -> Date {
-  if self.compare(lo) < 0 {
+  if self < lo {
     lo
-  } else if self.compare(hi) > 0 {
+  } else if self > hi {
     hi
   } else {
     self
@@ -1394,19 +1394,19 @@ pub fn Time::with_nanosecond(
 ///|
 /// `true` if this time is earlier than `other`.
 pub fn Time::is_before(self : Time, other : Time) -> Bool {
-  self.compare(other) < 0
+  self < other
 }
 
 ///|
 /// `true` if this time is later than `other`.
 pub fn Time::is_after(self : Time, other : Time) -> Bool {
-  self.compare(other) > 0
+  self > other
 }
 
 ///|
 /// Return the earlier of this time and `other`.
 pub fn Time::min(self : Time, other : Time) -> Time {
-  if self.compare(other) <= 0 {
+  if self <= other {
     self
   } else {
     other
@@ -1416,7 +1416,7 @@ pub fn Time::min(self : Time, other : Time) -> Time {
 ///|
 /// Return the later of this time and `other`.
 pub fn Time::max(self : Time, other : Time) -> Time {
-  if self.compare(other) >= 0 {
+  if self >= other {
     self
   } else {
     other
@@ -1426,9 +1426,9 @@ pub fn Time::max(self : Time, other : Time) -> Time {
 ///|
 /// Clamp this time to the inclusive range `[lo, hi]`. Assumes `lo <= hi`.
 pub fn Time::clamp(self : Time, lo : Time, hi : Time) -> Time {
-  if self.compare(lo) < 0 {
+  if self < lo {
     lo
-  } else if self.compare(hi) > 0 {
+  } else if self > hi {
     hi
   } else {
     self
@@ -2217,19 +2217,19 @@ pub fn DateTime::checked_diff(self : DateTime, other : DateTime) -> Duration? {
 ///|
 /// `true` if this DateTime is earlier than `other`.
 pub fn DateTime::is_before(self : DateTime, other : DateTime) -> Bool {
-  self.compare(other) < 0
+  self < other
 }
 
 ///|
 /// `true` if this DateTime is later than `other`.
 pub fn DateTime::is_after(self : DateTime, other : DateTime) -> Bool {
-  self.compare(other) > 0
+  self > other
 }
 
 ///|
 /// Return the earlier of this DateTime and `other`.
 pub fn DateTime::min(self : DateTime, other : DateTime) -> DateTime {
-  if self.compare(other) <= 0 {
+  if self <= other {
     self
   } else {
     other
@@ -2239,7 +2239,7 @@ pub fn DateTime::min(self : DateTime, other : DateTime) -> DateTime {
 ///|
 /// Return the later of this DateTime and `other`.
 pub fn DateTime::max(self : DateTime, other : DateTime) -> DateTime {
-  if self.compare(other) >= 0 {
+  if self >= other {
     self
   } else {
     other
@@ -2253,9 +2253,9 @@ pub fn DateTime::clamp(
   lo : DateTime,
   hi : DateTime,
 ) -> DateTime {
-  if self.compare(lo) < 0 {
+  if self < lo {
     lo
-  } else if self.compare(hi) > 0 {
+  } else if self > hi {
     hi
   } else {
     self
