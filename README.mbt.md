@@ -7,7 +7,7 @@ In your `moon.pkg`:
 
 ```
 import {
-  "brickfrog/tempo/src" @tempo,
+  "brickfrog/tempo" @tempo,
 }
 ```
 

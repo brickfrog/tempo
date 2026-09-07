@@ -461,7 +461,7 @@ pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
   if day < 1 || day > max_day {
     raise TempoError("day \{day} out of range for \{year}-\{month}")
   }
-  { year, month, day }
+  { year, month, day, }
 }
 
 // ─── Period constructors and arithmetic ──────────────────────────────────────
@@ -498,38 +498,38 @@ fn checked_int_neg(a : Int, context : String) -> Int raise TempoError {
 ///|
 /// Create a `Period`, storing the year, month, and day fields exactly.
 pub fn Period::of(years : Int, months : Int, days : Int) -> Period {
-  { years, months, days }
+  { years, months, days, }
 }
 
 ///|
 /// Create a `Period` with only a year field.
 pub fn Period::of_years(years : Int) -> Period {
-  { years, months: 0, days: 0 }
+  { years, months: 0, days: 0, }
 }
 
 ///|
 /// Create a `Period` with only a month field.
 pub fn Period::of_months(months : Int) -> Period {
-  { years: 0, months, days: 0 }
+  { years: 0, months, days: 0, }
 }
 
 ///|
 /// Create a `Period` with only a day field.
 pub fn Period::of_days(days : Int) -> Period {
-  { years: 0, months: 0, days }
+  { years: 0, months: 0, days, }
 }
 
 ///|
 /// Create a `Period` from whole weeks, stored as days.
 pub fn Period::of_weeks(weeks : Int) -> Period raise TempoError {
   let days = int64_to_int_checked(weeks.to_int64() * 7L, "period weeks")
-  { years: 0, months: 0, days }
+  { years: 0, months: 0, days, }
 }
 
 ///|
 /// The zero period.
 pub fn Period::zero() -> Period {
-  { years: 0, months: 0, days: 0 }
+  { years: 0, months: 0, days: 0, }
 }
 
 ///|
@@ -625,7 +625,7 @@ pub fn YearMonth::new(year : Int, month : Int) -> YearMonth raise TempoError {
   if month < 1 || month > 12 {
     raise TempoError("month \{month} out of range 1–12")
   }
-  { year, month }
+  { year, month, }
 }
 
 // ─── Date arithmetic ──────────────────────────────────────────────────────────
@@ -643,7 +643,7 @@ fn Date::add_months64(self : Date, months : Int64) -> Date {
   let (year, month) = shift_year_month(self.year, self.month, months)
   let max_day = days_in_month(year, month)
   let day = if self.day > max_day { max_day } else { self.day }
-  { year, month, day }
+  { year, month, day, }
 }
 
 ///|
@@ -734,7 +734,7 @@ pub fn Date::add_period(self : Date, period : Period) -> Date raise TempoError {
 ///|
 fn YearMonth::plus_months64(self : YearMonth, months : Int64) -> YearMonth {
   let (year, month) = shift_year_month(self.year, self.month, months)
-  { year, month }
+  { year, month, }
 }
 
 ///|
@@ -776,25 +776,25 @@ pub fn Date::with_day(self : Date, day : Int) -> Date raise TempoError {
 ///|
 /// Return the first day of this date's calendar month.
 pub fn Date::start_of_month(self : Date) -> Date {
-  { ..self, day: 1 }
+  { ..self, day: 1, }
 }
 
 ///|
 /// Return the last day of this date's calendar month.
 pub fn Date::end_of_month(self : Date) -> Date {
-  { ..self, day: days_in_month(self.year, self.month) }
+  { ..self, day: days_in_month(self.year, self.month), }
 }
 
 ///|
 /// Return the first day of this date's calendar year.
 pub fn Date::start_of_year(self : Date) -> Date {
-  { ..self, month: 1, day: 1 }
+  { ..self, month: 1, day: 1, }
 }
 
 ///|
 /// Return the last day of this date's calendar year.
 pub fn Date::end_of_year(self : Date) -> Date {
-  { ..self, month: 12, day: 31 }
+  { ..self, month: 12, day: 31, }
 }
 
 ///|
@@ -835,14 +835,14 @@ pub fn Date::start_of_quarter(self : Date) -> Date {
     4 => 10
     _ => abort("Date::quarter returned out-of-range quarter")
   }
-  { ..self, month, day: 1 }
+  { ..self, month, day: 1, }
 }
 
 ///|
 /// Return the last day of this date's calendar quarter.
 pub fn Date::end_of_quarter(self : Date) -> Date {
   let month = self.start_of_quarter().month + 2
-  { ..self, month, day: days_in_month(self.year, month) }
+  { ..self, month, day: days_in_month(self.year, month), }
 }
 
 ///|
@@ -853,7 +853,7 @@ pub fn Date::end_of_quarter(self : Date) -> Date {
 pub fn Date::add_days(self : Date, days : Int) -> Date {
   let base = days_from_civil(self.year, self.month, self.day)
   let (y, m, d) = civil_from_days(base + days.to_int64())
-  { year: y, month: m, day: d }
+  { year: y, month: m, day: d, }
 }
 
 ///|
@@ -1104,7 +1104,7 @@ pub fn YearMonth::at_day(self : YearMonth, day : Int) -> Date raise TempoError {
 ///|
 /// Return the last date in this year-month.
 pub fn YearMonth::at_end_of_month(self : YearMonth) -> Date {
-  { year: self.year, month: self.month, day: self.length() }
+  { year: self.year, month: self.month, day: self.length(), }
 }
 
 ///|
@@ -1230,7 +1230,7 @@ pub fn DateInterval::intersection(
   let s = self.start.max(other.start)
   let e = self.end.min(other.end)
   if s <= e {
-    Some({ start: s, end: e })
+    Some({ start: s, end: e, })
   } else {
     None
   }
@@ -1361,7 +1361,7 @@ pub fn Time::new(
   if nanosecond < 0 || nanosecond > 999_999_999 {
     raise TempoError("nanosecond \{nanosecond} out of range 0–999_999_999")
   }
-  { hour, minute, second, nanosecond }
+  { hour, minute, second, nanosecond, }
 }
 
 ///|
@@ -1440,7 +1440,7 @@ pub fn Time::clamp(self : Time, lo : Time, hi : Time) -> Time {
 /// Both arguments should be constructed via `Date::new` / `Time::new` (which
 /// validate). This constructor performs no additional checks.
 pub fn DateTime::new(date : Date, time : Time) -> DateTime {
-  { date, time }
+  { date, time, }
 }
 
 ///|
@@ -1470,7 +1470,7 @@ pub fn FixedOffsetDateTime::from_datetime_and_offset(
   offset_seconds : Int,
 ) -> FixedOffsetDateTime raise TempoError {
   validate_fixed_offset_seconds(offset_seconds)
-  { utc, offset_seconds }
+  { utc, offset_seconds, }
 }
 
 ///|
@@ -1514,7 +1514,7 @@ pub fn DateTime::with_year(
   self : DateTime,
   year : Int,
 ) -> DateTime raise TempoError {
-  { ..self, date: self.date.with_year(year) }
+  { ..self, date: self.date.with_year(year), }
 }
 
 ///|
@@ -1523,7 +1523,7 @@ pub fn DateTime::with_month(
   self : DateTime,
   month : Int,
 ) -> DateTime raise TempoError {
-  { ..self, date: self.date.with_month(month) }
+  { ..self, date: self.date.with_month(month), }
 }
 
 ///|
@@ -1532,7 +1532,7 @@ pub fn DateTime::with_day(
   self : DateTime,
   day : Int,
 ) -> DateTime raise TempoError {
-  { ..self, date: self.date.with_day(day) }
+  { ..self, date: self.date.with_day(day), }
 }
 
 ///|
@@ -1541,7 +1541,7 @@ pub fn DateTime::with_hour(
   self : DateTime,
   hour : Int,
 ) -> DateTime raise TempoError {
-  { ..self, time: self.time.with_hour(hour) }
+  { ..self, time: self.time.with_hour(hour), }
 }
 
 ///|
@@ -1550,7 +1550,7 @@ pub fn DateTime::with_minute(
   self : DateTime,
   minute : Int,
 ) -> DateTime raise TempoError {
-  { ..self, time: self.time.with_minute(minute) }
+  { ..self, time: self.time.with_minute(minute), }
 }
 
 ///|
@@ -1559,7 +1559,7 @@ pub fn DateTime::with_second(
   self : DateTime,
   second : Int,
 ) -> DateTime raise TempoError {
-  { ..self, time: self.time.with_second(second) }
+  { ..self, time: self.time.with_second(second), }
 }
 
 ///|
@@ -1568,15 +1568,15 @@ pub fn DateTime::with_nanosecond(
   self : DateTime,
   nanosecond : Int,
 ) -> DateTime raise TempoError {
-  { ..self, time: self.time.with_nanosecond(nanosecond) }
+  { ..self, time: self.time.with_nanosecond(nanosecond), }
 }
 
 ///|
 /// The Unix epoch: 1970-01-01T00:00:00Z.
 pub fn DateTime::epoch() -> DateTime {
   {
-    date: { year: 1970, month: 1, day: 1 },
-    time: { hour: 0, minute: 0, second: 0, nanosecond: 0 },
+    date: { year: 1970, month: 1, day: 1, },
+    time: { hour: 0, minute: 0, second: 0, nanosecond: 0, },
   }
 }
 
@@ -1615,7 +1615,7 @@ pub fn DateTime::end_of_year(self : DateTime) -> DateTime {
 ///|
 /// Return this DateTime at the start of its calendar day.
 pub fn DateTime::start_of_day(self : DateTime) -> DateTime {
-  { ..self, time: { hour: 0, minute: 0, second: 0, nanosecond: 0 } }
+  { ..self, time: { hour: 0, minute: 0, second: 0, nanosecond: 0, }, }
 }
 
 ///|
@@ -1623,7 +1623,7 @@ pub fn DateTime::start_of_day(self : DateTime) -> DateTime {
 pub fn DateTime::end_of_day(self : DateTime) -> DateTime {
   {
     ..self,
-    time: { hour: 23, minute: 59, second: 59, nanosecond: 999_999_999 },
+    time: { hour: 23, minute: 59, second: 59, nanosecond: 999_999_999, },
   }
 }
 
@@ -1634,10 +1634,10 @@ pub fn DateTime::end_of_day(self : DateTime) -> DateTime {
 /// the same date, rather than truncating a duration since the Unix epoch.
 pub fn DateTime::truncate_to(self : DateTime, unit : TimeUnit) -> DateTime {
   match unit {
-    Second => { ..self, time: { ..self.time, nanosecond: 0 } }
-    Minute => { ..self, time: { ..self.time, second: 0, nanosecond: 0 } }
+    Second => { ..self, time: { ..self.time, nanosecond: 0, }, }
+    Minute => { ..self, time: { ..self.time, second: 0, nanosecond: 0, }, }
     Hour =>
-      { ..self, time: { ..self.time, minute: 0, second: 0, nanosecond: 0 } }
+      { ..self, time: { ..self.time, minute: 0, second: 0, nanosecond: 0, }, }
     Day => self.start_of_day()
   }
 }
@@ -1725,7 +1725,10 @@ pub fn DateTime::from_unix_seconds(ts : Int64) -> DateTime {
   let hour = sod / 3600
   let minute = sod % 3600 / 60
   let second = sod % 60
-  { date: { year, month, day }, time: { hour, minute, second, nanosecond: 0 } }
+  {
+    date: { year, month, day, },
+    time: { hour, minute, second, nanosecond: 0, },
+  }
 }
 
 ///|
@@ -1736,7 +1739,7 @@ pub fn DateTime::from_unix_nanos(ns : Int64) -> DateTime {
   let ts_sec = floor_div64(ns, ns_per_sec)
   let nanosecond = (ns - ts_sec * ns_per_sec).to_int()
   let dt = DateTime::from_unix_seconds(ts_sec)
-  { ..dt, time: { ..dt.time, nanosecond, } }
+  { ..dt, time: { ..dt.time, nanosecond, }, }
 }
 
 ///|
@@ -1746,7 +1749,7 @@ pub fn DateTime::from_unix_millis(ms : Int64) -> DateTime {
   let ts_sec = floor_div64(ms, 1000L)
   let nanosecond = ((ms - ts_sec * 1000L) * ns_per_ms).to_int()
   let dt = DateTime::from_unix_seconds(ts_sec)
-  { ..dt, time: { ..dt.time, nanosecond, } }
+  { ..dt, time: { ..dt.time, nanosecond, }, }
 }
 
 ///|
@@ -1756,7 +1759,7 @@ pub fn DateTime::from_unix_micros(us : Int64) -> DateTime {
   let ts_sec = floor_div64(us, 1_000_000L)
   let nanosecond = ((us - ts_sec * 1_000_000L) * ns_per_us).to_int()
   let dt = DateTime::from_unix_seconds(ts_sec)
-  { ..dt, time: { ..dt.time, nanosecond, } }
+  { ..dt, time: { ..dt.time, nanosecond, }, }
 }
 
 ///|
@@ -1886,49 +1889,49 @@ fn checked_i64_sub(a : Int64, b : Int64) -> Int64? {
 ///|
 /// Create a Duration from a number of nanoseconds.
 pub fn Duration::nanoseconds(ns : Int64) -> Duration {
-  { nanoseconds: ns }
+  { nanoseconds: ns, }
 }
 
 ///|
 /// Create a Duration representing the given number of days (86 400 seconds each).
 pub fn Duration::days(d : Int64) -> Duration {
-  { nanoseconds: d * 86_400L * ns_per_sec }
+  { nanoseconds: d * 86_400L * ns_per_sec, }
 }
 
 ///|
 /// Create a Duration representing the given number of weeks (7 × 86 400 seconds).
 pub fn Duration::weeks(w : Int64) -> Duration {
-  { nanoseconds: w * 7L * 86_400L * ns_per_sec }
+  { nanoseconds: w * 7L * 86_400L * ns_per_sec, }
 }
 
 ///|
 /// Create a Duration representing the given number of microseconds.
 pub fn Duration::microseconds(us : Int64) -> Duration {
-  { nanoseconds: us * ns_per_us }
+  { nanoseconds: us * ns_per_us, }
 }
 
 ///|
 /// Create a Duration representing the given number of milliseconds.
 pub fn Duration::milliseconds(ms : Int64) -> Duration {
-  { nanoseconds: ms * ns_per_ms }
+  { nanoseconds: ms * ns_per_ms, }
 }
 
 ///|
 /// Create a Duration representing the given number of seconds.
 pub fn Duration::seconds(s : Int64) -> Duration {
-  { nanoseconds: s * ns_per_sec }
+  { nanoseconds: s * ns_per_sec, }
 }
 
 ///|
 /// Create a Duration representing the given number of minutes.
 pub fn Duration::minutes(m : Int64) -> Duration {
-  { nanoseconds: m * ns_per_min }
+  { nanoseconds: m * ns_per_min, }
 }
 
 ///|
 /// Create a Duration representing the given number of hours.
 pub fn Duration::hours(h : Int64) -> Duration {
-  { nanoseconds: h * ns_per_hour }
+  { nanoseconds: h * ns_per_hour, }
 }
 
 // ─── Duration accessors ───────────────────────────────────────────────────────
@@ -2026,9 +2029,9 @@ pub fn Duration::is_negative(self : Duration) -> Bool {
 /// to `Int64::max_value` instead of raising or wrapping.
 pub fn Duration::abs(self : Duration) -> Duration {
   if self.nanoseconds == int64_min_value {
-    { nanoseconds: int64_max_value }
+    { nanoseconds: int64_max_value, }
   } else if self.nanoseconds < 0L {
-    { nanoseconds: -self.nanoseconds }
+    { nanoseconds: -self.nanoseconds, }
   } else {
     self
   }
@@ -2060,20 +2063,20 @@ pub fn Duration::signum(self : Duration) -> Int {
 /// This wraps on `Int64` overflow. Use `checked_multiply` when overflow should
 /// return `None`.
 pub fn Duration::multiply(self : Duration, n : Int64) -> Duration {
-  { nanoseconds: self.nanoseconds * n }
+  { nanoseconds: self.nanoseconds * n, }
 }
 
 ///|
 /// Multiply this duration by an `Int64` scalar, returning `None` on overflow.
 pub fn Duration::checked_multiply(self : Duration, n : Int64) -> Duration? {
   if n == 0L {
-    Some({ nanoseconds: 0L })
+    Some({ nanoseconds: 0L, })
   } else {
     let product = self.nanoseconds * n
     if product == int64_min_value && n == -1L {
       None
     } else if product / n == self.nanoseconds {
-      Some({ nanoseconds: product })
+      Some({ nanoseconds: product, })
     } else {
       None
     }
@@ -2096,7 +2099,7 @@ pub fn Duration::divide(
   if self.nanoseconds == int64_min_value && n == -1L {
     raise TempoError("duration division overflow")
   }
-  { nanoseconds: self.nanoseconds / n }
+  { nanoseconds: self.nanoseconds / n, }
 }
 
 ///|
@@ -2105,7 +2108,7 @@ pub fn Duration::divide(
 /// This wraps on `Int64` overflow. Use `checked_add` when overflow should
 /// return `None`.
 pub impl Add for Duration with fn add(self, other : Duration) -> Duration {
-  { nanoseconds: self.nanoseconds + other.nanoseconds }
+  { nanoseconds: self.nanoseconds + other.nanoseconds, }
 }
 
 ///|
@@ -2114,7 +2117,7 @@ pub impl Add for Duration with fn add(self, other : Duration) -> Duration {
 /// This wraps on `Int64` overflow. Use `checked_sub` when overflow should
 /// return `None`.
 pub impl Sub for Duration with fn sub(self, other : Duration) -> Duration {
-  { nanoseconds: self.nanoseconds - other.nanoseconds }
+  { nanoseconds: self.nanoseconds - other.nanoseconds, }
 }
 
 ///|
@@ -2137,7 +2140,7 @@ pub fn Duration::checked_sub(self : Duration, other : Duration) -> Duration? {
 
 ///|
 pub impl Neg for Duration with fn neg(self) -> Duration {
-  { nanoseconds: -self.nanoseconds }
+  { nanoseconds: -self.nanoseconds, }
 }
 
 // ─── DateTime arithmetic ──────────────────────────────────────────────────────
@@ -2169,7 +2172,7 @@ pub fn DateTime::sub(self : DateTime, d : Duration) -> DateTime {
 /// DateTime outside the representable Unix-nanoseconds range should return
 /// `None`.
 pub fn DateTime::diff(self : DateTime, other : DateTime) -> Duration {
-  { nanoseconds: self.to_unix_nanos() - other.to_unix_nanos() }
+  { nanoseconds: self.to_unix_nanos() - other.to_unix_nanos(), }
 }
 
 ///|
@@ -2283,7 +2286,7 @@ pub fn Interval::intersection(self : Interval, other : Interval) -> Interval? {
   let s = self.start.max(other.start)
   let e = self.end.min(other.end)
   if s < e {
-    Some({ start: s, end: e })
+    Some({ start: s, end: e, })
   } else {
     None
   }
@@ -2976,7 +2979,7 @@ pub fn Period::parse(s : String) -> Period raise TempoError {
     match v {
       [] =>
         if saw_component {
-          break { years, months, days }
+          break { years, months, days, }
         } else {
           raise TempoError("expected period component")
         }
@@ -3271,7 +3274,7 @@ fn parse_rfc3339_parts(s : String) -> (DateTime, Int) raise TempoError {
   }
   let date = Date::new(year, month, day)
   let time = Time::new(hour, minute, second, nanosecond)
-  let base = { date, time }
+  let base = { date, time, }
   let utc = if offset_minutes == 0 {
     base
   } else {
