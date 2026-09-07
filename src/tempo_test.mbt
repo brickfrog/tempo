@@ -2951,12 +2951,12 @@ test "Date::parse roundtrip 2-digit year" {
 
 ///|
 fn date_interval(start : @tempo.Date, end : @tempo.Date) -> @tempo.DateInterval {
-  { start, end }
+  { start, end, }
 }
 
 ///|
 fn interval(start : @tempo.DateTime, end : @tempo.DateTime) -> @tempo.Interval {
-  { start, end }
+  { start, end, }
 }
 
 ///|
