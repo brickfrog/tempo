@@ -1691,6 +1691,14 @@ test "DateTime::format_with escapes braces" {
 }
 
 ///|
+test "DateTime::format_with preserves non-BMP literals" {
+  let dt = @tempo.DateTime::parse("2024-03-15T12:34:56Z")
+  assert_eq(dt.format_with("{YYYY} 🎉 {MM}"), "2024 🎉 03")
+  assert_eq(dt.format_with("{{🎉}}|{DD}"), "{🎉}|15")
+  assert_eq(dt.format_with("héllo{DD}"), "héllo15")
+}
+
+///|
 test "Time::format no sub-second" {
   let t = @tempo.Time::new(0, 0, 0, 0)
   assert_eq(t.format(), "00:00:00")

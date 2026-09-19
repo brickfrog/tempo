@@ -2456,8 +2456,11 @@ pub fn DateTime::format_with(
         raise TempoError("unmatched closing brace in datetime format pattern")
       }
     } else {
-      buf.write_string(pattern[i:i + 1].to_owned())
-      i += 1
+      let literal_start = i
+      while i < len && pattern[i] != '{' && pattern[i] != '}' {
+        i += 1
+      }
+      buf.write_view(pattern[literal_start:i])
     }
   }
   buf.to_string()
