@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `DateTime::format_with` no longer drops non-BMP literal characters (emoji,
+  astral-plane text) from the pattern. MoonBit v0.10.13 changed bracket slicing
+  so that a string slice which would split a UTF-16 surrogate pair trims inward
+  instead; the previous per-code-unit `pattern[i:i + 1]` copy therefore yielded
+  an empty slice for each half of a surrogate pair. Literal runs are now copied
+  in one slice bounded by `{` / `}`, which also removes one allocation per
+  character.
+- The README install snippet imported `brickfrog/tempo/src`. The module sets
+  `source = "src"`, so the package path is `brickfrog/tempo`; the documented
+  import did not resolve. (#53)
+
+### Changed
+
+- Reformatted for the current `moon fmt`, which emits trailing commas in
+  single-line record literals. No behavior change; required for the
+  `moon fmt --check` CI gate. (#53)
+
 ## [0.8.1] - 2026-08-06
 
 ### Added
