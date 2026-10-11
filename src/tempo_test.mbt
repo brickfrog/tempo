@@ -3093,6 +3093,32 @@ test "Interval::overlaps treats touching half-open bounds as disjoint" {
 }
 
 ///|
+test "Interval::overlaps rejects empty intervals inside a range" {
+  let cases = [
+    ("1969-12-31T23:59:59Z", "1970-01-01T00:00:00Z", "1970-01-01T00:00:01Z"),
+    (
+      "2400-02-29T23:59:59.999999998Z", "2400-02-29T23:59:59.999999999Z", "2400-03-01T00:00:00Z",
+    ),
+  ]
+  for (start_text, middle_text, end_text) in cases {
+    let start = @tempo.DateTime::parse(start_text)
+    let middle = @tempo.DateTime::parse(middle_text)
+    let end = @tempo.DateTime::parse(end_text)
+    let range = interval(start, end)
+    assert_eq(range.overlaps(interval(middle, end)), true)
+    for instant in [start, middle, end] {
+      let empty = interval(instant, instant)
+      assert_eq(empty.contains(instant), false)
+      assert_eq(range.intersection(empty), None)
+      assert_eq(empty.intersection(range), None)
+      assert_eq(range.overlaps(empty), false)
+      assert_eq(empty.overlaps(range), false)
+      assert_eq(empty.overlaps(empty), false)
+    }
+  }
+}
+
+///|
 test "Interval::intersection uses half-open bounds" {
   let start = @tempo.DateTime::parse("2024-01-01T00:00:00Z")
   let end = start.add(@tempo.Duration::hours(2L))

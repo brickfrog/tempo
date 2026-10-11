@@ -2275,9 +2275,9 @@ pub fn Interval::contains(self : Interval, dt : DateTime) -> Bool {
 
 ///|
 /// `true` if this half-open DateTime interval shares at least one instant with
-/// `other`.
+/// `other`. Empty intervals (`start == end`) never overlap.
 pub fn Interval::overlaps(self : Interval, other : Interval) -> Bool {
-  self.start < other.end && other.start < self.end
+  self.start.max(other.start) < self.end.min(other.end)
 }
 
 ///|
