@@ -615,3 +615,24 @@ test {
 - **Leap seconds** — POSIX ignores them, so does tempo
 
 See [ROADMAP.md](ROADMAP.md).
+
+## Development
+
+CI uses MoonBit compiler/core `0.10.20+65efd5b93` with moon/moonrun
+`0.1.20261104`. The compiler reports a November 5 build date. Both CI and Copilot
+setup use the same checked-in, checksum-verified installer at
+`.github/scripts/setup-moonbit.sh`, covering Linux x86-64 and macOS ARM64.
+
+With that toolchain installed:
+
+```sh
+moon fmt --check
+moon check --frozen --deny-warn
+moon build --frozen --deny-warn
+moon test --frozen --deny-warn --target wasm-gc
+moon test --frozen --deny-warn --target js
+moon test --frozen --deny-warn --target native
+```
+
+After public API changes, run `moon info && moon fmt` and commit the regenerated
+`src/pkg.generated.mbti` alongside the source changes.
