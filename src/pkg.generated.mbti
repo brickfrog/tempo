@@ -7,102 +7,129 @@ import {
 }
 
 // Values
-pub fn days_in_month(Int, Int) -> Int
+pub fn days_in_month(Int32, Int32) -> Int32
 
-pub fn is_leap_year(Int) -> Bool
+pub fn is_leap_year(Int32) -> Bool
 
 // Errors
 pub(all) suberror TempoError {
   TempoError(String)
 }
+pub fn TempoError::output(Self, &Logger) -> Unit
+pub fn TempoError::to_string(Self) -> String
 pub impl Show for TempoError
 
 // Types and methods
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub struct Date {
-  year : Int
-  month : Int
-  day : Int
-} derive(Compare, Eq, Hash, @debug.Debug)
-pub fn Date::add_days(Self, Int) -> Self
-pub fn Date::add_days_checked(Self, Int) -> Self?
-pub fn Date::add_months(Self, Int) -> Self
-pub fn Date::add_months_checked(Self, Int) -> Self?
+  year : Int32
+  month : Int32
+  day : Int32
+}
+pub fn Date::add_days(Self, Int32) -> Self
+pub fn Date::add_days_checked(Self, Int32) -> Self?
+pub fn Date::add_months(Self, Int32) -> Self
+pub fn Date::add_months_checked(Self, Int32) -> Self?
 pub fn Date::add_period(Self, Period) -> Self raise TempoError
-pub fn Date::add_years(Self, Int) -> Self
-pub fn Date::add_years_checked(Self, Int) -> Self?
+pub fn Date::add_years(Self, Int32) -> Self
+pub fn Date::add_years_checked(Self, Int32) -> Self?
 pub fn Date::clamp(Self, Self, Self) -> Self
-pub fn Date::day_of_week(Self) -> Int
-pub fn Date::day_of_year(Self) -> Int
-pub fn Date::days_in_year(Self) -> Int
-pub fn Date::days_until(Self, Self) -> Int
+pub fn Date::compare(Self, Self) -> Int32
+pub fn Date::day_of_week(Self) -> Int32
+pub fn Date::day_of_year(Self) -> Int32
+pub fn Date::days_in_year(Self) -> Int32
+pub fn Date::days_until(Self, Self) -> Int32
 pub fn Date::end_of_month(Self) -> Self
 pub fn Date::end_of_quarter(Self) -> Self
 pub fn Date::end_of_year(Self) -> Self
+pub fn Date::equal(Self, Self) -> Bool
 pub fn Date::format(Self) -> String
 pub fn Date::format_iso_week(Self) -> String
 pub fn Date::format_ordinal(Self) -> String
-pub fn Date::from_iso_week(Int, Int, Int) -> Self raise TempoError
-pub fn Date::from_ordinal(Int, Int) -> Self raise TempoError
+pub fn Date::from_iso_week(Int32, Int32, Int32) -> Self raise TempoError
+pub fn Date::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Date::from_ordinal(Int32, Int32) -> Self raise TempoError
+pub fn Date::hash(Self) -> Int32
+pub fn Date::hash_combine(Self, Hasher) -> Unit
 pub fn Date::is_after(Self, Self) -> Bool
 pub fn Date::is_before(Self, Self) -> Bool
 pub fn Date::is_leap(Self) -> Bool
-pub fn Date::iso_week(Self) -> Int
-pub fn Date::iso_week_year(Self) -> Int
+pub fn Date::iso_week(Self) -> Int32
+pub fn Date::iso_week_year(Self) -> Int32
 pub fn Date::max(Self, Self) -> Self
 pub fn Date::min(Self, Self) -> Self
 pub fn Date::month_enum(Self) -> Month
-pub fn Date::new(Int, Int, Int) -> Self raise TempoError
+pub fn Date::new(Int32, Int32, Int32) -> Self raise TempoError
 pub fn Date::next(Self, Weekday) -> Self
 pub fn Date::next_or_same(Self, Weekday) -> Self
-pub fn Date::nth_weekday_of_month(Int, Int, Weekday, Int) -> Self raise TempoError
+pub fn Date::not_equal(Self, Self) -> Bool
+pub fn Date::nth_weekday_of_month(Int32, Int32, Weekday, Int32) -> Self raise TempoError
+pub fn Date::op_ge(Self, Self) -> Bool
+pub fn Date::op_gt(Self, Self) -> Bool
+pub fn Date::op_le(Self, Self) -> Bool
+pub fn Date::op_lt(Self, Self) -> Bool
+pub fn Date::output(Self, &Logger) -> Unit
 pub fn Date::parse(String) -> Self raise TempoError
 pub fn Date::parse_iso_week(String) -> Self raise TempoError
 pub fn Date::parse_ordinal(String) -> Self raise TempoError
 pub fn Date::previous(Self, Weekday) -> Self
 pub fn Date::previous_or_same(Self, Weekday) -> Self
-pub fn Date::quarter(Self) -> Int
+pub fn Date::quarter(Self) -> Int32
 pub fn Date::start_of_month(Self) -> Self
 pub fn Date::start_of_quarter(Self) -> Self
 pub fn Date::start_of_year(Self) -> Self
+pub fn Date::to_json(Self) -> @json.Json
+pub fn Date::to_repr(Self) -> @debug.Repr
+pub fn Date::to_string(Self) -> String
 pub fn Date::until(Self, Self) -> Period raise TempoError
 pub fn Date::weekday(Self) -> Weekday
-pub fn Date::with_day(Self, Int) -> Self raise TempoError
-pub fn Date::with_month(Self, Int) -> Self raise TempoError
-pub fn Date::with_year(Self, Int) -> Self raise TempoError
+pub fn Date::with_day(Self, Int32) -> Self raise TempoError
+pub fn Date::with_month(Self, Int32) -> Self raise TempoError
+pub fn Date::with_year(Self, Int32) -> Self raise TempoError
 pub impl Show for Date
-pub impl ToJson for Date
 pub impl @json.FromJson for Date
+pub impl @json.ToJson for Date
 
+#derive(Eq, @debug.Debug)
 pub(all) struct DateInterval {
   start : Date
   end : Date
-} derive(Eq, @debug.Debug)
+}
 pub fn DateInterval::contains(Self, Date) -> Bool
+pub fn DateInterval::equal(Self, Self) -> Bool
 pub fn DateInterval::intersection(Self, Self) -> Self?
-pub fn DateInterval::length_in_days(Self) -> Int
+pub fn DateInterval::length_in_days(Self) -> Int32
+pub fn DateInterval::not_equal(Self, Self) -> Bool
 pub fn DateInterval::overlaps(Self, Self) -> Bool
+pub fn DateInterval::to_repr(Self) -> @debug.Repr
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub struct DateTime {
   date : Date
   time : Time
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
 pub fn DateTime::add(Self, Duration) -> Self
 pub fn DateTime::checked_add(Self, Duration) -> Self?
 pub fn DateTime::checked_diff(Self, Self) -> Duration?
 pub fn DateTime::checked_sub(Self, Duration) -> Self?
 pub fn DateTime::clamp(Self, Self, Self) -> Self
+pub fn DateTime::compare(Self, Self) -> Int32
 pub fn DateTime::diff(Self, Self) -> Duration
 pub fn DateTime::end_of_day(Self) -> Self
 pub fn DateTime::end_of_month(Self) -> Self
 pub fn DateTime::end_of_year(Self) -> Self
 pub fn DateTime::epoch() -> Self
+pub fn DateTime::equal(Self, Self) -> Bool
 pub fn DateTime::format(Self) -> String
 pub fn DateTime::format_fixed(Self) -> String
 pub fn DateTime::format_with(Self, String) -> String raise TempoError
+pub fn DateTime::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn DateTime::from_unix_micros(Int64) -> Self
 pub fn DateTime::from_unix_millis(Int64) -> Self
 pub fn DateTime::from_unix_nanos(Int64) -> Self
 pub fn DateTime::from_unix_seconds(Int64) -> Self
+pub fn DateTime::hash(Self) -> Int32
+pub fn DateTime::hash_combine(Self, Hasher) -> Unit
 pub fn DateTime::is_after(Self, Self) -> Bool
 pub fn DateTime::is_before(Self, Self) -> Bool
 pub fn DateTime::max(Self, Self) -> Self
@@ -110,7 +137,13 @@ pub fn DateTime::max_unix_nanos() -> Int64
 pub fn DateTime::min(Self, Self) -> Self
 pub fn DateTime::min_unix_nanos() -> Int64
 pub fn DateTime::new(Date, Time) -> Self
+pub fn DateTime::not_equal(Self, Self) -> Bool
 pub fn DateTime::now() -> Self
+pub fn DateTime::op_ge(Self, Self) -> Bool
+pub fn DateTime::op_gt(Self, Self) -> Bool
+pub fn DateTime::op_le(Self, Self) -> Bool
+pub fn DateTime::op_lt(Self, Self) -> Bool
+pub fn DateTime::output(Self, &Logger) -> Unit
 pub fn DateTime::parse(String) -> Self raise TempoError
 pub fn DateTime::round_to(Self, TimeUnit, RoundMode) -> Self
 pub fn DateTime::since(Self, Self) -> Duration
@@ -119,6 +152,9 @@ pub fn DateTime::start_of_month(Self) -> Self
 pub fn DateTime::start_of_year(Self) -> Self
 pub fn DateTime::sub(Self, Duration) -> Self
 pub fn DateTime::to_date(Self) -> Date
+pub fn DateTime::to_json(Self) -> @json.Json
+pub fn DateTime::to_repr(Self) -> @debug.Repr
+pub fn DateTime::to_string(Self) -> String
 pub fn DateTime::to_time(Self) -> Time
 pub fn DateTime::to_unix_micros(Self) -> Int64
 pub fn DateTime::to_unix_millis(Self) -> Int64
@@ -128,22 +164,24 @@ pub fn DateTime::to_unix_seconds(Self) -> Int64
 pub fn DateTime::truncate_to(Self, TimeUnit) -> Self
 pub fn DateTime::until(Self, Self) -> Duration
 pub fn DateTime::with_date(Self, Date) -> Self
-pub fn DateTime::with_day(Self, Int) -> Self raise TempoError
-pub fn DateTime::with_hour(Self, Int) -> Self raise TempoError
-pub fn DateTime::with_minute(Self, Int) -> Self raise TempoError
-pub fn DateTime::with_month(Self, Int) -> Self raise TempoError
-pub fn DateTime::with_nanosecond(Self, Int) -> Self raise TempoError
-pub fn DateTime::with_second(Self, Int) -> Self raise TempoError
+pub fn DateTime::with_day(Self, Int32) -> Self raise TempoError
+pub fn DateTime::with_hour(Self, Int32) -> Self raise TempoError
+pub fn DateTime::with_minute(Self, Int32) -> Self raise TempoError
+pub fn DateTime::with_month(Self, Int32) -> Self raise TempoError
+pub fn DateTime::with_nanosecond(Self, Int32) -> Self raise TempoError
+pub fn DateTime::with_second(Self, Int32) -> Self raise TempoError
 pub fn DateTime::with_time(Self, Time) -> Self
-pub fn DateTime::with_year(Self, Int) -> Self raise TempoError
+pub fn DateTime::with_year(Self, Int32) -> Self raise TempoError
 pub impl Show for DateTime
-pub impl ToJson for DateTime
 pub impl @json.FromJson for DateTime
+pub impl @json.ToJson for DateTime
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub struct Duration {
   nanoseconds : Int64
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
 pub fn Duration::abs(Self) -> Self
+pub fn Duration::add(Self, Self) -> Self
 pub fn Duration::as_days(Self) -> Int64
 pub fn Duration::as_hours(Self) -> Int64
 pub fn Duration::as_hours_f64(Self) -> Double
@@ -158,9 +196,14 @@ pub fn Duration::as_weeks(Self) -> Int64
 pub fn Duration::checked_add(Self, Self) -> Self?
 pub fn Duration::checked_multiply(Self, Int64) -> Self?
 pub fn Duration::checked_sub(Self, Self) -> Self?
+pub fn Duration::compare(Self, Self) -> Int32
 pub fn Duration::days(Int64) -> Self
 pub fn Duration::divide(Self, Int64) -> Self raise TempoError
+pub fn Duration::equal(Self, Self) -> Bool
 pub fn Duration::format_iso(Self) -> String
+pub fn Duration::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Duration::hash(Self) -> Int32
+pub fn Duration::hash_combine(Self, Hasher) -> Unit
 pub fn Duration::hours(Int64) -> Self
 pub fn Duration::humanize(Self) -> String
 pub fn Duration::is_negative(Self) -> Bool
@@ -171,36 +214,65 @@ pub fn Duration::milliseconds(Int64) -> Self
 pub fn Duration::minutes(Int64) -> Self
 pub fn Duration::multiply(Self, Int64) -> Self
 pub fn Duration::nanoseconds(Int64) -> Self
+pub fn Duration::neg(Self) -> Self
+pub fn Duration::not_equal(Self, Self) -> Bool
+pub fn Duration::op_ge(Self, Self) -> Bool
+pub fn Duration::op_gt(Self, Self) -> Bool
+pub fn Duration::op_le(Self, Self) -> Bool
+pub fn Duration::op_lt(Self, Self) -> Bool
+pub fn Duration::output(Self, &Logger) -> Unit
 pub fn Duration::parse_iso(String) -> Self raise TempoError
 pub fn Duration::seconds(Int64) -> Self
-pub fn Duration::signum(Self) -> Int
+pub fn Duration::signum(Self) -> Int32
+pub fn Duration::sub(Self, Self) -> Self
+pub fn Duration::to_json(Self) -> @json.Json
+pub fn Duration::to_repr(Self) -> @debug.Repr
+pub fn Duration::to_string(Self) -> String
 pub fn Duration::weeks(Int64) -> Self
 pub impl Add for Duration
 pub impl Neg for Duration
 pub impl Show for Duration
 pub impl Sub for Duration
-pub impl ToJson for Duration
 pub impl @json.FromJson for Duration
+pub impl @json.ToJson for Duration
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub struct FixedOffsetDateTime {
   // private fields
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
+pub fn FixedOffsetDateTime::compare(Self, Self) -> Int32
+pub fn FixedOffsetDateTime::equal(Self, Self) -> Bool
 pub fn FixedOffsetDateTime::format(Self) -> String
-pub fn FixedOffsetDateTime::from_datetime_and_offset(DateTime, Int) -> Self raise TempoError
-pub fn FixedOffsetDateTime::offset_seconds(Self) -> Int
+pub fn FixedOffsetDateTime::from_datetime_and_offset(DateTime, Int32) -> Self raise TempoError
+pub fn FixedOffsetDateTime::hash(Self) -> Int32
+pub fn FixedOffsetDateTime::hash_combine(Self, Hasher) -> Unit
+pub fn FixedOffsetDateTime::not_equal(Self, Self) -> Bool
+pub fn FixedOffsetDateTime::offset_seconds(Self) -> Int32
+pub fn FixedOffsetDateTime::op_ge(Self, Self) -> Bool
+pub fn FixedOffsetDateTime::op_gt(Self, Self) -> Bool
+pub fn FixedOffsetDateTime::op_le(Self, Self) -> Bool
+pub fn FixedOffsetDateTime::op_lt(Self, Self) -> Bool
+pub fn FixedOffsetDateTime::output(Self, &Logger) -> Unit
 pub fn FixedOffsetDateTime::parse(String) -> Self raise TempoError
+pub fn FixedOffsetDateTime::to_repr(Self) -> @debug.Repr
+pub fn FixedOffsetDateTime::to_string(Self) -> String
 pub fn FixedOffsetDateTime::to_utc(Self) -> DateTime
 pub impl Show for FixedOffsetDateTime
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Interval {
   start : DateTime
   end : DateTime
-} derive(Eq, @debug.Debug)
+}
 pub fn Interval::contains(Self, DateTime) -> Bool
+pub fn Interval::equal(Self, Self) -> Bool
 pub fn Interval::intersection(Self, Self) -> Self?
+pub fn Interval::not_equal(Self, Self) -> Bool
 pub fn Interval::overlaps(Self, Self) -> Bool
 pub fn Interval::to_duration(Self) -> Duration
+pub fn Interval::to_repr(Self) -> @debug.Repr
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub(all) enum Month {
   January
   February
@@ -214,75 +286,137 @@ pub(all) enum Month {
   October
   November
   December
-} derive(Compare, Eq, Hash, @debug.Debug)
-pub fn Month::days_in(Self, Int) -> Int
-pub fn Month::from_int(Int) -> Self?
+}
+pub fn Month::compare(Self, Self) -> Int32
+pub fn Month::days_in(Self, Int32) -> Int32
+pub fn Month::equal(Self, Self) -> Bool
+pub fn Month::from_int(Int32) -> Self?
+pub fn Month::hash(Self) -> Int32
+pub fn Month::hash_combine(Self, Hasher) -> Unit
 pub fn Month::next(Self) -> Self
+pub fn Month::not_equal(Self, Self) -> Bool
+pub fn Month::op_ge(Self, Self) -> Bool
+pub fn Month::op_gt(Self, Self) -> Bool
+pub fn Month::op_le(Self, Self) -> Bool
+pub fn Month::op_lt(Self, Self) -> Bool
+pub fn Month::output(Self, &Logger) -> Unit
 pub fn Month::previous(Self) -> Self
-pub fn Month::to_int(Self) -> Int
+pub fn Month::to_int(Self) -> Int32
+pub fn Month::to_repr(Self) -> @debug.Repr
+pub fn Month::to_string(Self) -> String
 pub impl Show for Month
 
+#derive(Eq, Hash, @debug.Debug)
 pub(all) struct Period {
-  years : Int
-  months : Int
-  days : Int
-} derive(Eq, Hash, @debug.Debug)
-pub fn Period::days(Self) -> Int
+  years : Int32
+  months : Int32
+  days : Int32
+}
+pub fn Period::days(Self) -> Int32
+pub fn Period::equal(Self, Self) -> Bool
 pub fn Period::format(Self) -> String
+pub fn Period::hash(Self) -> Int32
+pub fn Period::hash_combine(Self, Hasher) -> Unit
 pub fn Period::is_zero(Self) -> Bool
 pub fn Period::minus(Self, Self) -> Self raise TempoError
-pub fn Period::months(Self) -> Int
+pub fn Period::months(Self) -> Int32
 pub fn Period::negated(Self) -> Self raise TempoError
 pub fn Period::normalized(Self) -> Self raise TempoError
-pub fn Period::of(Int, Int, Int) -> Self
-pub fn Period::of_days(Int) -> Self
-pub fn Period::of_months(Int) -> Self
-pub fn Period::of_weeks(Int) -> Self raise TempoError
-pub fn Period::of_years(Int) -> Self
+pub fn Period::not_equal(Self, Self) -> Bool
+pub fn Period::of(Int32, Int32, Int32) -> Self
+pub fn Period::of_days(Int32) -> Self
+pub fn Period::of_months(Int32) -> Self
+pub fn Period::of_weeks(Int32) -> Self raise TempoError
+pub fn Period::of_years(Int32) -> Self
+pub fn Period::output(Self, &Logger) -> Unit
 pub fn Period::parse(String) -> Self raise TempoError
 pub fn Period::plus(Self, Self) -> Self raise TempoError
+pub fn Period::to_repr(Self) -> @debug.Repr
+pub fn Period::to_string(Self) -> String
 pub fn Period::to_total_months(Self) -> Int64
-pub fn Period::years(Self) -> Int
+pub fn Period::years(Self) -> Int32
 pub fn Period::zero() -> Self
 pub impl Show for Period
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub(all) enum RoundMode {
   Floor
   Ceil
   HalfExpand
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
+pub fn RoundMode::compare(Self, Self) -> Int32
+pub fn RoundMode::equal(Self, Self) -> Bool
+pub fn RoundMode::hash(Self) -> Int32
+pub fn RoundMode::hash_combine(Self, Hasher) -> Unit
+pub fn RoundMode::not_equal(Self, Self) -> Bool
+pub fn RoundMode::op_ge(Self, Self) -> Bool
+pub fn RoundMode::op_gt(Self, Self) -> Bool
+pub fn RoundMode::op_le(Self, Self) -> Bool
+pub fn RoundMode::op_lt(Self, Self) -> Bool
+pub fn RoundMode::output(Self, &Logger) -> Unit
+pub fn RoundMode::to_repr(Self) -> @debug.Repr
+pub fn RoundMode::to_string(Self) -> String
 pub impl Show for RoundMode
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub struct Time {
-  hour : Int
-  minute : Int
-  second : Int
-  nanosecond : Int
-} derive(Compare, Eq, Hash, @debug.Debug)
+  hour : Int32
+  minute : Int32
+  second : Int32
+  nanosecond : Int32
+}
 pub fn Time::clamp(Self, Self, Self) -> Self
+pub fn Time::compare(Self, Self) -> Int32
+pub fn Time::equal(Self, Self) -> Bool
 pub fn Time::format(Self) -> String
+pub fn Time::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Time::hash(Self) -> Int32
+pub fn Time::hash_combine(Self, Hasher) -> Unit
 pub fn Time::is_after(Self, Self) -> Bool
 pub fn Time::is_before(Self, Self) -> Bool
 pub fn Time::max(Self, Self) -> Self
 pub fn Time::min(Self, Self) -> Self
-pub fn Time::new(Int, Int, Int, Int) -> Self raise TempoError
+pub fn Time::new(Int32, Int32, Int32, Int32) -> Self raise TempoError
+pub fn Time::not_equal(Self, Self) -> Bool
+pub fn Time::op_ge(Self, Self) -> Bool
+pub fn Time::op_gt(Self, Self) -> Bool
+pub fn Time::op_le(Self, Self) -> Bool
+pub fn Time::op_lt(Self, Self) -> Bool
+pub fn Time::output(Self, &Logger) -> Unit
 pub fn Time::parse(String) -> Self raise TempoError
-pub fn Time::with_hour(Self, Int) -> Self raise TempoError
-pub fn Time::with_minute(Self, Int) -> Self raise TempoError
-pub fn Time::with_nanosecond(Self, Int) -> Self raise TempoError
-pub fn Time::with_second(Self, Int) -> Self raise TempoError
+pub fn Time::to_json(Self) -> @json.Json
+pub fn Time::to_repr(Self) -> @debug.Repr
+pub fn Time::to_string(Self) -> String
+pub fn Time::with_hour(Self, Int32) -> Self raise TempoError
+pub fn Time::with_minute(Self, Int32) -> Self raise TempoError
+pub fn Time::with_nanosecond(Self, Int32) -> Self raise TempoError
+pub fn Time::with_second(Self, Int32) -> Self raise TempoError
 pub impl Show for Time
-pub impl ToJson for Time
 pub impl @json.FromJson for Time
+pub impl @json.ToJson for Time
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub(all) enum TimeUnit {
   Second
   Minute
   Hour
   Day
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
+pub fn TimeUnit::compare(Self, Self) -> Int32
+pub fn TimeUnit::equal(Self, Self) -> Bool
+pub fn TimeUnit::hash(Self) -> Int32
+pub fn TimeUnit::hash_combine(Self, Hasher) -> Unit
+pub fn TimeUnit::not_equal(Self, Self) -> Bool
+pub fn TimeUnit::op_ge(Self, Self) -> Bool
+pub fn TimeUnit::op_gt(Self, Self) -> Bool
+pub fn TimeUnit::op_le(Self, Self) -> Bool
+pub fn TimeUnit::op_lt(Self, Self) -> Bool
+pub fn TimeUnit::output(Self, &Logger) -> Unit
+pub fn TimeUnit::to_repr(Self) -> @debug.Repr
+pub fn TimeUnit::to_string(Self) -> String
 pub impl Show for TimeUnit
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub(all) enum Weekday {
   Monday
   Tuesday
@@ -291,28 +425,53 @@ pub(all) enum Weekday {
   Friday
   Saturday
   Sunday
-} derive(Compare, Eq, Hash, @debug.Debug)
-pub fn Weekday::from_int(Int) -> Self?
+}
+pub fn Weekday::compare(Self, Self) -> Int32
+pub fn Weekday::equal(Self, Self) -> Bool
+pub fn Weekday::from_int(Int32) -> Self?
+pub fn Weekday::hash(Self) -> Int32
+pub fn Weekday::hash_combine(Self, Hasher) -> Unit
 pub fn Weekday::next(Self) -> Self
-pub fn Weekday::number_from_monday(Self) -> Int
-pub fn Weekday::number_from_sunday(Self) -> Int
+pub fn Weekday::not_equal(Self, Self) -> Bool
+pub fn Weekday::number_from_monday(Self) -> Int32
+pub fn Weekday::number_from_sunday(Self) -> Int32
+pub fn Weekday::op_ge(Self, Self) -> Bool
+pub fn Weekday::op_gt(Self, Self) -> Bool
+pub fn Weekday::op_le(Self, Self) -> Bool
+pub fn Weekday::op_lt(Self, Self) -> Bool
+pub fn Weekday::output(Self, &Logger) -> Unit
 pub fn Weekday::previous(Self) -> Self
-pub fn Weekday::to_int(Self) -> Int
+pub fn Weekday::to_int(Self) -> Int32
+pub fn Weekday::to_repr(Self) -> @debug.Repr
+pub fn Weekday::to_string(Self) -> String
 pub impl Show for Weekday
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub(all) struct YearMonth {
-  year : Int
-  month : Int
-} derive(Compare, Eq, Hash, @debug.Debug)
-pub fn YearMonth::at_day(Self, Int) -> Date raise TempoError
+  year : Int32
+  month : Int32
+}
+pub fn YearMonth::at_day(Self, Int32) -> Date raise TempoError
 pub fn YearMonth::at_end_of_month(Self) -> Date
+pub fn YearMonth::compare(Self, Self) -> Int32
+pub fn YearMonth::equal(Self, Self) -> Bool
 pub fn YearMonth::format(Self) -> String
-pub fn YearMonth::length(Self) -> Int
+pub fn YearMonth::hash(Self) -> Int32
+pub fn YearMonth::hash_combine(Self, Hasher) -> Unit
+pub fn YearMonth::length(Self) -> Int32
 pub fn YearMonth::month_enum(Self) -> Month
-pub fn YearMonth::new(Int, Int) -> Self raise TempoError
+pub fn YearMonth::new(Int32, Int32) -> Self raise TempoError
+pub fn YearMonth::not_equal(Self, Self) -> Bool
+pub fn YearMonth::op_ge(Self, Self) -> Bool
+pub fn YearMonth::op_gt(Self, Self) -> Bool
+pub fn YearMonth::op_le(Self, Self) -> Bool
+pub fn YearMonth::op_lt(Self, Self) -> Bool
+pub fn YearMonth::output(Self, &Logger) -> Unit
 pub fn YearMonth::parse(String) -> Self raise TempoError
-pub fn YearMonth::plus_months(Self, Int) -> Self
-pub fn YearMonth::plus_years(Self, Int) -> Self
+pub fn YearMonth::plus_months(Self, Int32) -> Self
+pub fn YearMonth::plus_years(Self, Int32) -> Self
+pub fn YearMonth::to_repr(Self) -> @debug.Repr
+pub fn YearMonth::to_string(Self) -> String
 pub impl Show for YearMonth
 
 // Type aliases

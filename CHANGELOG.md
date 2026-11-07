@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Pinned CI and Copilot setup to matching MoonBit compiler/core archives with
+  SHA-256 verification on Linux x86-64 and macOS ARM64. Build and test gates now
+  reject warnings instead of silently accepting new compatibility warnings.
+- Updated for MoonBit `0.10.20+65efd5b93`: current formatter syntax, explicit
+  trait-method extensions preserving existing callers, and non-deprecated
+  full-string views.
 - Reformatted for the current `moon fmt`, which emits trailing commas in
   single-line record literals. No behavior change; required for the
   `moon fmt --check` CI gate. (#53)

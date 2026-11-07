@@ -2474,7 +2474,7 @@ test "core types are hash collection keys" {
     @tempo.Date::new(2024, 2, 29),
   ])
   assert_eq(date_set.contains(@tempo.Date::new(2024, 2, 29)), true)
-  let times : Map[@tempo.Time, Int] = Map([])
+  let times : Map[@tempo.Time, Int32] = Map([])
   times.set(@tempo.Time::new(9, 30, 0, 0), 1)
   times.set(@tempo.Time::new(17, 45, 30, 123), 2)
   assert_true(times.get(@tempo.Time::new(9, 30, 0, 0)) == Some(1))
@@ -2484,7 +2484,7 @@ test "core types are hash collection keys" {
     @tempo.Time::new(17, 45, 30, 123),
   ])
   assert_eq(time_set.contains(@tempo.Time::new(17, 45, 30, 123)), true)
-  let date_times : Map[@tempo.DateTime, Int] = Map([])
+  let date_times : Map[@tempo.DateTime, Int32] = Map([])
   date_times.set(@tempo.DateTime::parse("2024-01-01T00:00:00Z"), 1)
   date_times.set(@tempo.DateTime::parse("2024-02-29T12:30:00Z"), 2)
   assert_true(
@@ -3145,4 +3145,30 @@ test "Interval::to_duration returns end minus start" {
   let start = @tempo.DateTime::parse("2024-01-01T00:00:00Z")
   let range = interval(start, start.add(@tempo.Duration::hours(2L)))
   assert_eq(range.to_duration(), @tempo.Duration::hours(2L))
+}
+
+///|
+test "explicit trait methods remain callable" {
+  let date = @tempo.Date::new(2024, 3, 15)
+  let tomorrow = date.add_days(1)
+  assert_true(date.equal(date))
+  assert_true(date.not_equal(tomorrow))
+  assert_true(date.compare(tomorrow) < 0)
+  assert_true(date.op_lt(tomorrow))
+  assert_true(date.op_le(date))
+  assert_true(tomorrow.op_gt(date))
+  assert_true(date.op_ge(date))
+  assert_eq(date.hash(), @tempo.Date::new(2024, 3, 15).hash())
+  assert_eq(
+    date.to_repr().to_string(),
+    @tempo.Date::new(2024, 3, 15).to_repr().to_string(),
+  )
+  assert_eq(date.to_string(), date.format())
+  let _ = @tempo.Date::from_json
+  assert_eq((@json.from_json(date.to_json()) : @tempo.Date), date)
+  let hour = @tempo.Duration::hours(1L)
+  let minute = @tempo.Duration::minutes(1L)
+  assert_eq(hour.add(minute), hour + minute)
+  assert_eq(hour.sub(minute), hour - minute)
+  assert_eq(hour.neg(), -hour)
 }

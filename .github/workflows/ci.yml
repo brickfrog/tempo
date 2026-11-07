@@ -18,24 +18,24 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Set up MoonBit
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> $GITHUB_PATH
-
-      - name: Update stdlib
-        run: moon update
+        run: bash .github/scripts/setup-moonbit.sh
 
       - name: Check formatting
         run: moon fmt --check
 
+      - name: Check types and generated interface
+        run: |
+          moon check --frozen --deny-warn
+          git diff --exit-code -- src/pkg.generated.mbti
+
       - name: Build
-        run: moon build
+        run: moon build --frozen --deny-warn
 
       - name: Test (wasm-gc)
-        run: moon test --target wasm-gc
+        run: moon test --frozen --deny-warn --target wasm-gc
 
       - name: Test (js)
-        run: moon test --target js
+        run: moon test --frozen --deny-warn --target js
 
       - name: Test (native)
-        run: moon test --target native
+        run: moon test --frozen --deny-warn --target native
