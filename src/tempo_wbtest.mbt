@@ -4,7 +4,7 @@
 ///|
 test "civil_from_days roundtrip" {
   // Edge dates: epoch, year 1, year -1, far future, leap day
-  let cases : Array[(Int, Int, Int)] = [
+  let cases : Array[(Int32, Int32, Int32)] = [
     (1970, 1, 1),
     (1, 1, 1),
     (-1, 12, 31),

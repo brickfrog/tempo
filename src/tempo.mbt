@@ -19,11 +19,12 @@ pub impl Show for TempoError with fn output(self, logger) {
 
 ///|
 /// A calendar date in the proleptic Gregorian calendar (UTC).
+#derive(Eq, Compare, Hash, Debug)
 pub struct Date {
-  year : Int
-  month : Int // 1–12
-  day : Int // 1–31
-} derive(Eq, Compare, Hash, Debug)
+  year : Int32
+  month : Int32 // 1–12
+  day : Int32 // 1–31
+}
 
 ///|
 /// A calendar-aware date period stored as exact year, month, and day fields.
@@ -31,18 +32,20 @@ pub struct Date {
 /// This is a calendar-field vector, not an elapsed-time scalar. It is never
 /// auto-canonicalized: fifteen months stays fifteen months, and thirty days
 /// never becomes one month.
+#derive(Eq, Hash, Debug)
 pub(all) struct Period {
-  years : Int
-  months : Int
-  days : Int
-} derive(Eq, Hash, Debug)
+  years : Int32
+  months : Int32
+  days : Int32
+}
 
 ///|
 /// A calendar year and month in the proleptic Gregorian calendar.
+#derive(Eq, Compare, Hash, Debug)
 pub(all) struct YearMonth {
-  year : Int
-  month : Int // 1–12
-} derive(Eq, Compare, Hash, Debug)
+  year : Int32
+  month : Int32 // 1–12
+}
 
 ///|
 /// A calendar date interval with an inclusive end date: `[start, end]`.
@@ -51,13 +54,15 @@ pub(all) struct YearMonth {
 /// DateInterval is inclusive-end for whole calendar dates, while `Interval` is
 /// half-open for instants. Assumes `start <= end`; methods do not validate
 /// inverted intervals.
+#derive(Eq, Debug)
 pub(all) struct DateInterval {
   start : Date
   end : Date
-} derive(Eq, Debug)
+}
 
 ///|
 /// ISO 8601 weekday, ordered Monday through Sunday.
+#derive(Eq, Compare, Hash, Debug)
 pub(all) enum Weekday {
   Monday
   Tuesday
@@ -66,11 +71,11 @@ pub(all) enum Weekday {
   Friday
   Saturday
   Sunday
-} derive(Eq, Compare, Hash, Debug)
+}
 
 ///|
 /// ISO 8601 weekday number: Monday = 1 through Sunday = 7.
-pub fn Weekday::to_int(self : Weekday) -> Int {
+pub fn Weekday::to_int(self : Weekday) -> Int32 {
   match self {
     Monday => 1
     Tuesday => 2
@@ -84,7 +89,7 @@ pub fn Weekday::to_int(self : Weekday) -> Int {
 
 ///|
 /// Convert an ISO weekday number (1..7) to a `Weekday`.
-pub fn Weekday::from_int(n : Int) -> Weekday? {
+pub fn Weekday::from_int(n : Int32) -> Weekday? {
   match n {
     1 => Some(Monday)
     2 => Some(Tuesday)
@@ -99,13 +104,13 @@ pub fn Weekday::from_int(n : Int) -> Weekday? {
 
 ///|
 /// ISO 8601 weekday number: Monday = 1 through Sunday = 7.
-pub fn Weekday::number_from_monday(self : Weekday) -> Int {
+pub fn Weekday::number_from_monday(self : Weekday) -> Int32 {
   self.to_int()
 }
 
 ///|
 /// Sunday-based weekday number: Sunday = 1 through Saturday = 7.
-pub fn Weekday::number_from_sunday(self : Weekday) -> Int {
+pub fn Weekday::number_from_sunday(self : Weekday) -> Int32 {
   match self {
     Sunday => 1
     Monday => 2
@@ -160,6 +165,7 @@ pub impl Show for Weekday with fn output(self, logger) {
 
 ///|
 /// Calendar month, ordered January through December.
+#derive(Eq, Compare, Hash, Debug)
 pub(all) enum Month {
   January
   February
@@ -173,11 +179,11 @@ pub(all) enum Month {
   October
   November
   December
-} derive(Eq, Compare, Hash, Debug)
+}
 
 ///|
 /// Calendar month number: January = 1 through December = 12.
-pub fn Month::to_int(self : Month) -> Int {
+pub fn Month::to_int(self : Month) -> Int32 {
   match self {
     January => 1
     February => 2
@@ -196,7 +202,7 @@ pub fn Month::to_int(self : Month) -> Int {
 
 ///|
 /// Convert a calendar month number (1..12) to a `Month`.
-pub fn Month::from_int(n : Int) -> Month? {
+pub fn Month::from_int(n : Int32) -> Month? {
   match n {
     1 => Some(January)
     2 => Some(February)
@@ -254,7 +260,7 @@ pub fn Month::previous(self : Month) -> Month {
 
 ///|
 /// Number of days in this month for `year`.
-pub fn Month::days_in(self : Month, year : Int) -> Int {
+pub fn Month::days_in(self : Month, year : Int32) -> Int32 {
   days_in_month(year, self.to_int())
 }
 
@@ -278,22 +284,24 @@ pub impl Show for Month with fn output(self, logger) {
 
 ///|
 /// A time of day with nanosecond precision (UTC).
+#derive(Eq, Compare, Hash, Debug)
 pub struct Time {
-  hour : Int // 0–23
-  minute : Int // 0–59
-  second : Int // 0–59
-  nanosecond : Int // 0–999_999_999
-} derive(Eq, Compare, Hash, Debug)
+  hour : Int32 // 0–23
+  minute : Int32 // 0–59
+  second : Int32 // 0–59
+  nanosecond : Int32 // 0–999_999_999
+}
 
 ///|
 /// Units supported by `DateTime::truncate_to` and `DateTime::round_to`, ordered
 /// smallest to largest.
+#derive(Eq, Compare, Hash, Debug)
 pub(all) enum TimeUnit {
   Second
   Minute
   Hour
   Day
-} derive(Eq, Compare, Hash, Debug)
+}
 
 ///|
 pub impl Show for TimeUnit with fn output(self, logger) {
@@ -308,11 +316,12 @@ pub impl Show for TimeUnit with fn output(self, logger) {
 ///|
 /// Rounding modes for `DateTime::round_to`, ordered from earlier-boundary
 /// preference to nearest-boundary behavior.
+#derive(Eq, Compare, Hash, Debug)
 pub(all) enum RoundMode {
   Floor
   Ceil
   HalfExpand
-} derive(Eq, Compare, Hash, Debug)
+}
 
 ///|
 pub impl Show for RoundMode with fn output(self, logger) {
@@ -325,10 +334,11 @@ pub impl Show for RoundMode with fn output(self, logger) {
 
 ///|
 /// A combined UTC date and time.
+#derive(Eq, Compare, Hash, Debug)
 pub struct DateTime {
   date : Date
   time : Time
-} derive(Eq, Compare, Hash, Debug)
+}
 
 ///|
 /// A UTC instant paired with a fixed numeric display offset.
@@ -337,10 +347,11 @@ pub struct DateTime {
 /// for wire formats and interop surfaces where a timestamp carries an explicit
 /// numeric offset but no IANA time zone. The stored instant is normalized UTC;
 /// the offset is retained only as a display hint.
+#derive(Eq, Compare, Hash, Debug)
 pub struct FixedOffsetDateTime {
   priv utc : DateTime
-  priv offset_seconds : Int
-} derive(Eq, Compare, Hash, Debug)
+  priv offset_seconds : Int32
+}
 
 ///|
 /// A DateTime interval with a half-open end instant: `[start, end)`.
@@ -349,29 +360,31 @@ pub struct FixedOffsetDateTime {
 /// `DateInterval` is inclusive-end for calendar dates, while Interval is
 /// half-open for instants. Assumes `start <= end`; methods do not validate
 /// inverted intervals.
+#derive(Eq, Debug)
 pub(all) struct Interval {
   start : DateTime
   end : DateTime
-} derive(Eq, Debug)
+}
 
 ///|
 /// A signed duration stored as total nanoseconds.
+#derive(Eq, Compare, Hash, Debug)
 pub struct Duration {
   nanoseconds : Int64
-} derive(Eq, Compare, Hash, Debug)
+}
 
 // ─── Calendar helpers ─────────────────────────────────────────────────────────
 
 ///|
 /// `true` if `year` is a leap year in the proleptic Gregorian calendar.
-pub fn is_leap_year(year : Int) -> Bool {
+pub fn is_leap_year(year : Int32) -> Bool {
   (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
 }
 
 ///|
 /// Number of days in the given month (1–12). Returns `0` for invalid month
 /// values outside 1–12.
-pub fn days_in_month(year : Int, month : Int) -> Int {
+pub fn days_in_month(year : Int32, month : Int32) -> Int32 {
   match month {
     1 | 3 | 5 | 7 | 8 | 10 | 12 => 31
     4 | 6 | 9 | 11 => 30
@@ -395,7 +408,7 @@ fn floor_div64(a : Int64, b : Int64) -> Int64 {
 // Howard Hinnant's civil_from_days: days-since-epoch -> (year, month, day)
 
 ///|
-fn civil_from_shifted_days(z : Int64) -> (Int64, Int, Int) {
+fn civil_from_shifted_days(z : Int64) -> (Int64, Int32, Int32) {
   let era = floor_div64(z, 146097L)
   let doe = (z - era * 146097L).to_int() // 0..146096
   let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365 // 0..399
@@ -409,18 +422,18 @@ fn civil_from_shifted_days(z : Int64) -> (Int64, Int, Int) {
 }
 
 ///|
-fn civil_from_days64(z : Int64) -> (Int64, Int, Int) {
+fn civil_from_days64(z : Int64) -> (Int64, Int32, Int32) {
   civil_from_shifted_days(z + 719468L)
 }
 
 ///|
-fn civil_from_days(z : Int64) -> (Int, Int, Int) {
+fn civil_from_days(z : Int64) -> (Int32, Int32, Int32) {
   let (y64, m, d) = civil_from_days64(z)
   (y64.to_int(), m, d)
 }
 
 ///|
-fn civil_from_days_checked(z : Int64) -> (Int, Int, Int) raise TempoError {
+fn civil_from_days_checked(z : Int64) -> (Int32, Int32, Int32) raise TempoError {
   let shifted = match checked_i64_add(z, 719468L) {
     Some(shifted) => shifted
     None => raise TempoError("date epoch day overflows Int64")
@@ -433,7 +446,7 @@ fn civil_from_days_checked(z : Int64) -> (Int, Int, Int) raise TempoError {
 // Howard Hinnant's days_from_civil: (year, month, day) -> days-since-epoch
 
 ///|
-fn days_from_civil64(year : Int64, month : Int, day : Int) -> Int64 {
+fn days_from_civil64(year : Int64, month : Int32, day : Int32) -> Int64 {
   let y = if month <= 2 { year - 1L } else { year }
   let era = floor_div64(y, 400L)
   let yoe = y - era * 400L // 0..399
@@ -444,7 +457,7 @@ fn days_from_civil64(year : Int64, month : Int, day : Int) -> Int64 {
 }
 
 ///|
-fn days_from_civil(year : Int, month : Int, day : Int) -> Int64 {
+fn days_from_civil(year : Int32, month : Int32, day : Int32) -> Int64 {
   days_from_civil64(year.to_int64(), month, day)
 }
 
@@ -453,7 +466,11 @@ fn days_from_civil(year : Int, month : Int, day : Int) -> Int64 {
 ///|
 /// Create a `Date`, validating that `month` is 1–12 and `day` fits the
 /// calendar month (accounting for leap years in February).
-pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
+pub fn Date::new(
+  year : Int32,
+  month : Int32,
+  day : Int32,
+) -> Date raise TempoError {
   if month < 1 || month > 12 {
     raise TempoError("month \{month} out of range 1–12")
   }
@@ -470,7 +487,7 @@ pub fn Date::new(year : Int, month : Int, day : Int) -> Date raise TempoError {
 fn int64_to_int_checked(
   value : Int64,
   context : String,
-) -> Int raise TempoError {
+) -> Int32 raise TempoError {
   if value < @int.MIN_VALUE.to_int64() || value > @int.MAX_VALUE.to_int64() {
     raise TempoError("\{context} overflows Int")
   }
@@ -478,17 +495,25 @@ fn int64_to_int_checked(
 }
 
 ///|
-fn checked_int_add(a : Int, b : Int, context : String) -> Int raise TempoError {
+fn checked_int_add(
+  a : Int32,
+  b : Int32,
+  context : String,
+) -> Int32 raise TempoError {
   int64_to_int_checked(a.to_int64() + b.to_int64(), context)
 }
 
 ///|
-fn checked_int_sub(a : Int, b : Int, context : String) -> Int raise TempoError {
+fn checked_int_sub(
+  a : Int32,
+  b : Int32,
+  context : String,
+) -> Int32 raise TempoError {
   int64_to_int_checked(a.to_int64() - b.to_int64(), context)
 }
 
 ///|
-fn checked_int_neg(a : Int, context : String) -> Int raise TempoError {
+fn checked_int_neg(a : Int32, context : String) -> Int32 raise TempoError {
   if a == @int.MIN_VALUE {
     raise TempoError("\{context} overflows Int")
   }
@@ -497,31 +522,31 @@ fn checked_int_neg(a : Int, context : String) -> Int raise TempoError {
 
 ///|
 /// Create a `Period`, storing the year, month, and day fields exactly.
-pub fn Period::of(years : Int, months : Int, days : Int) -> Period {
+pub fn Period::of(years : Int32, months : Int32, days : Int32) -> Period {
   { years, months, days, }
 }
 
 ///|
 /// Create a `Period` with only a year field.
-pub fn Period::of_years(years : Int) -> Period {
+pub fn Period::of_years(years : Int32) -> Period {
   { years, months: 0, days: 0, }
 }
 
 ///|
 /// Create a `Period` with only a month field.
-pub fn Period::of_months(months : Int) -> Period {
+pub fn Period::of_months(months : Int32) -> Period {
   { years: 0, months, days: 0, }
 }
 
 ///|
 /// Create a `Period` with only a day field.
-pub fn Period::of_days(days : Int) -> Period {
+pub fn Period::of_days(days : Int32) -> Period {
   { years: 0, months: 0, days, }
 }
 
 ///|
 /// Create a `Period` from whole weeks, stored as days.
-pub fn Period::of_weeks(weeks : Int) -> Period raise TempoError {
+pub fn Period::of_weeks(weeks : Int32) -> Period raise TempoError {
   let days = int64_to_int_checked(weeks.to_int64() * 7L, "period weeks")
   { years: 0, months: 0, days, }
 }
@@ -534,19 +559,19 @@ pub fn Period::zero() -> Period {
 
 ///|
 /// Year field accessor.
-pub fn Period::years(self : Period) -> Int {
+pub fn Period::years(self : Period) -> Int32 {
   self.years
 }
 
 ///|
 /// Month field accessor.
-pub fn Period::months(self : Period) -> Int {
+pub fn Period::months(self : Period) -> Int32 {
   self.months
 }
 
 ///|
 /// Day field accessor.
-pub fn Period::days(self : Period) -> Int {
+pub fn Period::days(self : Period) -> Int32 {
   self.days
 }
 
@@ -609,8 +634,8 @@ pub fn Period::is_zero(self : Period) -> Bool {
 /// Create a `Date` from `year` and day-of-year in 1..365, or 1..366 for a
 /// leap year.
 pub fn Date::from_ordinal(
-  year : Int,
-  day_of_year : Int,
+  year : Int32,
+  day_of_year : Int32,
 ) -> Date raise TempoError {
   let days_in_year = if is_leap_year(year) { 366 } else { 365 }
   if day_of_year < 1 || day_of_year > days_in_year {
@@ -621,7 +646,10 @@ pub fn Date::from_ordinal(
 
 ///|
 /// Create a `YearMonth`, validating that `month` is 1–12.
-pub fn YearMonth::new(year : Int, month : Int) -> YearMonth raise TempoError {
+pub fn YearMonth::new(
+  year : Int32,
+  month : Int32,
+) -> YearMonth raise TempoError {
   if month < 1 || month > 12 {
     raise TempoError("month \{month} out of range 1–12")
   }
@@ -631,7 +659,11 @@ pub fn YearMonth::new(year : Int, month : Int) -> YearMonth raise TempoError {
 // ─── Date arithmetic ──────────────────────────────────────────────────────────
 
 ///|
-fn shift_year_month(year : Int, month : Int, months : Int64) -> (Int, Int) {
+fn shift_year_month(
+  year : Int32,
+  month : Int32,
+  months : Int64,
+) -> (Int32, Int32) {
   let total = year.to_int64() * 12L + (month - 1).to_int64() + months
   let new_year = floor_div64(total, 12L).to_int()
   let new_month = floor_mod64(total, 12L).to_int() + 1
@@ -648,10 +680,10 @@ fn Date::add_months64(self : Date, months : Int64) -> Date {
 
 ///|
 fn checked_shift_year_month(
-  year : Int,
-  month : Int,
+  year : Int32,
+  month : Int32,
   months : Int64,
-) -> (Int, Int) raise TempoError {
+) -> (Int32, Int32) raise TempoError {
   let base = year.to_int64() * 12L + (month - 1).to_int64()
   let total = match checked_i64_add(base, months) {
     Some(total) => total
@@ -685,14 +717,14 @@ fn Date::add_months64_checked(
 ///
 /// This infallible operation wraps if the resulting year falls outside the
 /// `Int` year envelope. Use `Date::add_months_checked` to get `None` instead.
-pub fn Date::add_months(self : Date, months : Int) -> Date {
+pub fn Date::add_months(self : Date, months : Int32) -> Date {
   self.add_months64(months.to_int64())
 }
 
 ///|
 /// Add a signed number of calendar months, returning `None` if the resulting
 /// year cannot be represented by `Date`'s `Int` year field.
-pub fn Date::add_months_checked(self : Date, months : Int) -> Date? {
+pub fn Date::add_months_checked(self : Date, months : Int32) -> Date? {
   Some(self.add_months64_checked(months.to_int64())) catch {
     TempoError(_) => None
   }
@@ -707,14 +739,14 @@ pub fn Date::add_months_checked(self : Date, months : Int) -> Date? {
 ///
 /// This infallible operation wraps if the resulting year falls outside the
 /// `Int` year envelope. Use `Date::add_years_checked` to get `None` instead.
-pub fn Date::add_years(self : Date, years : Int) -> Date {
+pub fn Date::add_years(self : Date, years : Int32) -> Date {
   self.add_months64(years.to_int64() * 12L)
 }
 
 ///|
 /// Add a signed number of calendar years, returning `None` if the resulting
 /// year cannot be represented by `Date`'s `Int` year field.
-pub fn Date::add_years_checked(self : Date, years : Int) -> Date? {
+pub fn Date::add_years_checked(self : Date, years : Int32) -> Date? {
   Some(self.add_months64_checked(years.to_int64() * 12L)) catch {
     TempoError(_) => None
   }
@@ -739,19 +771,19 @@ fn YearMonth::plus_months64(self : YearMonth, months : Int64) -> YearMonth {
 
 ///|
 /// Add a signed number of calendar months to this year-month.
-pub fn YearMonth::plus_months(self : YearMonth, months : Int) -> YearMonth {
+pub fn YearMonth::plus_months(self : YearMonth, months : Int32) -> YearMonth {
   self.plus_months64(months.to_int64())
 }
 
 ///|
 /// Add a signed number of calendar years to this year-month.
-pub fn YearMonth::plus_years(self : YearMonth, years : Int) -> YearMonth {
+pub fn YearMonth::plus_years(self : YearMonth, years : Int32) -> YearMonth {
   self.plus_months64(years.to_int64() * 12L)
 }
 
 ///|
 /// Return a copy of this date with `year` replaced, validating the result.
-pub fn Date::with_year(self : Date, year : Int) -> Date raise TempoError {
+pub fn Date::with_year(self : Date, year : Int32) -> Date raise TempoError {
   Date::new(year, self.month, self.day)
 }
 
@@ -760,7 +792,7 @@ pub fn Date::with_year(self : Date, year : Int) -> Date raise TempoError {
 ///
 /// This does not clamp. Chaining with `with_day` can raise on an intermediate
 /// invalid date before a later update would make it valid.
-pub fn Date::with_month(self : Date, month : Int) -> Date raise TempoError {
+pub fn Date::with_month(self : Date, month : Int32) -> Date raise TempoError {
   Date::new(self.year, month, self.day)
 }
 
@@ -769,7 +801,7 @@ pub fn Date::with_month(self : Date, month : Int) -> Date raise TempoError {
 ///
 /// This does not clamp. Chaining with `with_month` can raise on an intermediate
 /// invalid date before a later update would make it valid.
-pub fn Date::with_day(self : Date, day : Int) -> Date raise TempoError {
+pub fn Date::with_day(self : Date, day : Int32) -> Date raise TempoError {
   Date::new(self.year, self.month, day)
 }
 
@@ -799,7 +831,7 @@ pub fn Date::end_of_year(self : Date) -> Date {
 
 ///|
 /// Calendar quarter number in 1..4.
-pub fn Date::quarter(self : Date) -> Int {
+pub fn Date::quarter(self : Date) -> Int32 {
   match self.month {
     1 | 2 | 3 => 1
     4 | 5 | 6 => 2
@@ -817,7 +849,7 @@ pub fn Date::is_leap(self : Date) -> Bool {
 
 ///|
 /// Number of days in this date's calendar year.
-pub fn Date::days_in_year(self : Date) -> Int {
+pub fn Date::days_in_year(self : Date) -> Int32 {
   if self.is_leap() {
     366
   } else {
@@ -850,7 +882,7 @@ pub fn Date::end_of_quarter(self : Date) -> Date {
 ///
 /// This infallible operation wraps if the resulting year falls outside the
 /// `Int` year envelope. Use `Date::add_days_checked` to get `None` instead.
-pub fn Date::add_days(self : Date, days : Int) -> Date {
+pub fn Date::add_days(self : Date, days : Int32) -> Date {
   let base = days_from_civil(self.year, self.month, self.day)
   let (y, m, d) = civil_from_days(base + days.to_int64())
   { year: y, month: m, day: d, }
@@ -859,7 +891,7 @@ pub fn Date::add_days(self : Date, days : Int) -> Date {
 ///|
 fn Date::add_days_checked_or_raise(
   self : Date,
-  days : Int,
+  days : Int32,
 ) -> Date raise TempoError {
   let base = days_from_civil(self.year, self.month, self.day)
   let target = match checked_i64_add(base, days.to_int64()) {
@@ -873,21 +905,21 @@ fn Date::add_days_checked_or_raise(
 ///|
 /// Add a signed number of calendar days, returning `None` if the resulting year
 /// cannot be represented by `Date`'s `Int` year field.
-pub fn Date::add_days_checked(self : Date, days : Int) -> Date? {
+pub fn Date::add_days_checked(self : Date, days : Int32) -> Date? {
   Some(self.add_days_checked_or_raise(days)) catch {
     TempoError(_) => None
   }
 }
 
 ///|
-fn day_of_week_from_epoch_day(d : Int64) -> Int {
+fn day_of_week_from_epoch_day(d : Int64) -> Int32 {
   // Align so Monday (1970-01-05, etc.) is remainder 0.
   floor_mod64(d - 4L, 7L).to_int() + 1
 }
 
 ///|
 /// ISO 8601 weekday: Monday = 1 through Sunday = 7.
-pub fn Date::day_of_week(self : Date) -> Int {
+pub fn Date::day_of_week(self : Date) -> Int32 {
   let d = days_from_civil(self.year, self.month, self.day)
   day_of_week_from_epoch_day(d)
 }
@@ -914,7 +946,7 @@ fn iso_week1_monday_days64(week_year : Int64) -> Int64 {
 }
 
 ///|
-fn iso_weeks_in_year(week_year : Int) -> Int {
+fn iso_weeks_in_year(week_year : Int32) -> Int32 {
   let jan1 = days_from_civil(week_year, 1, 1)
   let jan1_weekday = day_of_week_from_epoch_day(jan1)
   if jan1_weekday == 4 || (jan1_weekday == 3 && is_leap_year(week_year)) {
@@ -943,13 +975,13 @@ fn Date::iso_week_year64(self : Date) -> Int64 {
 /// outside the representable `Int` range. This infallible accessor wraps in that
 /// residual case; `Date::format_iso_week` still formats the true expanded ISO
 /// week-year text.
-pub fn Date::iso_week_year(self : Date) -> Int {
+pub fn Date::iso_week_year(self : Date) -> Int32 {
   self.iso_week_year64().to_int()
 }
 
 ///|
 /// ISO 8601 week number in 1..53 for this date.
-pub fn Date::iso_week(self : Date) -> Int {
+pub fn Date::iso_week(self : Date) -> Int32 {
   let week_year = self.iso_week_year64()
   let week1 = iso_week1_monday_days64(week_year)
   ((self.epoch_day() - week1) / 7L).to_int() + 1
@@ -963,9 +995,9 @@ pub fn Date::iso_week(self : Date) -> Int {
 /// Raises `TempoError` if the ISO week fields are invalid or if the computed
 /// calendar date falls outside `Date`'s representable `Int` year envelope.
 pub fn Date::from_iso_week(
-  week_year : Int,
-  week : Int,
-  weekday : Int,
+  week_year : Int32,
+  week : Int32,
+  weekday : Int32,
 ) -> Date raise TempoError {
   let max_week = iso_weeks_in_year(week_year)
   if week < 1 || week > max_week {
@@ -997,7 +1029,7 @@ pub fn Date::format_iso_week(self : Date) -> String {
 }
 
 ///|
-fn positive_mod7(n : Int) -> Int {
+fn positive_mod7(n : Int32) -> Int32 {
   (n % 7 + 7) % 7
 }
 
@@ -1037,10 +1069,10 @@ pub fn Date::previous_or_same(self : Date, wd : Weekday) -> Date {
 /// Positive `n` counts from the start of the month; negative `n` counts from
 /// the end, so `n == -1` is the last occurrence.
 pub fn Date::nth_weekday_of_month(
-  year : Int,
-  month : Int,
+  year : Int32,
+  month : Int32,
   wd : Weekday,
-  n : Int,
+  n : Int32,
 ) -> Date raise TempoError {
   if n == 0 {
     raise TempoError("weekday occurrence must not be zero")
@@ -1091,13 +1123,16 @@ pub fn YearMonth::month_enum(self : YearMonth) -> Month {
 
 ///|
 /// Number of days in this year-month.
-pub fn YearMonth::length(self : YearMonth) -> Int {
+pub fn YearMonth::length(self : YearMonth) -> Int32 {
   self.month_enum().days_in(self.year)
 }
 
 ///|
 /// Return the date in this year-month at `day`, validating the day.
-pub fn YearMonth::at_day(self : YearMonth, day : Int) -> Date raise TempoError {
+pub fn YearMonth::at_day(
+  self : YearMonth,
+  day : Int32,
+) -> Date raise TempoError {
   Date::new(self.year, self.month, day)
 }
 
@@ -1109,7 +1144,7 @@ pub fn YearMonth::at_end_of_month(self : YearMonth) -> Date {
 
 ///|
 /// Day of year in 1..366 (1 = January 1).
-pub fn Date::day_of_year(self : Date) -> Int {
+pub fn Date::day_of_year(self : Date) -> Int32 {
   let y = self.year
   let start = days_from_civil(y, 1, 1)
   let today = days_from_civil(self.year, self.month, self.day)
@@ -1128,7 +1163,7 @@ fn Date::proleptic_month(self : Date) -> Int64 {
 
 ///|
 /// Calendar days from `self` to `other` (`other` minus `self`). Negative if `other` is earlier.
-pub fn Date::days_until(self : Date, other : Date) -> Int {
+pub fn Date::days_until(self : Date, other : Date) -> Int32 {
   let a = self.epoch_day()
   let b = other.epoch_day()
   (b - a).to_int()
@@ -1238,7 +1273,7 @@ pub fn DateInterval::intersection(
 
 ///|
 /// Inclusive day count for this date interval.
-pub fn DateInterval::length_in_days(self : DateInterval) -> Int {
+pub fn DateInterval::length_in_days(self : DateInterval) -> Int32 {
   self.start.days_until(self.end) + 1
 }
 
@@ -1250,7 +1285,7 @@ fn floor_mod64(a : Int64, b : Int64) -> Int64 {
 ///|
 /// Parse a calendar date in 'YYYY-MM-DD' format.
 pub fn Date::parse(s : String) -> Date raise TempoError {
-  let v = s.view()
+  let v = s.exact_view()
   let (year, v) = parse_digits(v, 4)
   let v = consume(v, '-')
   let (month, v) = parse_digits(v, 2)
@@ -1270,7 +1305,7 @@ pub fn Date::parse(s : String) -> Date raise TempoError {
 /// exactly 3 digits for the day-of-year, and end-of-input. Expanded-year output
 /// from `Date::format_ordinal` is not accepted.
 pub fn Date::parse_ordinal(s : String) -> Date raise TempoError {
-  let v = s.view()
+  let v = s.exact_view()
   let (year, v) = parse_digits(v, 4)
   let v = consume(v, '-')
   let (day_of_year, v) = parse_digits(v, 3)
@@ -1290,7 +1325,7 @@ pub fn Date::parse_ordinal(s : String) -> Date raise TempoError {
 /// weekday, and end-of-input. Expanded-year output from `Date::format_iso_week`
 /// is not accepted.
 pub fn Date::parse_iso_week(s : String) -> Date raise TempoError {
-  let v = s.view()
+  let v = s.exact_view()
   let (week_year, v) = parse_digits(v, 4)
   let v = consume(v, '-')
   let v = consume(v, 'W')
@@ -1307,7 +1342,7 @@ pub fn Date::parse_iso_week(s : String) -> Date raise TempoError {
 ///|
 /// Parse a calendar year-month in 'YYYY-MM' format.
 pub fn YearMonth::parse(s : String) -> YearMonth raise TempoError {
-  let v = s.view()
+  let v = s.exact_view()
   let (year, v) = parse_digits(v, 4)
   let v = consume(v, '-')
   let (month, v) = parse_digits(v, 2)
@@ -1344,10 +1379,10 @@ pub fn YearMonth::format(self : YearMonth) -> String {
 /// Create a `Time`, validating that each field is within its canonical range:
 /// `hour` 0–23, `minute` 0–59, `second` 0–59, `nanosecond` 0–999_999_999.
 pub fn Time::new(
-  hour : Int,
-  minute : Int,
-  second : Int,
-  nanosecond : Int,
+  hour : Int32,
+  minute : Int32,
+  second : Int32,
+  nanosecond : Int32,
 ) -> Time raise TempoError {
   if hour < 0 || hour > 23 {
     raise TempoError("hour \{hour} out of range 0–23")
@@ -1366,19 +1401,19 @@ pub fn Time::new(
 
 ///|
 /// Return a copy of this time with `hour` replaced, validating the result.
-pub fn Time::with_hour(self : Time, hour : Int) -> Time raise TempoError {
+pub fn Time::with_hour(self : Time, hour : Int32) -> Time raise TempoError {
   Time::new(hour, self.minute, self.second, self.nanosecond)
 }
 
 ///|
 /// Return a copy of this time with `minute` replaced, validating the result.
-pub fn Time::with_minute(self : Time, minute : Int) -> Time raise TempoError {
+pub fn Time::with_minute(self : Time, minute : Int32) -> Time raise TempoError {
   Time::new(self.hour, minute, self.second, self.nanosecond)
 }
 
 ///|
 /// Return a copy of this time with `second` replaced, validating the result.
-pub fn Time::with_second(self : Time, second : Int) -> Time raise TempoError {
+pub fn Time::with_second(self : Time, second : Int32) -> Time raise TempoError {
   Time::new(self.hour, self.minute, second, self.nanosecond)
 }
 
@@ -1386,7 +1421,7 @@ pub fn Time::with_second(self : Time, second : Int) -> Time raise TempoError {
 /// Return a copy of this time with `nanosecond` replaced, validating the result.
 pub fn Time::with_nanosecond(
   self : Time,
-  nanosecond : Int,
+  nanosecond : Int32,
 ) -> Time raise TempoError {
   Time::new(self.hour, self.minute, self.second, nanosecond)
 }
@@ -1467,14 +1502,16 @@ pub fn DateTime::to_time(self : DateTime) -> Time {
 /// is outside the RFC 3339 fixed-offset range ±23:59.
 pub fn FixedOffsetDateTime::from_datetime_and_offset(
   utc : DateTime,
-  offset_seconds : Int,
+  offset_seconds : Int32,
 ) -> FixedOffsetDateTime raise TempoError {
   validate_fixed_offset_seconds(offset_seconds)
   { utc, offset_seconds, }
 }
 
 ///|
-fn validate_fixed_offset_seconds(offset_seconds : Int) -> Unit raise TempoError {
+fn validate_fixed_offset_seconds(
+  offset_seconds : Int32,
+) -> Unit raise TempoError {
   if offset_seconds % 60 != 0 {
     raise TempoError("fixed offset must be whole-minute granularity")
   }
@@ -1492,7 +1529,7 @@ pub fn FixedOffsetDateTime::to_utc(self : FixedOffsetDateTime) -> DateTime {
 
 ///|
 /// Return the retained fixed display offset in seconds.
-pub fn FixedOffsetDateTime::offset_seconds(self : FixedOffsetDateTime) -> Int {
+pub fn FixedOffsetDateTime::offset_seconds(self : FixedOffsetDateTime) -> Int32 {
   self.offset_seconds
 }
 
@@ -1512,7 +1549,7 @@ pub fn DateTime::with_time(self : DateTime, time : Time) -> DateTime {
 /// Return a copy of this `DateTime` with its date year replaced.
 pub fn DateTime::with_year(
   self : DateTime,
-  year : Int,
+  year : Int32,
 ) -> DateTime raise TempoError {
   { ..self, date: self.date.with_year(year), }
 }
@@ -1521,7 +1558,7 @@ pub fn DateTime::with_year(
 /// Return a copy of this `DateTime` with its date month replaced.
 pub fn DateTime::with_month(
   self : DateTime,
-  month : Int,
+  month : Int32,
 ) -> DateTime raise TempoError {
   { ..self, date: self.date.with_month(month), }
 }
@@ -1530,7 +1567,7 @@ pub fn DateTime::with_month(
 /// Return a copy of this `DateTime` with its date day replaced.
 pub fn DateTime::with_day(
   self : DateTime,
-  day : Int,
+  day : Int32,
 ) -> DateTime raise TempoError {
   { ..self, date: self.date.with_day(day), }
 }
@@ -1539,7 +1576,7 @@ pub fn DateTime::with_day(
 /// Return a copy of this `DateTime` with its time hour replaced.
 pub fn DateTime::with_hour(
   self : DateTime,
-  hour : Int,
+  hour : Int32,
 ) -> DateTime raise TempoError {
   { ..self, time: self.time.with_hour(hour), }
 }
@@ -1548,7 +1585,7 @@ pub fn DateTime::with_hour(
 /// Return a copy of this `DateTime` with its time minute replaced.
 pub fn DateTime::with_minute(
   self : DateTime,
-  minute : Int,
+  minute : Int32,
 ) -> DateTime raise TempoError {
   { ..self, time: self.time.with_minute(minute), }
 }
@@ -1557,7 +1594,7 @@ pub fn DateTime::with_minute(
 /// Return a copy of this `DateTime` with its time second replaced.
 pub fn DateTime::with_second(
   self : DateTime,
-  second : Int,
+  second : Int32,
 ) -> DateTime raise TempoError {
   { ..self, time: self.time.with_second(second), }
 }
@@ -1566,7 +1603,7 @@ pub fn DateTime::with_second(
 /// Return a copy of this `DateTime` with its time nanosecond replaced.
 pub fn DateTime::with_nanosecond(
   self : DateTime,
-  nanosecond : Int,
+  nanosecond : Int32,
 ) -> DateTime raise TempoError {
   { ..self, time: self.time.with_nanosecond(nanosecond), }
 }
@@ -2045,7 +2082,7 @@ pub fn Duration::is_positive(self : Duration) -> Bool {
 
 ///|
 /// Sign of this duration: `-1` for negative, `0` for zero, `1` for positive.
-pub fn Duration::signum(self : Duration) -> Int {
+pub fn Duration::signum(self : Duration) -> Int32 {
   if self.nanoseconds < 0L {
     -1
   } else if self.nanoseconds > 0L {
@@ -2315,7 +2352,7 @@ pub fn DateTime::until(self : DateTime, later : DateTime) -> Duration {
 // Zero-pad an integer to 2 digits.
 
 ///|
-fn pad2(n : Int) -> String {
+fn pad2(n : Int32) -> String {
   if n < 10 {
     "0\{n}"
   } else {
@@ -2326,7 +2363,7 @@ fn pad2(n : Int) -> String {
 // Zero-pad an integer to 3 digits.
 
 ///|
-fn pad3(n : Int) -> String {
+fn pad3(n : Int32) -> String {
   if n < 10 {
     "00\{n}"
   } else if n < 100 {
@@ -2366,12 +2403,12 @@ fn pad4_year64(year : Int64) -> String {
 }
 
 ///|
-fn pad4_year(year : Int) -> String {
+fn pad4_year(year : Int32) -> String {
   pad4_year64(year.to_int64())
 }
 
 ///|
-fn pad9(n : Int) -> String {
+fn pad9(n : Int32) -> String {
   if n < 10 {
     "00000000\{n}"
   } else if n < 100 {
@@ -2396,7 +2433,7 @@ fn pad9(n : Int) -> String {
 // Format nanoseconds as a fractional-seconds string, trimming trailing zeros.
 
 ///|
-fn fmt_frac(ns : Int) -> String {
+fn fmt_frac(ns : Int32) -> String {
   let s = pad9(ns)
   let mut end = s.length()
   while end > 1 && s[end - 1] == '0' {
@@ -2515,7 +2552,7 @@ fn format_datetime_without_zone(dt : DateTime) -> String {
 }
 
 ///|
-fn shift_datetime_by_seconds(dt : DateTime, offset_seconds : Int) -> DateTime {
+fn shift_datetime_by_seconds(dt : DateTime, offset_seconds : Int32) -> DateTime {
   let t = dt.time
   let seconds_of_day = t.hour * 3600 + t.minute * 60 + t.second
   let total_seconds = seconds_of_day.to_int64() + offset_seconds.to_int64()
@@ -2533,7 +2570,7 @@ fn shift_datetime_by_seconds(dt : DateTime, offset_seconds : Int) -> DateTime {
 }
 
 ///|
-fn format_offset_suffix(offset_seconds : Int) -> String {
+fn format_offset_suffix(offset_seconds : Int32) -> String {
   if offset_seconds == 0 {
     "Z"
   } else {
@@ -2863,14 +2900,14 @@ fn Duration::to_string_repr(self : Duration) -> String {
 ///|
 fn parse_digits(
   view : StringView,
-  n : Int,
-) -> (Int, StringView) raise TempoError {
+  n : Int32,
+) -> (Int32, StringView) raise TempoError {
   for v = view, remaining = n, acc = 0 {
     if remaining == 0 {
       break (acc, v)
     }
     match v {
-      ['0'..='9' as c, .. rest] =>
+      ['0'..<='9' as c, .. rest] =>
         continue rest, remaining - 1, acc * 10 + c.to_int() - '0'
       [c, ..] => raise TempoError("expected digit, got '\{c}'")
       [] => raise TempoError("unexpected end of input, expected digit")
@@ -2894,10 +2931,10 @@ fn consume(view : StringView, expected : Char) -> StringView raise TempoError {
 // any remaining digits to avoid Int overflow.
 
 ///|
-fn parse_frac_ns(view : StringView) -> (Int, StringView) raise TempoError {
+fn parse_frac_ns(view : StringView) -> (Int32, StringView) raise TempoError {
   for v = view, count = 0, acc = 0 {
     match v {
-      ['0'..='9' as c, .. rest] =>
+      ['0'..<='9' as c, .. rest] =>
         if count < 9 {
           // Still within 9 significant digits — accumulate normally.
           continue rest, count + 1, acc * 10 + c.to_int() - '0'
@@ -2923,7 +2960,9 @@ fn parse_frac_ns(view : StringView) -> (Int, StringView) raise TempoError {
 }
 
 ///|
-fn parse_period_number(view : StringView) -> (Int, StringView) raise TempoError {
+fn parse_period_number(
+  view : StringView,
+) -> (Int32, StringView) raise TempoError {
   let (negative, v) = match view {
     ['-', .. rest] => (true, rest)
     ['+', .. rest] => (false, rest)
@@ -2936,7 +2975,7 @@ fn parse_period_number(view : StringView) -> (Int, StringView) raise TempoError 
   }
   for v = v, count = 0, acc = 0L {
     match v {
-      ['0'..='9' as c, .. rest] => {
+      ['0'..<='9' as c, .. rest] => {
         let digit = (c.to_int() - '0').to_int64()
         if acc > (limit - digit) / 10L {
           raise TempoError("period component overflows Int")
@@ -2973,7 +3012,7 @@ fn reject_period_order() -> Unit raise TempoError {
 /// Week notation (`PnW`) is accepted and stored as days. Time components and
 /// any `T` separator are rejected.
 pub fn Period::parse(s : String) -> Period raise TempoError {
-  let v = match s.view() {
+  let v = match s.exact_view() {
     ['P', .. rest] => rest
     [c, ..] => raise TempoError("expected 'P', got '\{c}'")
     [] => raise TempoError("unexpected end of input, expected 'P'")
@@ -2987,7 +3026,7 @@ pub fn Period::parse(s : String) -> Period raise TempoError {
           raise TempoError("expected period component")
         }
       ['T', ..] => raise TempoError("period time components are not supported")
-      ['+' | '-' | '0'..='9', ..] => {
+      ['+' | '-' | '0'..<='9', ..] => {
         let (amount, rest) = parse_period_number(v)
         match rest {
           ['Y', .. rest] => {
@@ -3036,7 +3075,7 @@ fn parse_duration_number(
 ) -> (Int64, StringView) raise TempoError {
   for v = view, count = 0, acc = 0L {
     match v {
-      ['0'..='9' as c, .. rest] => {
+      ['0'..<='9' as c, .. rest] => {
         let digit = (c.to_int() - '0').to_int64()
         if acc > (int64_max_value - digit) / 10L {
           raise TempoError("duration component overflows Int64")
@@ -3100,7 +3139,7 @@ fn duration_reject_time_order() -> Unit raise TempoError {
 /// Calendar units (`Y` years or date-part `M` months) raise `TempoError`; use a
 /// calendar-period representation for those units.
 pub fn Duration::parse_iso(s : String) -> Duration raise TempoError {
-  let (negative, v) = match s.view() {
+  let (negative, v) = match s.exact_view() {
     ['-', .. rest] => (true, rest)
     ['+', .. rest] => (false, rest)
     v => (false, v)
@@ -3127,7 +3166,7 @@ pub fn Duration::parse_iso(s : String) -> Duration raise TempoError {
           _ => continue rest, total, saw_component, true, saw_day, time_rank
         }
       }
-      ['0'..='9', ..] => {
+      ['0'..<='9', ..] => {
         let (amount, rest) = parse_duration_number(v)
         match rest {
           ['Y', ..] => raise TempoError(duration_calendar_units_error)
@@ -3228,8 +3267,8 @@ pub fn FixedOffsetDateTime::parse(
 }
 
 ///|
-fn parse_rfc3339_parts(s : String) -> (DateTime, Int) raise TempoError {
-  let v = s.view()
+fn parse_rfc3339_parts(s : String) -> (DateTime, Int32) raise TempoError {
+  let v = s.exact_view()
   let (year, v) = parse_digits(v, 4)
   let v = consume(v, '-')
   let (month, v) = parse_digits(v, 2)
@@ -3300,7 +3339,7 @@ fn parse_rfc3339_parts(s : String) -> (DateTime, Int) raise TempoError {
 ///|
 /// Parse a time-of-day string: `HH:MM:SS` or `HH:MM:SS.fraction`.
 pub fn Time::parse(s : String) -> Time raise TempoError {
-  let v = s.view()
+  let v = s.exact_view()
   let (hour, v) = parse_digits(v, 2)
   let v = consume(v, ':')
   let (minute, v) = parse_digits(v, 2)

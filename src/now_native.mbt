@@ -2,7 +2,7 @@
 // For sub-second precision on native, a clock_gettime C stub would be needed.
 
 ///|
-extern "c" fn c_time(ptr : Int) -> Int64 = "time"
+extern "c" fn c_time(ptr : Int32) -> Int64 = "time"
 
 ///|
 /// Returns the current UTC time.
