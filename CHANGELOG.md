@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-26
+
 ### Fixed
 
+- Empty half-open intervals now report no overlap with any interval. (#55)
 - `DateTime::format_with` no longer drops non-BMP literal characters (emoji,
   astral-plane text) from the pattern. MoonBit v0.10.13 changed bracket slicing
   so that a string slice which would split a UTF-16 surrogate pair trims inward
