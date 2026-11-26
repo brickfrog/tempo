@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Pinned CI and Copilot setup to matching MoonBit compiler/core archives with
+- Updated the JSON decoders for Date, Time, DateTime, and Duration to use
+  MoonBit’s `DecodeContext.error` to preserve the path of a decoding failure.
+- Pinned CI and Copilot setup to MoonBit `1.0.0-rc1+3c0520448` with
   SHA-256 verification on Linux x86-64 and macOS ARM64. Build and test gates now
   reject warnings instead of silently accepting new compatibility warnings.
 - Updated for MoonBit `0.10.20+65efd5b93`: current formatter syntax, explicit

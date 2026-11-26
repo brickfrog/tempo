@@ -618,8 +618,8 @@ See [ROADMAP.md](ROADMAP.md).
 
 ## Development
 
-CI uses MoonBit compiler/core `0.10.20+65efd5b93` with moon/moonrun
-`0.1.20261104`. The compiler reports a November 5 build date. Both CI and Copilot
+CI uses MoonBit compiler/core `1.0.0-rc1+3c0520448` with moon/moonrun
+`0.1.20261126`. Both CI and Copilot
 setup use the same checked-in, checksum-verified installer at
 `.github/scripts/setup-moonbit.sh`, covering Linux x86-64 and macOS ARM64.
 
