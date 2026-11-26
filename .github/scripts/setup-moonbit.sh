@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Match the locally validated 2026-11-04 CLI / 2026-11-05 compiler bundle.
-readonly MOONBIT_VERSION='0.10.20+65efd5b93'
-readonly MOONBIT_VERSION_URL='0.10.20%2B65efd5b93'
+# Match the locally validated 2026-11-26 CLI / compiler bundle.
+readonly MOONBIT_VERSION='1.0.0-rc1+3c0520448'
+readonly MOONBIT_VERSION_URL='1.0.0-rc1%2B3c0520448'
 readonly MOONBIT_BASE_URL='https://cli.moonbitlang.com'
-readonly CORE_SHA256='8ec2a2c01335501d703867bb4eef5f92d3cd7e1ae1ee5f7f14d54d16d2c7c2b5'
+readonly CORE_SHA256='a3f7d82f1195e28ad9aad7b9b8b4cbca490cbf8146b306a376ea3beba4173751'
 
 # These are the two architectures used by the repository's hosted CI jobs.
 case "$(uname -s)-$(uname -m)" in
   Linux-x86_64)
     target='linux-x86_64'
-    toolchain_sha256='80d987523308fa490eba9f1baf98df996a5a7891e118357553b7c2608c0597c5'
+    toolchain_sha256='113527a9037fe12e463e6ac1e7698116bf703730243096328e4ac7e2774307c0'
     ;;
   Darwin-arm64)
     target='darwin-aarch64'
-    toolchain_sha256='3ccd56479ba704a779178abe8731490edee9e57b3b90f5cef2252afef4fdf130'
+    toolchain_sha256='c0d96efba88ba40f59c0e08fb97dd4a8a44e09c17591536817aea4873351394a'
     ;;
   *)
     printf 'Unsupported CI platform: %s\n' "$(uname -s)-$(uname -m)" >&2
