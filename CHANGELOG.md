@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-26
+
 ### Fixed
 
+- Empty half-open intervals now report no overlap with any interval. (#55)
 - `DateTime::format_with` no longer drops non-BMP literal characters (emoji,
   astral-plane text) from the pattern. MoonBit v0.10.13 changed bracket slicing
   so that a string slice which would split a UTF-16 surrogate pair trims inward
@@ -22,7 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Pinned CI and Copilot setup to matching MoonBit compiler/core archives with
+- Updated the JSON decoders for Date, Time, DateTime, and Duration to use
+  MoonBit’s `DecodeContext.error` to preserve the path of a decoding failure.
+- Pinned CI and Copilot setup to MoonBit `1.0.0-rc1+3c0520448` with
   SHA-256 verification on Linux x86-64 and macOS ARM64. Build and test gates now
   reject warnings instead of silently accepting new compatibility warnings.
 - Updated for MoonBit `0.10.20+65efd5b93`: current formatter syntax, explicit

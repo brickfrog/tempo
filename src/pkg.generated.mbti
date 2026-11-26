@@ -47,7 +47,7 @@ pub fn Date::format(Self) -> String
 pub fn Date::format_iso_week(Self) -> String
 pub fn Date::format_ordinal(Self) -> String
 pub fn Date::from_iso_week(Int32, Int32, Int32) -> Self raise TempoError
-pub fn Date::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Date::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Date::from_ordinal(Int32, Int32) -> Self raise TempoError
 pub fn Date::hash(Self) -> Int32
 pub fn Date::hash_combine(Self, Hasher) -> Unit
@@ -123,7 +123,7 @@ pub fn DateTime::equal(Self, Self) -> Bool
 pub fn DateTime::format(Self) -> String
 pub fn DateTime::format_fixed(Self) -> String
 pub fn DateTime::format_with(Self, String) -> String raise TempoError
-pub fn DateTime::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DateTime::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn DateTime::from_unix_micros(Int64) -> Self
 pub fn DateTime::from_unix_millis(Int64) -> Self
 pub fn DateTime::from_unix_nanos(Int64) -> Self
@@ -201,7 +201,7 @@ pub fn Duration::days(Int64) -> Self
 pub fn Duration::divide(Self, Int64) -> Self raise TempoError
 pub fn Duration::equal(Self, Self) -> Bool
 pub fn Duration::format_iso(Self) -> String
-pub fn Duration::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Duration::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Duration::hash(Self) -> Int32
 pub fn Duration::hash_combine(Self, Hasher) -> Unit
 pub fn Duration::hours(Int64) -> Self
@@ -369,7 +369,7 @@ pub fn Time::clamp(Self, Self, Self) -> Self
 pub fn Time::compare(Self, Self) -> Int32
 pub fn Time::equal(Self, Self) -> Bool
 pub fn Time::format(Self) -> String
-pub fn Time::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Time::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Time::hash(Self) -> Int32
 pub fn Time::hash_combine(Self, Hasher) -> Unit
 pub fn Time::is_after(Self, Self) -> Bool
